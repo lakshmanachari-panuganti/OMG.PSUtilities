@@ -1,14 +1,39 @@
-<?xml version="1.0" encoding="utf-8"?>
-<plasterManifest schemaVersion="1.1" templateType="project"
-                 name="OMG.PSUtilities"
-                 author="Your Name"
-                 description="Scaffolds a PowerShell module project with README, .psd1, .psm1">
-  <content>
-    <file source="Module.psm1" destination="$PLASTER_PARAM_ModuleName\$PLASTER_PARAM_ModuleName.psm1" />
-    <file source="Module.psd1" destination="$PLASTER_PARAM_ModuleName\$PLASTER_PARAM_ModuleName.psd1" />
-    <file source="README.md" destination="$PLASTER_PARAM_ModuleName\README.md" />
-  </content>
+<plasterManifest schemaVersion="1.1" xmlns="http://www.microsoft.com/schemas/PowerShell/Plaster/v1">
+  <metadata>
+    <id>basic-module-template</id>
+    <version>1.0.0</version>
+    <title>Basic PowerShell Module Template</title>
+    <description>Creates a simple reusable PowerShell module structure.</description>
+    <author>Lakshmanachari Panuganti</author>
+  </metadata>
+
   <parameters>
-    <parameter name="ModuleName" type="text" prompt="Enter your PowerShell module name" />
+    <parameter name="ModuleName" type="text" prompt="Enter the module name" />
+    <parameter name="Author" type="text" default="Lakshmanachari Panuganti" />
+    <parameter name="Description" type="text" default="A reusable PowerShell module." />
   </parameters>
+
+  <content>
+
+    <!-- Folder structure -->
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\README.md' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\.gitignore' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Get-Hello.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Private\Write-Log.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\${PLASTER_PARAM_ModuleName}.psm1' />
+
+    <!-- Module manifest -->
+    <newModuleManifest
+      path='${PLASTER_PARAM_ModuleName}\${PLASTER_PARAM_ModuleName}.psd1'
+      rootModule='${PLASTER_PARAM_ModuleName}.psm1'
+      moduleVersion='1.0.0'
+      author='${PLASTER_PARAM_Author}'
+      description='${PLASTER_PARAM_Description}'
+      functionsToExport='*'
+      guid='c3c40910-89a9-4dc3-8d67-aaf88be74519'
+    />
+
+    <message>✅ '${PLASTER_PARAM_ModuleName}' module scaffolded successfully!</message>
+    
+  </content>
 </plasterManifest>
