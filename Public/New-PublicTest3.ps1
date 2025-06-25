@@ -1,1 +1,0 @@
-Write-Host "New-PublicTest3 function is being executed."

@@ -25,9 +25,8 @@
 
     # Functions to export from this module
     FunctionsToExport = @(
-        'New-PublicTest1',
-        'New-PublicTest2',
-        'New-PublicTest3'
+        'New-HTMLReport',
+        'Send-HTMLReport'
     )
 
     # Cmdlets to export from this module
@@ -47,3 +46,4 @@
         }
     }
 }
+
