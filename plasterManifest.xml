@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<plasterManifest schemaVersion="1.1" templateType="project"
+                 name="OMG.PSUtilities"
+                 author="Your Name"
+                 description="Scaffolds a PowerShell module project with README, .psd1, .psm1">
+  <content>
+    <file source="Module.psm1" destination="$PLASTER_PARAM_ModuleName\$PLASTER_PARAM_ModuleName.psm1" />
+    <file source="Module.psd1" destination="$PLASTER_PARAM_ModuleName\$PLASTER_PARAM_ModuleName.psd1" />
+    <file source="README.md" destination="$PLASTER_PARAM_ModuleName\README.md" />
+  </content>
+  <parameters>
+    <parameter name="ModuleName" type="text" prompt="Enter your PowerShell module name" />
+  </parameters>
+</plasterManifest>
