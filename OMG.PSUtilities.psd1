@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.1'
+    ModuleVersion     = '1.0.2'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
