@@ -42,7 +42,7 @@
     # Private data to pass to the module specified in RootModule/ModuleToProcess
     PrivateData       = @{
         PSData = @{
-            Tags       = @('utility', 'powershell', 'functions', 'reusable')
+            Tags       = @('Utility', 'PowerShell', 'Functions', 'ActiveDirectory', 'Azure', 'ADO')
             ProjectUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities'
         }
     }
