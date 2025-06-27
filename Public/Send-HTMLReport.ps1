@@ -95,7 +95,6 @@ None
 
 .NOTES
   Author:         Lakshmanachari Panuganti
-  Purpose/Change: Initial script development for sending HTML reports.
 #>
 Function Send-HTMLReport {
   [CmdletBinding()]

@@ -53,7 +53,6 @@
 
 .NOTES
   Author:         LakshmanaChari Panuganti
-  Purpose/Change: Initial script development for creating HTML reports as PowerShell object.
 #>
 Function New-HTMLReport {
   [CmdletBinding(DefaultParameterSetName = 'PSObject')]
