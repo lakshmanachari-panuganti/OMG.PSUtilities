@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.3'
+    ModuleVersion     = '1.0.4'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
@@ -26,7 +26,8 @@
     # Functions to export from this module
     FunctionsToExport = @(
         'New-HTMLReport',
-        'Send-HTMLReport'
+        'Send-HTMLReport',
+        'Test-AzConnection'
     )
 
     # Cmdlets to export from this module
@@ -46,4 +47,3 @@
         }
     }
 }
-
