@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.5'
+    ModuleVersion     = '1.0.6'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
@@ -26,6 +26,7 @@
     # Functions to export from this module
     FunctionsToExport = @(
         'ConvertTo-ExcelFile',
+        'Get-AzToken',
         'New-HTMLReport',
         'Send-HTMLReport',
         'Set-UserEnvVariable',
@@ -50,3 +51,4 @@
         }
     }
 }
+
