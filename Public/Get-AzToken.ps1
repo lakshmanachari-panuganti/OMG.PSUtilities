@@ -30,6 +30,6 @@ function Get-AzToken {
         return $token
     }
     catch {
-        Write-Error "❌ Failed to acquire token: $_"
+        $PSCmdlet.ThrowTerminatingError($_)
     }
 }

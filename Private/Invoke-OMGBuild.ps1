@@ -43,6 +43,6 @@ function Invoke-OMGBuild {
         Write-Host "✅ Manifest saved to $psd1Path"
     }
     catch {
-        Write-Error "❌ Failed to update build: $_"
+        $PSCmdlet.ThrowTerminatingError($_)
     }
 }
