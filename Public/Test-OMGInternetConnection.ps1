@@ -1,4 +1,4 @@
-function Test-InternetConnection {
+function Test-OMGInternetConnection {
     try {
         $null = Invoke-WebRequest httpswww.google.com -UseBasicParsing -TimeoutSec 5
         return $true

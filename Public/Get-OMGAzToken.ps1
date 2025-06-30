@@ -5,7 +5,7 @@
     For Microsoft Graph
     $token = Get-AzToken -Resource "https://graph.microsoft.com/"
 #>
-function Get-AzToken {
+function Get-OMGAzToken {
     [CmdletBinding()]
     param (
         [Parameter()]

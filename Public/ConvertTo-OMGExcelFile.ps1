@@ -1,5 +1,5 @@
 
-function ConvertTo-ExcelFile {
+function ConvertTo-OMGExcelFile {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

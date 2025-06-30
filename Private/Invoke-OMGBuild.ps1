@@ -16,7 +16,7 @@ function Invoke-OMGBuild {
         # Collect all exported function names
         $functions = (Get-ChildItem -Path "$publicFolder\*.ps1" | ForEach-Object {
             "'$($_.BaseName)'"
-        }) -join ",`n        "
+        } | Sort-Object) -join ",`n        "
 
         $replacement = "FunctionsToExport = @(`n        $functions`n    )"
 

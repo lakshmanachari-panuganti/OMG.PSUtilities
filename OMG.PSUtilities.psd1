@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.7'
+    ModuleVersion     = '1.0.9'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
@@ -25,13 +25,13 @@
 
     # Functions to export from this module
     FunctionsToExport = @(
-        'ConvertTo-ExcelFile',
-        'Get-AzToken',
-        'New-HTMLReport',
-        'Send-HTMLReport',
-        'Set-UserEnvironmentVariable',
-        'Test-AzConnection',
-        'Test-InternetConnection'
+        'ConvertTo-OMGExcelFile',
+        'Get-OMGAzToken',
+        'New-OMGHTMLReport',
+        'Send-OMGHTMLReport',
+        'Set-OMGUserEnvironmentVariable',
+        'Test-OMGAzConnection',
+        'Test-OMGInternetConnection'
     )
 
     # Cmdlets to export from this module
@@ -51,5 +51,7 @@
         }
     }
 }
+
+
 
 

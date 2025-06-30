@@ -1,14 +1,14 @@
 <#
 .SYNOPSIS
-  Sends HTML reports that are created with New-HTMLReport function.
+  Sends HTML reports that are created with New-OMGHTMLReport function.
 
 .DESCRIPTION
-  Sends HTML reports that are created with New-HTMLReport function.
+  Sends HTML reports that are created with New-OMGHTMLReport function.
   We can send add Heading, Heading color, Summary, Summary color, Footer, Footer color along with the reports.
   We have to provide the valid html color name or color code.
 
   Note: SMTP server is hardcoded in the script, you can change it as per your environment.
-  The report can be an array of HTML reports that are created with New-HTMLReport function.
+  The report can be an array of HTML reports that are created with New-OMGHTMLReport function.
   The report can be a string or array of strings that are represented in the email body line by line.
   
 .PARAMETER Heading
@@ -65,8 +65,8 @@ $ServiceParams = @{
   PreContentBold = $true
   As = 'Table'
 }
-$ReportsHtml += New-HTMLReport @ErrorParams
-$ReportsHtml += New-HTMLReport @ServiceParams
+$ReportsHtml += New-OMGHTMLReport @ErrorParams
+$ReportsHtml += New-OMGHTMLReport @ServiceParams
 
 
 $Summary = @(
@@ -88,7 +88,7 @@ $Params = @{
     Subject = "Services running on $env:computername"
     ReportRecipient = 'lakshmanacharii@xyz.com'
 }
-Send-HTMLReport @Params
+New-OMGHTMLReport @Params
 
 .OUTPUTS
 None
@@ -96,7 +96,7 @@ None
 .NOTES
   Author:         Lakshmanachari Panuganti
 #>
-Function Send-HTMLReport {
+Function New-OMGHTMLReport {
   [CmdletBinding()]
   Param(
     [Parameter(Mandatory)]

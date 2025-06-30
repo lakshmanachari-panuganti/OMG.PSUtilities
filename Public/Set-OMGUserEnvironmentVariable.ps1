@@ -1,4 +1,4 @@
-function Set-UserEnvironmentVariable {
+function Set-OMGUserEnvironmentVariable {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
