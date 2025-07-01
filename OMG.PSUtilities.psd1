@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.10'
+    ModuleVersion     = '1.0.11'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
@@ -25,12 +25,13 @@
 
     # Dependency modules required by this module.
     RequiredModules   = @(
-        @{ModuleName = 'ImportExcel'; ModuleVersion = '7.8.9'}
+        @{ModuleName = 'ImportExcel'}
     )
 
     # Functions to export from this module
     FunctionsToExport = @(
         'ConvertTo-PSUExcelFile',
+        'Find-PSUFilesContainingText',
         'Get-PSUAzToken',
         'New-PSUHTMLReport',
         'Send-PSUHTMLReport',
@@ -56,6 +57,7 @@
         }
     }
 }
+
 
 
 
