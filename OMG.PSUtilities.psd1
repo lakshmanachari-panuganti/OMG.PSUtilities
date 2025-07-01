@@ -24,8 +24,8 @@
     PowerShellVersion = '5.1'
 
     # Dependency modules required by this module.
-    RequiredModules   = @(
-        @{ModuleName = 'ImportExcel'}
+    RequiredModules = @(
+        @{ ModuleName = 'ImportExcel'; RequiredVersion = '7.8.5' }
     )
 
     # Functions to export from this module
@@ -57,8 +57,3 @@
         }
     }
 }
-
-
-
-
-
