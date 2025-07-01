@@ -1,4 +1,4 @@
-function Invoke-OMGBuild {
+function Invoke-PSUBuild {
     [CmdletBinding()]
     param (
         [Parameter()]

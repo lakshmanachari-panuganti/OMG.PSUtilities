@@ -37,7 +37,7 @@
     PreContentItalic = $true
     As = 'Table'
   }
-  $ServicesHtml = New-OMGHTMLReport @ServiceParams
+  $ServicesHtml = New-PSUHTMLReport @ServiceParams
 
 .OUTPUTS
   <p><font color = Blue><i><b>Below is the list of first 5 services</b></i></font></p>
@@ -54,7 +54,7 @@
 .NOTES
   Author:         LakshmanaChari Panuganti
 #>
-Function New-OMGHTMLReport {
+Function New-PSUHTMLReport {
   [CmdletBinding(DefaultParameterSetName = 'PSObject')]
   Param(
     [Parameter(

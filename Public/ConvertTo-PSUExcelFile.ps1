@@ -1,5 +1,5 @@
 
-function ConvertTo-OMGExcelFile {
+function ConvertTo-PSUExcelFile {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

@@ -1,4 +1,4 @@
-function Set-OMGUserEnvironmentVariable {
+function Set-PSUUserEnvironmentVariable {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

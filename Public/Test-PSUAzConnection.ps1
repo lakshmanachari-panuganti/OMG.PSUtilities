@@ -19,7 +19,7 @@
     Date: 27th June 2025
 
 #>
-function Test-OMGAzConnection {
+function Test-PSUAzConnection {
     [CmdletBinding()]
     param ()
 
