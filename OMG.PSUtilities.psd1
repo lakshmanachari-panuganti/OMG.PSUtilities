@@ -23,6 +23,11 @@
     # Minimum version of the Windows PowerShell engine required by this module
     PowerShellVersion = '5.1'
 
+    # Dependency modules required by this module.
+    RequiredModules   = @(
+        @{ModuleName = 'ImportExcel'; ModuleVersion = '7.8.9'}
+    )
+
     # Functions to export from this module
     FunctionsToExport = @(
         'ConvertTo-PSUExcelFile',
