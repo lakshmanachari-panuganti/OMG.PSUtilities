@@ -17,6 +17,9 @@ function Find-PSUFilesContainingText {
         [string]$FileExtension,
 
         [Parameter()]
+        [string[]]$ExcludeExtensions = @('exe','dll','msi','bin','jpg','png','zip','iso','img','sys'),
+
+        [Parameter()]
         [switch]$NoRecurse
     )
 
@@ -34,6 +37,12 @@ function Find-PSUFilesContainingText {
     } else {
         Write-Verbose "Recursively searching subdirectories..."
         $files = Get-ChildItem -Path $SearchPath -Recurse -File -Filter $filter -ErrorAction SilentlyContinue
+    }
+
+    # Exclude files with specified extensions
+    $files = $files | Where-Object {
+        $ext = $_.Extension.TrimStart('.').ToLower()
+        -not ($ExcludeExtensions -contains $ext)
     }
 
     $matchedFiles = foreach ($file in $files) {

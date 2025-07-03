@@ -25,7 +25,7 @@
 
     # Dependency modules required by this module.
     RequiredModules = @(
-        @{ ModuleName = 'ImportExcel'; RequiredVersion = '7.8.5' }
+        @{ ModuleName = 'ImportExcel'; RequiredVersion = '7.8.9' }
     )
 
     # Functions to export from this module
