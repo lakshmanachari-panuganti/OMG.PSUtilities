@@ -1,9 +1,19 @@
 <#
-    For Azure DevOps
-    $token = Get-AzToken -Resource "499b84ac-1321-427f-aa17-267ca6975798"
+.SYNOPSIS
+    Retrieves an Azure access token for a specified resource.
 
-    For Microsoft Graph
-    $token = Get-AzToken -Resource "https://graph.microsoft.com/"
+.DESCRIPTION
+    Acquires an Azure access token using the current context for the specified resource URL.
+
+.PARAMETER Resource
+    The resource URL for which to acquire the token.
+
+.EXAMPLE
+    Get-PSUAzToken -Resource "https://graph.microsoft.com/"
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    File Creation Date: 2025-06-27
 #>
 function Get-PSUAzToken {
     [CmdletBinding()]

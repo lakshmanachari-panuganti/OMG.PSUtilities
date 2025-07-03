@@ -2,19 +2,18 @@
 
 A PowerShell module providing reusable utility functions for file, text, Azure, reporting, and environment operations.
 
-
 ## ✨ Features
 
 | Function                          | Description                                                                 |
 |-----------------------------------|-----------------------------------------------------------------------------|
-| `ConvertTo-PSUExcelFile`          | 📊 Converts data into a styled Excel report                                 |
-| `Find-PSUFilesContainingText`     | 🔍 Searches for specific text in files with filters and exclusions          |
-| `Get-PSUAzToken`                  | 🔐 Retrieves an Azure token using client credentials                        |
-| `New-PSUHTMLReport`               | 📝 Generates an HTML report from data                                       |
-| `Send-PSUHTMLReport`              | 📧 Sends the HTML report via SMTP email                                     |
-| `Set-PSUUserEnvironmentVariable`  | ⚙️ Sets or updates a user environment variable                              |
-| `Test-PSUAzConnection`            | 🌩️ Tests if Azure is reachable from the current session                    |
-| `Test-PSUInternetConnection`      | 🌍 Tests general internet connectivity                                      |
+| `ConvertTo-PSUExcelFile`          | 📊 Converts an array of objects to a styled Excel file.                     |
+| `Find-PSUFilesContainingText`     | 🔍 Searches files for a specific text string.                               |
+| `Get-PSUAzToken`                  | 🔐 Retrieves an Azure access token for a specified resource.                |
+| `New-PSUHTMLReport`               | 📝 Creates an HTML report as a PowerShell object.                           |
+| `Send-PSUHTMLReport`              | 📧 Sends HTML reports via email.                                            |
+| `Set-PSUUserEnvironmentVariable`  | ⚙️ Sets or updates a user environment variable.                             |
+| `Test-PSUAzConnection`            | 🌩️ Checks if an active Azure session exists.                                |
+| `Test-PSUInternetConnection`      | 🌍 Tests general internet connectivity.                                     |
 
 ---
 ## Installation

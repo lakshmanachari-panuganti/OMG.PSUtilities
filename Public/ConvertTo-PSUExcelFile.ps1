@@ -1,4 +1,23 @@
+<#
+.SYNOPSIS
+    Converts an array of objects to a styled Excel file.
 
+.DESCRIPTION
+    Exports the provided data objects to an Excel file with formatting, including styled headers and borders.
+
+.PARAMETER DataObject
+    The array of objects to export to Excel.
+
+.PARAMETER ExcelPath
+    The path where the Excel file will be saved.
+
+.EXAMPLE
+    ConvertTo-PSUExcelFile -DataObject $data -ExcelPath 'C:\Reports\report.xlsx'
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    File Creation Date: 2025-06-27
+#>
 function ConvertTo-PSUExcelFile {
     [CmdletBinding()]
     param (

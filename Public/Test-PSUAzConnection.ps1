@@ -3,21 +3,14 @@
     Checks if an active Azure session exists.
 
 .DESCRIPTION
-    This function checks whether there is an active Azure session. It retrieves the current Azure context using the `Get-AzContext` cmdlet. 
-    If an active session is found, it returns `$true`; otherwise, it returns `$false`. 
-    If the session check fails, a warning is displayed.
-
-.PARAMETER None
-    No parameters are required.
+    Checks for an active Azure session and returns $true if found, otherwise $false.
 
 .EXAMPLE
-    Test-AzConnection
-    This will check if the current Azure session is active and return `$true` or `$false` accordingly.
+    Test-PSUAzConnection
 
 .NOTES
     Author: Lakshmanachari Panuganti
-    Date: 27th June 2025
-
+    File Creation Date: 2025-06-27
 #>
 function Test-PSUAzConnection {
     [CmdletBinding()]
