@@ -2,18 +2,25 @@
 
 All notable changes to the OMG.PSUtilities module will be documented in this file.
 
+## [1.0.13] - 2025-07-03
+### Added
+- `ConvertTo-PSUExcelFile`: 📊 Converts an array of objects to a styled Excel file.
+- `Find-PSUFilesContainingText`: 🔍 Searches files for a specific text string.
+- `Get-PSUAzToken`: 🔐 Retrieves an Azure access token for a specified resource.
+- `Get-PSUConnectedWifiInfo`: 📶 Returns only the connected Wi-Fi's SSID, signal strength, private IPv4 address, band, and public IP address.
+- `Get-PSUInstalledSoftware`: 🗃️ Lists installed software on the system.
+- `Get-PSUUserSession`: 👤 Lists currently logged-in users and their sessions.
+- `Remove-PSUUserSession`: 🚪 Logs off selected user sessions by session ID.
+- `New-PSUHTMLReport`: 📝 Creates an HTML report as a PowerShell object.
+- `Send-PSUHTMLReport`: 📧 Sends HTML reports via email.
+- `Send-PSUTeamsMessage`: 💬 Sends a message to a Microsoft Teams channel via webhook.
+- `Set-PSUUserEnvironmentVariable`: ⚙️ Sets or updates a user environment variable.
+- `Test-PSUAzConnection`: 🌩️ Checks if an active Azure session exists.
+- `Test-PSUInternetConnection`: 🌍 Tests general internet connectivity.
+- `Uninstall-PSUInstalledSoftware`: 🗑️ Uninstalls software objects piped in from Get-PSUInstalledSoftware.
+- Improved comment-based help and parameter documentation for all new functions.
+- Added LICENSE file with MIT License.
+
 ## [1.0.0] - 2025-07-03
 ### Added
 - Initial release of OMG.PSUtilities module.
-- Added the following functions:
-  - `ConvertTo-PSUExcelFile`: 📊 Converts an array of objects to a styled Excel file.
-  - `Find-PSUFilesContainingText`: 🔍 Searches files for a specific text string.
-  - `Get-PSUAzToken`: 🔐 Retrieves an Azure access token for a specified resource.
-  - `New-PSUHTMLReport`: 📝 Creates an HTML report as a PowerShell object.
-  - `Send-PSUHTMLReport`: 📧 Sends HTML reports via email.
-  - `Set-PSUUserEnvironmentVariable`: ⚙️ Sets or updates a user environment variable.
-  - `Test-PSUAzConnection`: 🌩️ Checks if an active Azure session exists.
-  - `Test-PSUInternetConnection`: 🌍 Tests general internet connectivity.
-- Added comment-based help content (synopsis, description, parameters, examples, notes) to all public functions.
-- Updated README.md to use function synopses as descriptions and prefixed each with a relevant emoji.
-- Added LICENSE file with

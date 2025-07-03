@@ -1,4 +1,6 @@
-<#
+
+function Test-PSUAzConnection {
+    <#
 .SYNOPSIS
     Checks if an active Azure session exists.
 
@@ -12,19 +14,21 @@
     Author: Lakshmanachari Panuganti
     File Creation Date: 2025-06-27
 #>
-function Test-PSUAzConnection {
     [CmdletBinding()]
+    [OutputType([bool])]
     param ()
 
     try {
         $context = Get-AzContext
         if ($null -ne $context -and $null -ne $context.Account) {
             return $true
-        } else {
+        }
+        else {
             Write-Warning "⚠️ No active Azure session found."
             return $false
         }
-    } catch {
+    }
+    catch {
         Write-Warning "⚠️ Azure session check failed: $_"
         return $false
     }

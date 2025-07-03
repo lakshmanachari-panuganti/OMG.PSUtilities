@@ -1,3 +1,5 @@
+
+function Find-PSUFilesContainingText {
 <#
 .SYNOPSIS
     Searches files for a specific text string.
@@ -27,7 +29,6 @@
     Author: Lakshmanachari Panuganti
     File Creation Date: 2025-06-27
 #>
-function Find-PSUFilesContainingText {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

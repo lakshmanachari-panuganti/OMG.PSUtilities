@@ -1,4 +1,6 @@
-<#
+
+function ConvertTo-PSUExcelFile {
+    <#
 .SYNOPSIS
     Converts an array of objects to a styled Excel file.
 
@@ -18,7 +20,6 @@
     Author: Lakshmanachari Panuganti
     File Creation Date: 2025-06-27
 #>
-function ConvertTo-PSUExcelFile {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

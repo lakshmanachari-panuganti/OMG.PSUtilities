@@ -1,3 +1,4 @@
+function Get-PSUAzToken {
 <#
 .SYNOPSIS
     Retrieves an Azure access token for a specified resource.
@@ -15,7 +16,6 @@
     Author: Lakshmanachari Panuganti
     File Creation Date: 2025-06-27
 #>
-function Get-PSUAzToken {
     [CmdletBinding()]
     param (
         [Parameter()]

@@ -1,19 +1,25 @@
 # OMG.PSUtilities
 
-A PowerShell module providing reusable utility functions for file, text, Azure, reporting, and environment operations.
+A PowerShell module providing reusable utility functions for file, text, Azure, reporting, environment, and system operations.
 
 ## ✨ Features
 
 | Function                          | Description                                                                 |
-|-----------------------------------|-----------------------------------------------------------------------------|
-| `ConvertTo-PSUExcelFile`          | 📊 Converts an array of objects to a styled Excel file.                     |
-| `Find-PSUFilesContainingText`     | 🔍 Searches files for a specific text string.                               |
-| `Get-PSUAzToken`                  | 🔐 Retrieves an Azure access token for a specified resource.                |
-| `New-PSUHTMLReport`               | 📝 Creates an HTML report as a PowerShell object.                           |
-| `Send-PSUHTMLReport`              | 📧 Sends HTML reports via email.                                            |
-| `Set-PSUUserEnvironmentVariable`  | ⚙️ Sets or updates a user environment variable.                             |
-| `Test-PSUAzConnection`            | 🌩️ Checks if an active Azure session exists.                                |
-| `Test-PSUInternetConnection`      | 🌍 Tests general internet connectivity.                                     |
+|------------------------------------|-----------------------------------------------------------------------------|
+| `ConvertTo-PSUExcelFile`           | 📊 Converts an array of objects to a styled Excel file.                     |
+| `Find-PSUFilesContainingText`      | 🔍 Searches files for a specific text string.                               |
+| `Get-PSUAzToken`                   | 🔐 Retrieves an Azure access token for a specified resource.                |
+| `Get-PSUConnectedWifiInfo`         | 📶 Returns only the connected Wi-Fi's SSID, signal strength, private IPv4 address, band, and public IP address. |
+| `Get-PSUInstalledSoftware`         | 🗃️ Lists installed software on the system.                                  |
+| `Get-PSUUserSession`               | 👤 Lists currently logged-in users and their sessions.                      |
+| `Remove-PSUUserSession`            | 🚪 Logs off selected user sessions by session ID.                           |
+| `New-PSUHTMLReport`                | 📝 Creates an HTML report as a PowerShell object.                           |
+| `Send-PSUHTMLReport`               | 📧 Sends HTML reports via email.                                            |
+| `Send-PSUTeamsMessage`             | 💬 Sends a message to a Microsoft Teams channel via webhook.                |
+| `Set-PSUUserEnvironmentVariable`   | ⚙️ Sets or updates a user environment variable.                             |
+| `Test-PSUAzConnection`             | 🌩️ Checks if an active Azure session exists.                                |
+| `Test-PSUInternetConnection`       | 🌍 Tests general internet connectivity.                                     |
+| `Uninstall-PSUInstalledSoftware`   | 🗑️ Uninstalls software objects piped in from Get-PSUInstalledSoftware.      |
 
 ---
 ## Installation

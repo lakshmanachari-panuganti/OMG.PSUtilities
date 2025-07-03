@@ -1,3 +1,4 @@
+function Test-PSUInternetConnection {
 <#
 .SYNOPSIS
     Tests general internet connectivity.
@@ -12,7 +13,10 @@
     Author: Lakshmanachari Panuganti
     File Creation Date: 2025-06-27
 #>
-function Test-PSUInternetConnection {
+    [CmdletBinding()]
+    [OutputType([bool])]
+    param()
+
     try {
         $null = Invoke-WebRequest www.google.com -UseBasicParsing -TimeoutSec 5
         return $true
