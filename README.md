@@ -2,40 +2,27 @@
 
 A PowerShell module providing reusable utility functions for file, text, Azure, reporting, and environment operations.
 
-## Features
 
-- **ConvertTo-PSUExcelFile**  
-  Converts data to an Excel file.
+## ✨ Features
 
-- **Find-PSUFilesContainingText**  
-  Search for files containing specific text, with options to filter by extension, exclude certain file types, and control recursion.
+| Function                          | Description                                                                 |
+|-----------------------------------|-----------------------------------------------------------------------------|
+| `ConvertTo-PSUExcelFile`          | 📊 Converts data into a styled Excel report                                 |
+| `Find-PSUFilesContainingText`     | 🔍 Searches for specific text in files with filters and exclusions          |
+| `Get-PSUAzToken`                  | 🔐 Retrieves an Azure token using client credentials                        |
+| `New-PSUHTMLReport`               | 📝 Generates an HTML report from data                                       |
+| `Send-PSUHTMLReport`              | 📧 Sends the HTML report via SMTP email                                     |
+| `Set-PSUUserEnvironmentVariable`  | ⚙️ Sets or updates a user environment variable                              |
+| `Test-PSUAzConnection`            | 🌩️ Tests if Azure is reachable from the current session                    |
+| `Test-PSUInternetConnection`      | 🌍 Tests general internet connectivity                                      |
 
-- **Get-PSUAzToken**  
-  Retrieves an Azure authentication token.
-
-- **New-PSUHTMLReport**  
-  Generates an HTML report from data.
-
-- **Send-PSUHTMLReport**  
-  Sends an HTML report via email.
-
-- **Set-PSUUserEnvironmentVariable**  
-  Sets a user environment variable.
-
-- **Test-PSUAzConnection**  
-  Tests connectivity to Azure.
-
-- **Test-PSUInternetConnection**  
-  Tests general internet connectivity.
-
+---
 ## Installation
 
 ```powershell
 # Install from the PowerShell Gallery
-Install-Module -Name OMG.PSUtilities
+Install-Module -Name OMG.PSUtilities -Repository PSGallery -Scope CurrentUser
 
-# Or clone/download this repository and import the module
-Import-Module "$Path\OMG.PSUtilities.psm1"
 ```
 
 ## Usage
