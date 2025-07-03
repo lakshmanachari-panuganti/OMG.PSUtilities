@@ -6,14 +6,14 @@ A PowerShell module providing reusable utility functions for file, text, Azure, 
 
 | Function                          | Description                                                                 |
 |------------------------------------|-----------------------------------------------------------------------------|
-| `ConvertTo-PSUExcelFile`           | 📊 Converts an array of objects to a styled Excel file.                     |
+| `Export-PSUExcel`                  | 📊 Exports an array of objects to a styled Excel file with advanced formatting, backup, and pipeline support. |
 | `Find-PSUFilesContainingText`      | 🔍 Searches files for a specific text string.                               |
 | `Get-PSUAzToken`                   | 🔐 Retrieves an Azure access token for a specified resource.                |
 | `Get-PSUConnectedWifiInfo`         | 📶 Returns only the connected Wi-Fi's SSID, signal strength, private IPv4 address, band, and public IP address. |
-| `Get-PSUInstalledSoftware`         | 🗃️ Lists installed software on the system.                                  |
+| `Get-PSUInstalledSoftware`         | 🗃️ Lists installed software on the system, with optional filtering.         |
 | `Get-PSUUserSession`               | 👤 Lists currently logged-in users and their sessions.                      |
-| `Remove-PSUUserSession`            | 🚪 Logs off selected user sessions by session ID.                           |
 | `New-PSUHTMLReport`                | 📝 Creates an HTML report as a PowerShell object.                           |
+| `Remove-PSUUserSession`            | 🚪 Logs off selected user sessions by session ID.                           |
 | `Send-PSUHTMLReport`               | 📧 Sends HTML reports via email.                                            |
 | `Send-PSUTeamsMessage`             | 💬 Sends a message to a Microsoft Teams channel via webhook.                |
 | `Set-PSUUserEnvironmentVariable`   | ⚙️ Sets or updates a user environment variable.                             |
@@ -60,7 +60,7 @@ Find-PSUFilesContainingText -SearchPath 'C:\Scripts' -SearchText 'password' -Fil
 Refer to the function help for usage examples:
 
 ```powershell
-Get-Help ConvertTo-PSUExcelFile -Full
+Get-Help Export-PSUExcel -Full
 Get-Help Get-PSUAzToken -Full
 Get-Help New-PSUHTMLReport -Full
 Get-Help Send-PSUHTMLReport -Full

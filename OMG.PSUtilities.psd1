@@ -30,7 +30,7 @@
 
     # Functions to export from this module
     FunctionsToExport = @(
-        'ConvertTo-PSUExcelFile',
+        'Export-PSUExcel',
         'Find-PSUFilesContainingText',
         'Get-PSUAzToken',
         'Get-PSUConnectedWifiInfo',

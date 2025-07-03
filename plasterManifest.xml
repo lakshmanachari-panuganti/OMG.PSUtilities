@@ -18,18 +18,32 @@
     <!-- Folder structure -->
     <file source='' destination='${PLASTER_PARAM_ModuleName}\README.md' />
     <file source='' destination='${PLASTER_PARAM_ModuleName}\.gitignore' />
-    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Get-Hello.ps1' />
-    <file source='' destination='${PLASTER_PARAM_ModuleName}\Private\Write-Log.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\CHANGELOG.md' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\LICENSE' />
     <file source='' destination='${PLASTER_PARAM_ModuleName}\${PLASTER_PARAM_ModuleName}.psm1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Export-PSUExcel.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Find-PSUFilesContainingText.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Get-PSUAzToken.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Get-PSUConnectedWifiInfo.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Get-PSUInstalledSoftware.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Get-PSUUserSession.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\New-PSUHTMLReport.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Remove-PSUUserSession.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Send-PSUHTMLReport.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Send-PSUTeamsMessage.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Set-PSUUserEnvironmentVariable.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Test-PSUAzConnection.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Test-PSUInternetConnection.ps1' />
+    <file source='' destination='${PLASTER_PARAM_ModuleName}\Public\Uninstall-PSUInstalledSoftware.ps1' />
 
     <!-- Module manifest -->
     <newModuleManifest
       path='${PLASTER_PARAM_ModuleName}\${PLASTER_PARAM_ModuleName}.psd1'
       rootModule='${PLASTER_PARAM_ModuleName}.psm1'
-      moduleVersion='1.0.0'
+      moduleVersion='1.0.13'
       author='${PLASTER_PARAM_Author}'
       description='${PLASTER_PARAM_Description}'
-      functionsToExport='*'
+      functionsToExport='Export-PSUExcel,Find-PSUFilesContainingText,Get-PSUAzToken,Get-PSUConnectedWifiInfo,Get-PSUInstalledSoftware,Get-PSUUserSession,New-PSUHTMLReport,Remove-PSUUserSession,Send-PSUHTMLReport,Send-PSUTeamsMessage,Set-PSUUserEnvironmentVariable,Test-PSUAzConnection,Test-PSUInternetConnection,Uninstall-PSUInstalledSoftware'
       guid='c3c40910-89a9-4dc3-8d67-aaf88be74519'
     />
 
