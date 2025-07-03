@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.13'
+    ModuleVersion     = '1.0.14'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
@@ -36,6 +36,7 @@
         'Get-PSUConnectedWifiInfo',
         'Get-PSUInstalledSoftware',
         'Get-PSUUserSession',
+        'Invoke-PSUPromptAI',
         'New-PSUHTMLReport',
         'Remove-PSUUserSession',
         'Send-PSUHTMLReport',
@@ -71,3 +72,5 @@
         }
     }
 }
+
+

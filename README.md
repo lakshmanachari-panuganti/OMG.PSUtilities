@@ -6,6 +6,7 @@ A PowerShell module providing reusable utility functions for file, text, Azure, 
 
 | Function                          | Description                                                                 |
 |------------------------------------|-----------------------------------------------------------------------------|
+| `Invoke-PSUPromtAI`                | 🤖 Invokes an AI-powered prompt and returns the response.                   |
 | `Export-PSUExcel`                  | 📊 Exports an array of objects to a styled Excel file with advanced formatting, backup, and pipeline support. |
 | `Find-PSUFilesContainingText`      | 🔍 Searches files for a specific text string.                               |
 | `Get-PSUAzToken`                   | 🔐 Retrieves an Azure access token for a specified resource.                |

@@ -2,6 +2,10 @@
 
 All notable changes to the OMG.PSUtilities module will be documented in this file.
 
+## [1.0.14] - 2025-07-04
+### Added
+- `Invoke-PSUPromtAI`: 🤖 Invokes an AI-powered prompt and returns the response!
+
 ## [1.0.13] - 2025-07-03
 ### Added
 - `Export-PSUExcel`: 📊 Converts an array of objects to a styled Excel file with advanced formatting, backup, and pipeline support.
