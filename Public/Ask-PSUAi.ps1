@@ -1,3 +1,4 @@
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '')]
 function Ask-PSUAi {
 <#
 .SYNOPSIS
@@ -28,6 +29,7 @@ function Ask-PSUAi {
 .EXAMPLE
     Ask-PSUAi
 #>
+
     [CmdletBinding()]
     [Alias("Ask-Ai")]
     param (
@@ -49,7 +51,12 @@ function Ask-PSUAi {
         Write-Host ""
         $prompt = Read-Host -Prompt "👤 You"
 
-        if ($prompt -in @('exit', 'q')) {
+        if ($prompt -in @('clear', 'cls')) {
+            Clear-Host
+            continue
+        }
+
+        if ($prompt -in @('exit', 'q', 'bye')) {
             Write-Host "`n👋 Exiting chat. Goodbye!" -ForegroundColor Cyan
             break
         }
@@ -62,7 +69,7 @@ function Ask-PSUAi {
             $response = Invoke-RestMethod -Method Post -Uri $uri -Body $body -ContentType 'application/json'
 
             $text = $response.candidates[0].content.parts[0].text
-            $text = $text -replace '```json', '' -replace '```', '' -replace '^[\s\r\n]+|[\s\r\n]+$', ''
+            #$text = $text -replace '```json', '' -replace '```', '' -replace '^[\s\r\n]+|[\s\r\n]+$', ''
 
             Write-Host "`n🤖 PSU-Ai: " -NoNewline
             Write-Host $text -ForegroundColor Yellow

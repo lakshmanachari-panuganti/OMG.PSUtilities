@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.14'
+    ModuleVersion     = '1.0.15'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
@@ -30,6 +30,7 @@
 
     # Functions to export from this module
     FunctionsToExport = @(
+        'Ask-PSUAi',
         'Export-PSUExcel',
         'Find-PSUFilesContainingText',
         'Get-PSUAzToken',
@@ -49,12 +50,14 @@
 
     # Cmdlets to export from this module
     CmdletsToExport   = @()
-
+    
     # Variables to export from this module
     VariablesToExport = @()
 
     # Aliases to export from this module
-    AliasesToExport   = @()
+    AliasesToExport = @(
+        'Ask-Ai'
+    )
 
     # Private data to pass to the module specified in RootModule/ModuleToProcess
     PrivateData       = @{
@@ -72,5 +75,3 @@
         }
     }
 }
-
-
