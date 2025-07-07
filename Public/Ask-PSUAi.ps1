@@ -1,4 +1,4 @@
-[Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '')]
+# PSScriptAnalyzer suppress PSUseApprovedVerbs
 function Ask-PSUAi {
 <#
 .SYNOPSIS
