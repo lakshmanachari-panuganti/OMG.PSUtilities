@@ -4,49 +4,49 @@ function Invoke-PSUPromptAI {
     Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response.
 
 .DESCRIPTION
-    This function sends a user-defined prompt to the Gemini 2.0 Flash model (via Google's Generative Language API)
-    for fast and lightweight content generation.
+    This function interacts with Google's Generative Language API (Gemini 2.0 Flash model) to perform fast and
+    lightweight AI content generation.
 
-    Steps to use this function:
-    ---------------------------
-    1. Go to the Gemini API Console: https://makersuite.google.com/app/apikey
-    2. Sign in with your Google account
-    3. Click "Create API Key" to generate your Gemini key
-    4. Copy the API key and set it as an environment variable using:
+    📌 How to get started:
+    ----------------------
+    1️⃣ Visit: https://makersuite.google.com/app/apikey  
+    2️⃣ Sign in with your Google account  
+    3️⃣ Click **"Create API Key"**  
+    4️⃣ Copy the key and save it using:
 
         Set-PSUUserEnvironmentVariable -Name "GOOGLE_GEMINI_API_KEY" -Value "<your-api-key>"
 
-    5. Then use this function to send prompts and receive AI-generated content.
+    ✅ You're now ready to call `Invoke-PSUPromptAI` with your prompt!
 
 .PARAMETER Prompt
-    The text prompt you want to send to Gemini AI for generating content.
+    The text you want Gemini AI to process and respond to.
 
 .PARAMETER ApiKey
-    (Optional) The Gemini API key. If not supplied, the function uses the 'GOOGLE_GEMINI_API_KEY' environment variable.
+    Optional. Overrides the environment variable GOOGLE_GEMINI_API_KEY with a manually supplied key.
 
 .EXAMPLE
-    Invoke-PSUPromptAI -Prompt "Generate a PowerShell function to list installed applications"
+    Invoke-PSUPromptAI -Prompt "Generate a PowerShell script to get system uptime"
 
 .EXAMPLE
-    Ask-PSUAI -Prompt "Explain infrastructure as code in one line"
+    Ask-PSUAI -Prompt "Summarize cloud computing in one line"
 
 .NOTES
     Author: Lakshmanachari Panuganti
     Created: 2025-07-03
-    Model: Gemini 2.0 Flash via Generative Language API
+    Alias: Ask-Ai, Ask-PSUAi, Query-PSUAi
+    Model: Gemini 2.0 Flash (Generative Language API)
 #>
     [CmdletBinding()]
-    [Alias("Ask-Ai", "Ask-PSUAi", "Query-PSUAi")]
     param(
         [Parameter(Mandatory)]
-        [string]$Prompt,
+        [string]$Prompt = $Prompt,
 
         [Parameter()]
         [string]$ApiKey = $env:GOOGLE_GEMINI_API_KEY
     )
 
     if (-not $ApiKey) {
-        Write-Error "Gemini API key not found. Please set it using: Set-PSUUserEnvironmentVariable -Name 'GOOGLE_GEMINI_API_KEY' -Value '<your-api-key>'"
+        Write-Error "Gemini API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'GOOGLE_GEMINI_API_KEY' -Value '<your-api-key>'"
         return
     }
 
@@ -54,13 +54,29 @@ function Invoke-PSUPromptAI {
     $body = @{ contents = @(@{ parts = @(@{ text = $Prompt }) }) } | ConvertTo-Json -Depth 10
 
     try {
-        Write-Host "Workign on it... 🧠" -ForegroundColor Cyan
+        Write-Host "🧠 Thinking..." -ForegroundColor Cyan
         $response = Invoke-RestMethod -Method Post -Uri $uri -Body $body -ContentType 'application/json'
+
+        if ($response.candidates.Count -eq 0 -or -not $response.candidates[0].content.parts[0].text) {
+            throw "No content received from Gemini API."
+        }
+
         $rawResponse = $response.candidates[0].content.parts[0].text
-        $cleanedResponse = $rawResponse -replace '```json', '' -replace '```', '' -replace '^[\s\r\n]+|[\s\r\n]+$', ''
-        Return $cleanedResponse
-    } catch {
-        $ErrMessage = $_.Exception.Message
-        Write-Error "Failed to get response from Gemini: $ErrMessage"
+        $jsonBlock = ''
+        if ($rawResponse -match '(?s)```json\s*(\{.*?\})\s*```') {
+            $jsonBlock = $matches[1]
+            $jsonBlock = $jsonBlock -replace '```json\s*|\s*```', ''
+            return $jsonBlock
+        }
+        elseif ($rawResponse -match '(\{.*?\})') {
+            return $matches[1]
+        }
+        else {
+            Write-Warning "❗ Could not find a JSON object in the response."
+            return $rawResponse
+        }
+    }
+    catch {
+        Write-Error "Failed to get response from Gemini:`n$($_.Exception.Message)"
     }
 }
