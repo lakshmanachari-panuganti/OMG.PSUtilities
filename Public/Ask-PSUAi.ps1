@@ -1,4 +1,3 @@
-# PSScriptAnalyzer suppress PSUseApprovedVerbs
 function Ask-PSUAi {
 <#
 .SYNOPSIS
@@ -31,7 +30,7 @@ function Ask-PSUAi {
 #>
 
     [CmdletBinding()]
-    [Alias("Ask-Ai")]
+    #[Alias("Ask-Ai")]
     param (
         [string]$ApiKey = $env:GOOGLE_GEMINI_API_KEY
     )

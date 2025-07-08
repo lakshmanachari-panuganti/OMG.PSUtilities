@@ -2,7 +2,7 @@
 
 All notable changes to the OMG.PSUtilities module will be documented in this file.
 
-## [1.0.16] - 2025-07-05
+## [1.0.17] - 2025-07-05
 Resolved few bugs!
 
 ## [1.0.15] - 2025-07-05

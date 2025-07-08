@@ -1,5 +1,5 @@
 function Invoke-PSUPromptAI {
-<#
+    <#
 .SYNOPSIS
     Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response.
 
@@ -28,7 +28,7 @@ function Invoke-PSUPromptAI {
     Invoke-PSUPromptAI -Prompt "Generate a PowerShell script to get system uptime"
 
 .EXAMPLE
-    Ask-PSUAI -Prompt "Summarize cloud computing in one line"
+    Invoke-PSUPromptAI -Prompt "Summarize cloud computing in one line"
 
 .NOTES
     Author: Lakshmanachari Panuganti
@@ -39,15 +39,21 @@ function Invoke-PSUPromptAI {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [string]$Prompt = $Prompt,
+        [string]$Prompt,
 
         [Parameter()]
-        [string]$ApiKey = $env:GOOGLE_GEMINI_API_KEY
+        [string]$ApiKey = $env:GOOGLE_GEMINI_API_KEY,
+
+        [Parameter()]
+        [switch]$ReturnJsonResponse
     )
 
     if (-not $ApiKey) {
         Write-Error "Gemini API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'GOOGLE_GEMINI_API_KEY' -Value '<your-api-key>'"
         return
+    }
+    if ($ReturnJsonResponse.IsPresent) {
+        $Prompt += "`nRespond ONLY with a valid JSON object. Do NOT include any explanations, text. DO NOT include any Markdown Fencing formatting like triple backticks. Return raw JSON only."
     }
 
     $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"
@@ -61,20 +67,26 @@ function Invoke-PSUPromptAI {
             throw "No content received from Gemini API."
         }
 
-        $rawResponse = $response.candidates[0].content.parts[0].text
-        $jsonBlock = ''
-        if ($rawResponse -match '(?s)```json\s*(\{.*?\})\s*```') {
-            $jsonBlock = $matches[1]
-            $jsonBlock = $jsonBlock -replace '```json\s*|\s*```', ''
-            return $jsonBlock
+        $rawText = $response.candidates[0].content.parts[0].text
+        
+        if ($ReturnJsonResponse.IsPresent) {
+            $jsonBlock = ''
+            if ($rawText -match '(?s)```json\s*(\{.*?\})\s*```') {
+                $jsonBlock = $matches[1]
+                $jsonBlock = $jsonBlock -replace '```json\s*|\s*```', ''
+                return $jsonBlock
+            }
+            elseif ($rawText -match '(\{.*?\})') {
+                return $matches[1]
+            }
+            else {
+                Write-Warning "❗ Could not find a JSON object in the response."
+                return $rawText
+            }
+        } els {
+            return $rawText
         }
-        elseif ($rawResponse -match '(\{.*?\})') {
-            return $matches[1]
-        }
-        else {
-            Write-Warning "❗ Could not find a JSON object in the response."
-            return $rawResponse
-        }
+        
     }
     catch {
         Write-Error "Failed to get response from Gemini:`n$($_.Exception.Message)"
