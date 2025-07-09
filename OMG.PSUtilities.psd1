@@ -3,7 +3,7 @@
     RootModule        = 'OMG.PSUtilities.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.17'
+    ModuleVersion     = '1.0.18'
 
     # ID used to uniquely identify this module
     GUID              = 'c3c40910-89a9-4dc3-8d67-aaf88be74519'
@@ -30,7 +30,7 @@
 
     # Functions to export from this module
     FunctionsToExport = @(
-        'Ask-PSUAi',
+        'Start-PSUAiChat',
         'Export-PSUExcel',
         'Find-PSUFilesContainingText',
         'Get-PSUAzToken',

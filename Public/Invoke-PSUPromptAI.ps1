@@ -33,7 +33,7 @@ function Invoke-PSUPromptAI {
 .NOTES
     Author: Lakshmanachari Panuganti
     Created: 2025-07-03
-    Alias: Ask-Ai, Ask-PSUAi, Query-PSUAi
+    Alias: Ask-Ai, Start-PSUAiChat, Query-PSUAi
     Model: Gemini 2.0 Flash (Generative Language API)
 #>
     [CmdletBinding()]
@@ -83,7 +83,7 @@ function Invoke-PSUPromptAI {
                 Write-Warning "❗ Could not find a JSON object in the response."
                 return $rawText
             }
-        } els {
+        } else {
             return $rawText
         }
         

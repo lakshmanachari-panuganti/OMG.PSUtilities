@@ -1,4 +1,4 @@
-function Ask-PSUAi {
+function Start-PSUAiChat {
 <#
 .SYNOPSIS
     Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API.
@@ -23,14 +23,14 @@ function Ask-PSUAi {
 .NOTES
     Author: Lakshmanachari Panuganti
     Date: 4th July 2025
-    History: Initial development of Ask-PSUAi Chatbot.
+    History: Initial development of Start-PSUAiChat Chatbot.
 
 .EXAMPLE
-    Ask-PSUAi
+    Start-PSUAiChat
 #>
 
     [CmdletBinding()]
-    #[Alias("Ask-Ai")]
+    [Alias("Ask-Ai")]
     param (
         [string]$ApiKey = $env:GOOGLE_GEMINI_API_KEY
     )

@@ -2,12 +2,15 @@
 
 All notable changes to the OMG.PSUtilities module will be documented in this file.
 
+## [1.0.18] - 2025-07-05
+Resolved a bugs and renamed Ask-PSUAi --> Start-PSUAiChat
+
 ## [1.0.17] - 2025-07-05
 Resolved few bugs!
 
 ## [1.0.15] - 2025-07-05
 ### Added
-- `Ask-PSUAi`: 💬 Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API. 
+- `Start-PSUAiChat`: 💬 Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API. 
 Opens a PowerShell-based chat session with Gemini AI.
 
 ## [1.0.14] - 2025-07-04

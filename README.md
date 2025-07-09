@@ -6,7 +6,7 @@ A PowerShell module providing reusable utility functions for file, text, Azure, 
 
 | Function                          | Description                                                                 |
 |------------------------------------|-----------------------------------------------------------------------------|
-| `Ask-PSUAi`                        | 💬 Interactive AI chatbot using Google's Generative Language API           |
+| `Start-PSUAiChat`                        | 💬 Interactive AI chatbot using Google's Generative Language API           |
 | `Invoke-PSUPromtAI`                | 🤖 Invokes an AI-powered prompt and returns the response.                   |
 | `Export-PSUExcel`                  | 📊 Exports an array of objects to a styled Excel file with advanced formatting, backup, and pipeline support. |
 | `Find-PSUFilesContainingText`      | 🔍 Searches files for a specific text string.                               |
