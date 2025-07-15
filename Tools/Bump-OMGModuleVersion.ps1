@@ -12,13 +12,13 @@ function Bump-OMGModuleVersion {
     $modulePath = Join-Path $basePath $ModuleName
 
     if (-not (Test-Path $modulePath)) {
-        Write-Error "❌ Module path not found: $modulePath"
+        Write-Error "Module path not found: $modulePath"
         return
     }
 
     $psd1Path = Get-ChildItem -Path $modulePath -Filter *.psd1 | Select-Object -First 1
     if (-not $psd1Path) {
-        Write-Error "❌ Could not find .psd1 in $modulePath"
+        Write-Error "Could not find .psd1 in $modulePath"
         return
     }
 
@@ -27,7 +27,7 @@ function Bump-OMGModuleVersion {
     $currentVersion = $currentVersionLine -replace '.*=\s*["'']?', '' -replace '["'']', ''
 
     if (-not $currentVersion -or $currentVersion -notmatch '^\d+\.\d+\.\d+$') {
-        Write-Error "❌ Invalid or missing version in $($psd1Path.Name)"
+        Write-Error "Invalid or missing version in $($psd1Path.Name)"
         return
     }
 
@@ -44,13 +44,23 @@ function Bump-OMGModuleVersion {
     }
 
     $newVersion = "$major.$minor.$patch"
-    Write-Host "🔁 Bumping version from $currentVersion to $newVersion..." -ForegroundColor Cyan
+    Write-Host "Bumping version from $currentVersion to $newVersion..." -ForegroundColor Cyan
 
-    # Replace version in content
+    # 🔧 Update .psd1
     $newContent = $content -replace "(ModuleVersion\s*=\s*)['""][^'""]+['""]", "`$1'$newVersion'"
     Set-Content -Path $psd1Path.FullName -Value $newContent -Encoding UTF8
-
     Write-Host "✅ Version bumped to $newVersion in $($psd1Path.Name)" -ForegroundColor Green
+
+    # 🔧 Update plasterManifest.xml
+    $plasterManifestPath = Join-Path $modulePath "plasterManifest.xml"
+    if (Test-Path $plasterManifestPath) {
+        $xml = [xml](Get-Content $plasterManifestPath)
+        $xml.plasterManifest.metadata.version = $newVersion
+        $xml.Save($plasterManifestPath)
+        Write-Host "🛠️ Updated plasterManifest.xml version to $newVersion" -ForegroundColor DarkCyan
+    } else {
+        Write-Warning "plasterManifest.xml not found in $ModuleName — skipping update."
+    }
 
     return $newVersion
 }
