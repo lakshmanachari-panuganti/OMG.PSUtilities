@@ -1,0 +1,19 @@
+<plasterManifest
+    schemaVersion="1.1"
+    templateType="Project"
+    name="OMG.PSUtilities Wrapper Module"
+    author="Lakshmanachari Panuganti"
+    description="Template to scaffold the OMG.PSUtilities master module"
+    version="1.0.0">
+
+    <content>
+        <file source="README.md" />
+        <file source="CHANGELOG.md" />
+        <file source="OMG.PSUtilities.psd1" />
+        <file source="OMG.PSUtilities.psm1" />
+    </content>
+
+    <parameters>
+        <parameter name="Description" type="text" prompt="Enter module description" default="Wrapper module for all OMG.PSUtilities submodules." />
+    </parameters>
+</plasterManifest>

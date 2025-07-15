@@ -1,0 +1,14 @@
+<plasterManifest schemaVersion="1.1" xmlns="http://www.microsoft.com/plaster">
+  <metadata>
+    <name>OMG.PSUtilities.AI</name>
+    <id>879066c2-ef7d-42df-af4a-ee72e657c06c</id>
+    <version>0.1.0</version>
+    <title>OMG.PSUtilities.AI</title>
+    <description>AI-powered scripting tools, including chat, summarization, and generation.</description>
+    <author>OMG IT Solutions</author>
+  </metadata>
+  <parameters>
+    <parameter name="ModuleName" type="text" required="true" default="OMG.PSUtilities.AI" />
+    <parameter name="Description" type="text" prompt="Enter module description" default="AI-powered scripting tools, including chat, summarization, and generation." />
+  </parameters>
+</plasterManifest>

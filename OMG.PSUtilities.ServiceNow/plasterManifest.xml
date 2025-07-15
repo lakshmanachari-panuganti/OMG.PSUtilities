@@ -1,0 +1,14 @@
+<plasterManifest schemaVersion="1.1" xmlns="http://www.microsoft.com/plaster">
+  <metadata>
+    <name>OMG.PSUtilities.ServiceNow</name>
+    <id>ecca9643-cac8-4f0f-a6f8-05e147bcc002</id>
+    <version>0.1.0</version>
+    <title>OMG.PSUtilities.ServiceNow</title>
+    <description>ServiceNow automation and integration using PowerShell and REST APIs.</description>
+    <author>OMG IT Solutions</author>
+  </metadata>
+  <parameters>
+    <parameter name="ModuleName" type="text" required="true" default="OMG.PSUtilities.ServiceNow" />
+    <parameter name="Description" type="text" prompt="Enter module description" default="ServiceNow automation and integration using PowerShell and REST APIs." />
+  </parameters>
+</plasterManifest>

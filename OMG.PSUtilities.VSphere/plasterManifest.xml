@@ -1,0 +1,14 @@
+<plasterManifest schemaVersion="1.1" xmlns="http://www.microsoft.com/plaster">
+  <metadata>
+    <name>OMG.PSUtilities.VSphere</name>
+    <id>6f703659-d143-49d9-8ea1-8e4ce9a37fd4</id>
+    <version>0.1.0</version>
+    <title>OMG.PSUtilities.VSphere</title>
+    <description>PowerShell automation for VMware vSphere virtual environments.</description>
+    <author>OMG IT Solutions</author>
+  </metadata>
+  <parameters>
+    <parameter name="ModuleName" type="text" required="true" default="OMG.PSUtilities.VSphere" />
+    <parameter name="Description" type="text" prompt="Enter module description" default="PowerShell automation for VMware vSphere virtual environments." />
+  </parameters>
+</plasterManifest>
