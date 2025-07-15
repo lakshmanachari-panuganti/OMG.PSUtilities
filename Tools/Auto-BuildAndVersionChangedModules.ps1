@@ -18,16 +18,16 @@ $toolsPath = Join-Path $rootPath 'Tools'
 . "$toolsPath\Update-OMGModuleManifests.ps1"
 . "$toolsPath\Bump-ModuleVersion.ps1"
 
-Write-Host "🚀 Scanning for modified modules..." -ForegroundColor Cyan
+Write-Host "Scanning for modified modules..." -ForegroundColor Cyan
 
 # Get list of modified files via Git
 $changedFiles = git status --porcelain | Where-Object { $_ -match '^ [AMR] ' } | ForEach-Object {
-    ($_ -split ' +', 2)[1]
+    ($_ -split ' +', 2)[1] -replace 'M '
 }
 
 # Get unique list of modified modules (based on folder name)
 $changedModules = $changedFiles | ForEach-Object {
-    if ($_ -match '^OMG\.PSUtilities\.([^\/\\]+)\\Public\\(.+?)\.ps1$') {
+    if ($_ -match "^OMG\.PSUtilities\.([^/\\]+)[/\\]Public[/\\](.+?)\.ps1$") {
         [PSCustomObject]@{
             Module = $matches[1]
             Function = $matches[2]
@@ -53,7 +53,7 @@ foreach ($mod in $changedModules) {
     $readmePath = Join-Path $modRoot 'README.md'
     $changelogPath = Join-Path $modRoot 'CHANGELOG.md'
 
-    Write-Host "\n📦 Module: $($mod.ModuleName)" -ForegroundColor Yellow
+    Write-Host "\n📦 Module: OMG.PSUtilities.$($mod.ModuleName)" -ForegroundColor Yellow
 
     # Prompt for changelog per function
     $changeDetails = @()
@@ -63,38 +63,44 @@ foreach ($mod in $changedModules) {
     }
 
     # Bump module version and get new version
-    $newVersion = Bump-ModuleVersion -ModulePath $modRoot -DryRun:$DryRun
+    $newVersion = Bump-OMGModuleVersion -ModuleName "OMG.PSUtilities.$($mod.ModuleName)" -Increment Patch
 
     # Update CHANGELOG
     if (-not $DryRun) {
         $date = (Get-Date).ToString('yyyy-MM-dd')
-        Add-Content -Path $changelogPath -Value "\n## [$newVersion] - $date"
-        $changeDetails | ForEach-Object { Add-Content -Path $changelogPath -Value $_ }
+        Add-Content -Path $changelogPath -Value ""
+        Add-Content -Path $changelogPath -Value "## [$newVersion] - $date"
+        $changeDetails | ForEach-Object {
+            Add-Content -Path $changelogPath -Value $_
+        }
         Write-Host "📝 CHANGELOG updated."
     } else {
-        Write-Host "💡 [DryRun] Would update CHANGELOG with version $newVersion"
+        Write-Host "💡 [DryRun] [OMG.PSUtilities.$($mod.ModuleName)] Would update CHANGELOG with version $newVersion"
     }
 
     # Update README
     if (-not $DryRun) {
         $readmeLines = Get-Content $readmePath
         $metaLine = "> Module version: $newVersion | Last updated: $(Get-Date -Format 'yyyy-MM-dd')"
-        $readmeLines = $readmeLines | Where-Object { $_ -notmatch '^> Module version:' }
-        $readmeLines += "\n$metaLine\n"
 
+        # Remove previous metadata line
+        $readmeLines = $readmeLines | Where-Object { $_ -notmatch '^> Module version:' }
+
+        # Append updated metadata and function list
+        $readmeLines += ""
+        $readmeLines += $metaLine
         $readmeLines += "### 🚀 Recently Updated Functions"
         $readmeLines += ($changeDetails | ForEach-Object { "- $_" })
-
         Set-Content -Path $readmePath -Value $readmeLines
         Write-Host "📘 README updated."
     } else {
-        Write-Host "💡 [DryRun] Would update README with version and function list."
+        Write-Host "💡 [DryRun] [OMG.PSUtilities.$($mod.ModuleName)] Would update README.md with version and function list."
     }
 
     # Update Manifest + Build
     if (-not $DryRun) {
-        Update-OMGModuleManifests -ModulePath $modRoot
-        Build-OMGModuleLocally -ModulePath $modRoot
+        Update-OMGModuleManifests -ModuleName "OMG.PSUtilities.$($mod.ModuleName)"
+        Build-OMGModuleLocally -ModuleName "OMG.PSUtilities.$($mod.ModuleName)"
     } else {
         Write-Host "💡 [DryRun] Would update manifest and build module."
     }

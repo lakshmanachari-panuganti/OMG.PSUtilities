@@ -4,7 +4,8 @@ function Build-OMGModuleLocally {
         [string]$ModuleName  # Example: OMG.PSUtilities.AI
     )
 
-    $modulePath = Join-Path "C:\repos\OMG.PSUtilities\$ModuleName" "$ModuleName.psd1"
+    $basePath = $basePath = Split-Path -Parent $PSScriptRoot
+    $modulePath = Join-Path $basePath $ModuleName
 
     if (-not (Test-Path $modulePath)) {
         Write-Error "❌ Module not found: $modulePath"
