@@ -10,61 +10,73 @@ function Update-OMGModuleManifests {
     $modulePath = Join-Path $basePath $ModuleName
 
     if (-not (Test-Path $modulePath)) {
-        Write-Warning "❌ Module path not found: $modulePath"
+        Write-Warning "Module path not found: $modulePath"
         return
     }
 
     $publicPath = Join-Path $modulePath "Public"
-    $psm1Path   = Join-Path $modulePath "$ModuleName.psm1"
-    $psd1Path   = Join-Path $modulePath "$ModuleName.psd1"
+    $psm1Path = Join-Path $modulePath "$ModuleName.psm1"
+    $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
 
     if (-not (Test-Path $publicPath)) {
-        Write-Warning "❌ Missing Public folder in $ModuleName"
+        Write-Warning "Missing Public folder in $ModuleName"
         return
     }
 
-    # Get all public functions
-    $functions = Get-ChildItem -Path $publicPath -Filter *.ps1 | Select-Object -ExpandProperty BaseName
+    # Get all public function names
+    $publicFunctions = Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse |
+        Select-Object -ExpandProperty BaseName
 
-    if (-not $functions) {
-        Write-Warning "⚠️ No functions found in $publicPath"
+    if (-not $publicFunctions) {
+        Write-Warning "No functions found in $publicPath"
         return
     }
 
-    # 1️⃣ Create .psm1 content
+    # Generate .psm1 content
     $psm1Content = @"
-# Auto-generated .psm1 for $ModuleName
-# Loaded functions:
-`$PublicFunctions = @(
-$(@($functions | ForEach-Object { "    '$_'" }) -join "`n")
-)
-
-foreach (`$func in `$PublicFunctions) {
-    . "`$PSScriptRoot\Public\$func.ps1"
+# Load private functions
+Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | ForEach-Object {
+    try {
+        . `$(`$_.FullName)
+    } catch {
+        Write-Error "Failed to load private function `$(`$_.FullName): `$(`$_)"
+    }
 }
+
+# Load public functions
+Get-ChildItem -Path "`$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
+    try {
+        . `$(`$_.FullName)
+    } catch {
+        Write-Error "Failed to load public function `$(`$_.FullName): `$(`$_)"
+    }
+}
+
+# Export public functions
+`$PublicFunctions = @(
+$(@($publicFunctions | ForEach-Object { "    '$_'" }) -join "`n")
+)
 
 Export-ModuleMember -Function `$PublicFunctions
 "@
 
     $psm1Content | Set-Content -Path $psm1Path -Encoding UTF8
-    Write-Host "✅ Updated: $ModuleName.psm1" -ForegroundColor Green
+    Write-Host "Updated: $ModuleName.psm1" -ForegroundColor Green
 
-    # 2️⃣ Update .psd1 with FunctionsToExport
+    # Patch .psd1 → FunctionsToExport
     if (Test-Path $psd1Path) {
         $psd1 = Get-Content $psd1Path
-        $newExport = "FunctionsToExport = @(" + ($functions | ForEach-Object { "'$_'" } -join ", ") + ")"
+        $newExport = "FunctionsToExport = @(" + (($publicFunctions | ForEach-Object { "'$_'" } ) -join ", ") + ")"
 
-        # Use regex replace
         if ($psd1 -match 'FunctionsToExport\s*=\s*@\([^\)]*\)') {
             $psd1 = $psd1 -replace 'FunctionsToExport\s*=\s*@\([^\)]*\)', $newExport
         } else {
-            # If FunctionsToExport not found, append it
             $psd1 += "`n$newExport"
         }
 
         $psd1 | Set-Content -Path $psd1Path -Encoding UTF8
-        Write-Host "🔄 Patched: $ModuleName.psd1" -ForegroundColor Cyan
+        Write-Host "Patched: $ModuleName.psd1" -ForegroundColor Cyan
     } else {
-        Write-Warning "❌ $ModuleName.psd1 not found"
+        Write-Warning "$ModuleName.psd1 not found"
     }
 }
