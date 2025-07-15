@@ -48,10 +48,10 @@ function Uninstall-PSUInstalledSoftware {
         if ($PSCmdlet.ShouldProcess($Software.DisplayName, "Uninstall using: $cmd")) {
             try {
                 Start-Process -FilePath "cmd.exe" -ArgumentList "/c $cmd" -Verb RunAs -WindowStyle Hidden
-                Write-Host "🗑️ Uninstall triggered: $($Software.DisplayName)" -ForegroundColor Cyan
+                Write-Host "Uninstall triggered: $($Software.DisplayName)" -ForegroundColor Cyan
             }
             catch {
-                Write-Warning "❌ Failed to uninstall $($Software.DisplayName): $_"
+                Write-Warning "Failed to uninstall $($Software.DisplayName): $_"
             }
         }
     }

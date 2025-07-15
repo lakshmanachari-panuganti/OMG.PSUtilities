@@ -1,18 +1,32 @@
 function Build-OMGModuleLocally {
+    [CmdletBinding()]
     param (
-        [Parameter(Mandatory)]
-        [string]$ModuleName  # Example: OMG.PSUtilities.AI
+        [Parameter(Mandatory = $true)]
+        [string]$ModuleName  # Example: OMG.PSUtilities.Core
     )
 
-    $basePath = $basePath = Split-Path -Parent $PSScriptRoot
+    # Resolve base path dynamically
+    $basePath = Split-Path -Parent $PSScriptRoot
     $modulePath = Join-Path $basePath $ModuleName
-
-    if (-not (Test-Path $modulePath)) {
-        Write-Error "❌ Module not found: $modulePath"
+    $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
+    
+    if (-not (Test-Path $psd1Path)) {
+        Write-Error "Module manifest not found: $psd1Path"
         return
     }
 
-    # Import with a _temp prefix for testing
-    Import-Module $modulePath -Prefix _temp -Force -Verbose
-    Write-Host "✅ Module '$ModuleName' imported with prefix _temp" -ForegroundColor Green
+    # Remove the module if already loaded (base name only)
+    $existingModule = Get-Module | Where-Object { $_.Name -eq $ModuleName}
+    if ($existingModule) {
+        Write-Host "Removing previously loaded module '$ModuleName'" -ForegroundColor Yellow
+        $existingModule | Remove-Module -Force -ErrorAction SilentlyContinue
+    }
+
+    # Import with a _temp prefix so functions don't clash
+    try {
+        Import-Module $psd1Path -Force -Verbose -ErrorAction Stop
+        Write-Host "✅ Imported module locally '$ModuleName'" -ForegroundColor Green
+    } catch {
+        Write-Error "Failed to import module: $_"
+    }
 }

@@ -8,7 +8,7 @@ function Bump-OMGModuleVersion {
         [string]$ModuleName
     )
 
-    $basePath = $basePath = Split-Path -Parent $PSScriptRoot
+    $basePath = Split-Path -Parent $PSScriptRoot
     $modulePath = Join-Path $basePath $ModuleName
 
     if (-not (Test-Path $modulePath)) {

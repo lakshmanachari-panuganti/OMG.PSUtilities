@@ -16,7 +16,7 @@ $toolsPath = Join-Path $rootPath 'Tools'
 # Import reusable build functions
 . "$toolsPath\Build-OMGModuleLocally.ps1"
 . "$toolsPath\Update-OMGModuleManifests.ps1"
-. "$toolsPath\Bump-ModuleVersion.ps1"
+. "$toolsPath\Bump-OMGModuleVersion.ps1"
 
 Write-Host "Scanning for modified modules..." -ForegroundColor Cyan
 
@@ -106,4 +106,4 @@ foreach ($mod in $changedModules) {
     }
 }
 
-Write-Host "\n✅ All modified modules processed." -ForegroundColor Green
+Write-Host "✅ All modified modules processed." -ForegroundColor Green

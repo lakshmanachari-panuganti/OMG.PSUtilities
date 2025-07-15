@@ -85,9 +85,9 @@ function Find-PSUFilesContainingText {
         $matchedFiles
     } else {
         if ($FileExtension) {
-            Write-Warning "⚠️ No *.$FileExtension files found containing '$SearchText' in '$SearchPath'."
+            Write-Warning "No *.$FileExtension files found containing '$SearchText' in '$SearchPath'."
         } else {
-            Write-Warning "⚠️ No files found containing '$SearchText' in '$SearchPath'."
+            Write-Warning "No files found containing '$SearchText' in '$SearchPath'."
         }
     }
 }
