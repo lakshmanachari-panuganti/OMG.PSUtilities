@@ -2,7 +2,7 @@
   <metadata>
     <name>OMG.PSUtilities.VSphere</name>
     <id>6f703659-d143-49d9-8ea1-8e4ce9a37fd4</id>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <title>OMG.PSUtilities.VSphere</title>
     <description>PowerShell automation for VMware vSphere virtual environments.</description>
     <author>OMG IT Solutions</author>

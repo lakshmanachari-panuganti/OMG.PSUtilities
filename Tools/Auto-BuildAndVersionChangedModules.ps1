@@ -27,7 +27,7 @@ $changedFiles = git status --porcelain | Where-Object { $_ -match '^ [AMR] ' } |
 
 # Get unique list of modified modules (based on folder name)
 $changedModules = $changedFiles | ForEach-Object {
-    if ($_ -match "^OMG\.PSUtilities\.([^/\\]+)[/\\]Public[/\\](.+?)\.ps1$") {
+    if ($_ -match "^OMG\.PSUtilities\.([^/\\]+)[/\\](.+)$"){
         [PSCustomObject]@{
             Module = $matches[1]
             Function = $matches[2]
@@ -58,7 +58,7 @@ foreach ($mod in $changedModules) {
     # Prompt for changelog per function
     $changeDetails = @()
     foreach ($fn in $mod.Functions) {
-        $msg = Read-Host "[CHANGELOG] [$($mod.ModuleName)][$fn.ps1] → Enter change description"
+        $msg = Read-Host "[CHANGELOG] [$($mod.ModuleName)][$fn] → Enter change description"
         $changeDetails += "- $fn : $msg"
     }
 
