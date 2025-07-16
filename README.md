@@ -44,7 +44,8 @@ To install individual submodules:
 
 ```powershell
 Install-Module -Name OMG.PSUtilities.AzureCore -Scope CurrentUser -Repository PSGallery
-Install-Module -Name OMG.PSUtilities.AzureCore -Scope CurrentUser -Repository PSGallery
+Install-Module -Name OMG.PSUtilities.AI -Scope CurrentUser -Repository PSGallery
+Install-Module -Name OMG.PSUtilities.AzureDevOps -Scope CurrentUser -Repository PSGallery
 
 
 

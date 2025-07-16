@@ -1,7 +1,7 @@
 
 @{
     RootModule = 'OMG.PSUtilities.psm1'
-    ModuleVersion = '1.0.0'
+    ModuleVersion = '1.0.19'
     GUID = 'd9c7767a-1234-4c2d-ae6f-bdf00a0e0999'
     Author = 'OMG IT Solutions'
     CompanyName = 'OMG IT Solutions'
