@@ -67,4 +67,4 @@ Get-ChildItem -Path \$PSScriptRoot\Public\*.ps1 -Recurse | ForEach-Object { . \$
     Set-Content -Path (Join-Path $folderPath "plasterManifest.xml") -Value $plasterContent
 }
 
-Write-Host "`n✅ Folder structure, manifests, and base files created successfully with updated module name `OMG.PSUtilities.Core`" -ForegroundColor Green
+Write-Host "Folder structure, manifests, and base files created successfully with updated module names" -ForegroundColor Green

@@ -1,4 +1,4 @@
-function Bump-OMGModuleVersion {
+function Update-OMGModuleVersion {
     param (
         [Parameter(Mandatory)]
         [ValidateSet("Major", "Minor", "Patch")]
@@ -44,12 +44,12 @@ function Bump-OMGModuleVersion {
     }
 
     $newVersion = "$major.$minor.$patch"
-    Write-Host "Bumping version from $currentVersion to $newVersion..." -ForegroundColor Cyan
+    Write-Host "Attempting to update module version from $currentVersion to $newVersion..." -ForegroundColor Cyan
 
     # 🔧 Update .psd1
     $newContent = $content -replace "(ModuleVersion\s*=\s*)['""][^'""]+['""]", "`$1'$newVersion'"
     Set-Content -Path $psd1Path.FullName -Value $newContent -Encoding UTF8
-    Write-Host "✅ Version bumped to $newVersion in $($psd1Path.Name)" -ForegroundColor Green
+    Write-Host "Updated $newVersion in $($psd1Path.Name)" -ForegroundColor Green
 
     # 🔧 Update plasterManifest.xml
     $plasterManifestPath = Join-Path $modulePath "plasterManifest.xml"
@@ -57,7 +57,7 @@ function Bump-OMGModuleVersion {
         $xml = [xml](Get-Content $plasterManifestPath)
         $xml.plasterManifest.metadata.version = $newVersion
         $xml.Save($plasterManifestPath)
-        Write-Host "🛠️ Updated plasterManifest.xml version to $newVersion" -ForegroundColor DarkCyan
+        Write-Host "Updated $newVersion in $plasterManifestPath " -ForegroundColor DarkCyan
     } else {
         Write-Warning "plasterManifest.xml not found in $ModuleName — skipping update."
     }

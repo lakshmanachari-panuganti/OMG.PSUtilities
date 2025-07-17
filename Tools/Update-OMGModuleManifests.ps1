@@ -61,7 +61,7 @@ Export-ModuleMember -Function `$PublicFunctions
 "@
 
     $psm1Content | Set-Content -Path $psm1Path -Encoding UTF8
-    Write-Host "Updated: $ModuleName.psm1" -ForegroundColor Green
+    Write-Host "UPDATED: $ModuleName.psm1" -ForegroundColor Green
 
     # Patch .psd1 → FunctionsToExport
     if (Test-Path $psd1Path) {
@@ -75,7 +75,7 @@ Export-ModuleMember -Function `$PublicFunctions
         }
 
         $psd1 | Set-Content -Path $psd1Path -Encoding UTF8
-        Write-Host "Patched: $ModuleName.psd1" -ForegroundColor Cyan
+        Write-Host "PATCHED: $ModuleName.psd1" -ForegroundColor Green
     } else {
         Write-Warning "$ModuleName.psd1 not found"
     }

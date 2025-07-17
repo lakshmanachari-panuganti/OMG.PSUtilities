@@ -1,32 +1,53 @@
 function Build-OMGModuleLocally {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true)]
-        [string]$ModuleName  # Example: OMG.PSUtilities.Core
+        [Parameter(Mandatory,
+            ValueFromPipeline,
+            valuefrompipelinebypropertyname)]
+        [ValidateNotNullOrEmpty()]
+        [string]$ModuleName,  # Example: OMG.PSUtilities.Core
+
+        [Parameter()]
+        [Switch]$UpdateManifests
     )
+    process {
+        try {
+            # Resolve base path dynamically
+            
+            $basePath = Split-Path -Parent $PSScriptRoot
+            $modulePath = Join-Path $basePath $ModuleName
+            $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
 
-    # Resolve base path dynamically
-    $basePath = Split-Path -Parent $PSScriptRoot
-    $modulePath = Join-Path $basePath $ModuleName
-    $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
+            Write-Verbose "Base path for module: $basePath"
+            Write-Verbose "Module path: $modulePath"
+            Write-Verbose "Module manifest path: $psd1Path"
     
-    if (-not (Test-Path $psd1Path)) {
-        Write-Error "Module manifest not found: $psd1Path"
-        return
-    }
+            if (-not (Test-Path $psd1Path)) {
+                Write-Error "Module manifest not found: $psd1Path"
+                return
+            }
 
-    # Remove the module if already loaded (base name only)
-    $existingModule = Get-Module | Where-Object { $_.Name -eq $ModuleName}
-    if ($existingModule) {
-        Write-Host "Removing previously loaded module '$ModuleName'" -ForegroundColor Yellow
-        $existingModule | Remove-Module -Force -ErrorAction SilentlyContinue
-    }
+            if ($UpdateManifests.IsPresent) {
+                Update-OMGModuleManifests -ModuleName $ModuleName
+            }
 
-    # Import with a _temp prefix so functions don't clash
-    try {
-        Import-Module $psd1Path -Force -Verbose -ErrorAction Stop
-        Write-Host "✅ Imported module locally '$ModuleName'" -ForegroundColor Green
-    } catch {
-        Write-Error "Failed to import module: $_"
+            # Remove the module if already loaded (base name only)
+            $existingModule = Get-Module -Name $ModuleName
+            if ($existingModule) {
+                $existingModule | Remove-Module -Force -ErrorAction SilentlyContinue
+                Write-Host "REMOVED: Existed '$ModuleName' successfully removed." -ForegroundColor Green
+            }
+
+            # Import the module locally
+            Import-Module $psd1Path -Force -Verbose -ErrorAction Stop
+            $importMsg = "IMPORTD: Updated $ModuleName successfully imported"
+            Write-Host "IMPORTD: Updated $ModuleName successfully imported" -ForegroundColor Green
+            1.. $importMsg.Length | foreach-object { Write-Host "-" -ForegroundColor Green -NoNewline }
+            Write-Host ""
+            Write-Host ""
+        }
+        catch {
+            Write-Error "Failed to import module: $_"
+        }
     }
 }

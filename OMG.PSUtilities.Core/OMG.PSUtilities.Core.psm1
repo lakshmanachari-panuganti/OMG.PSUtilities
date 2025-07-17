@@ -20,6 +20,8 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
 $PublicFunctions = @(
     'Find-PSUFilesContainingText'
     'Get-PSUConnectedWifiInfo'
+    'Get-PSUFunctionHelpInfo'
+    'Get-PSUGitRepositoryChanges'
     'Get-PSUInstalledSoftware'
     'Get-PSUUserSession'
     'New-PSUHTMLReport'

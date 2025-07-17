@@ -18,7 +18,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
 
 # Export public functions
 $PublicFunctions = @(
-    'Get-PSUADOBuildDetails'
+    'Get-PSUADOPipelineBuildDetails'
     'Get-PSUADOPipelineLatestRun'
 )
 
