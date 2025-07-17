@@ -15,7 +15,7 @@ $toolsPath = Join-Path $rootPath 'Tools'
 
 # Import reusable build functions
 . "$toolsPath\Build-OMGModuleLocally.ps1"
-. "$toolsPath\Update-OMGModuleManifests.ps1"
+. "$toolsPath\Reset-OMGModuleManifests.ps1.ps1"
 . "$toolsPath\Update-OMGModuleVersion.ps1"
 
 Write-Host "Scanning for modified modules..." -ForegroundColor Cyan
@@ -64,7 +64,7 @@ foreach ($thismodule in $changedModules.Keys) {
         $msg = $null
         $Synopsis = $null
         if ($thisModuleFile.ChangeType -like 'New') {
-            $Synopsis = Get-PSUFunctionHelpInfo -FunctionPath $thisModuleFile.Path -HelpType SYNOPSIS
+            $Synopsis = Get-PSUFunctionCommentBasedHelp -FunctionPath $thisModuleFile.Path -HelpType SYNOPSIS
             Write-Host "Hit Enter to update the description as [$Synopsis] for $($thisModuleFile.Name)" -ForegroundColor Cyan
         }
         
@@ -138,7 +138,7 @@ foreach ($thismodule in $changedModules.Keys) {
 
     # Update Manifest + Build
     if (-not $DryRun) {
-        Update-OMGModuleManifests -ModuleName "OMG.PSUtilities.$thismodule"
+        Reset-OMGModuleManifests.ps1 -ModuleName "OMG.PSUtilities.$thismodule"
         Build-OMGModuleLocally -ModuleName "OMG.PSUtilities.$thismodule"
     }
     else {

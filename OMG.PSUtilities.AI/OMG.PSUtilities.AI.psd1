@@ -51,9 +51,7 @@ PowerShellVersion = '5.1'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @(
-    @{ ModuleName = 'OMG.PSUtilities.Core'; RequiredVersion = '1.*' }
-)
+RequiredModules = @('OMG.PSUtilities.Core')
 
 
 # Assemblies that must be loaded prior to importing this module

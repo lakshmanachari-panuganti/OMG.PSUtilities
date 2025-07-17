@@ -1,4 +1,4 @@
-function Get-PSUFunctionHelpInfo {
+function Get-PSUFunctionCommentBasedHelp {
 <#
 .SYNOPSIS
     This function pulls out a specific help section (like .SYNOPSIS or .EXAMPLE) from a PowerShell script, useful for reading documentation automatically.
@@ -15,7 +15,7 @@ function Get-PSUFunctionHelpInfo {
     .SYNOPSIS, .DESCRIPTION, .EXAMPLE, .NOTES
 
 .EXAMPLE
-    Get-PSUFunctionHelpInfo -FunctionPath "C:\repos\OMG.PSUtilities.Core\Public\Get-PSUGitRepositoryChanges.ps1" -HelpType SYNOPSIS
+    Get-PSUFunctionCommentBasedHelp -FunctionPath "C:\repos\OMG.PSUtilities.Core\Public\Get-PSUGitRepositoryChanges.ps1" -HelpType SYNOPSIS
 
 .NOTES
     Author: Lakshmanachari Panuganti
@@ -40,7 +40,7 @@ function Get-PSUFunctionHelpInfo {
         $match = [regex]::Match($content, $helpPattern, 'Singleline')
 
         if (-not $match.Success) {
-            Write-Warning "❌ No comment-based help block found in $FunctionPath"
+            Write-Warning "No comment-based help block found in $FunctionPath"
             return $null
         }
 

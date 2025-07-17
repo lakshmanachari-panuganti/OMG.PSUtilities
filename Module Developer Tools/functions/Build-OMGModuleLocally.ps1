@@ -28,7 +28,7 @@ function Build-OMGModuleLocally {
                 Reset-OMGModuleManifests -ModuleName $ModuleName
             }
 
-            # Remove the module if already loaded (base name only)
+            # Remove the module if already loaded.
             $existingModule = Get-Module -Name $ModuleName
             if ($existingModule) {
                 $existingModule | Remove-Module -Force -ErrorAction SilentlyContinue

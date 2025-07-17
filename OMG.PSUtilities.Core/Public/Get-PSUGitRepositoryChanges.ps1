@@ -44,8 +44,8 @@ function Get-PSUGitRepositoryChanges {
             $line = $line.Trim()
 
             $changeCode = $line.Split(' ')[0].Trim()
-            $path       = $line.Split(' ', 2)[1].Trim()
-            $fullPath   = Join-Path $RootPath $path
+            $path       = $line.Split(' ', 2)[1].Trim() -replace '"'
+            $fullPath   = Join-Path -Path $RootPath -ChildPath $path
 
             $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
 

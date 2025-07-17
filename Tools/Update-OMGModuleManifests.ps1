@@ -1,4 +1,4 @@
-function Update-OMGModuleManifests {
+function Reset-OMGModuleManifests {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
