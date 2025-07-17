@@ -1,5 +1,3 @@
-# Root of your module repo
-$basePath = "C:\repos\OMG.PSUtilities"
  
 # Mapping of functions to their destination modules
 $functionMap = @{
@@ -31,7 +29,7 @@ $sourcePublicFolder = "C:\repos\OMG.PSUtilities-Old\Public"
 
 foreach ($func in $functionMap.Keys) {
     $moduleName = $functionMap[$func]
-    $targetModuleFolder = Join-Path $basePath "OMG.PSUtilities.$moduleName"
+    $targetModuleFolder = Join-Path $env:BASE_MODULE_PATH "OMG.PSUtilities.$moduleName"
     $targetPublic = Join-Path $targetModuleFolder "Public"
 
     # Ensure destination exists

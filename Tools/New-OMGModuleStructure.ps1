@@ -1,6 +1,5 @@
 
 # New-OMGModuleStructure.ps1
-$basePath = "OMG.PSUtilities"
 $companyName = "OMG IT Solutions"
 
 $modules = @{
@@ -16,7 +15,7 @@ $modules = @{
 foreach ($module in $modules.GetEnumerator()) {
     $name = $module.Key
     $description = $module.Value
-    $folderPath = Join-Path -Path $basePath -ChildPath $name
+    $folderPath = Join-Path -Path $env:BASE_MODULE_PATH -ChildPath $name
 
     # Create folders
     New-Item -ItemType Directory -Force -Path (Join-Path $folderPath 'Public') | Out-Null

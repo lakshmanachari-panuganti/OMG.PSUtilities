@@ -1,12 +1,13 @@
 function Test-PSUCommentBasedHelp {
     param (
-        [string]$BasePath = "C:\repos\OMG.PSUtilities"
+        [Parameter(Mandatory)]
+        [string]$ModulePath # = "C:\repos\OMG.PSUtilities"
     )
 
     $requiredTags = @('.SYNOPSIS', '.DESCRIPTION', '.EXAMPLE', '.NOTES')
     $results = @()
 
-    $ps1Files = Get-ChildItem -Path $BasePath -Recurse -Filter *.ps1 |
+    $ps1Files = Get-ChildItem -Path $ModulePath -Recurse -Filter *.ps1 |
         Where-Object { $_.FullName -like "*\Public\*" }
 
     foreach ($file in $ps1Files) {

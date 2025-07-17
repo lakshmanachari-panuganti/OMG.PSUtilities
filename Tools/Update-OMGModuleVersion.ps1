@@ -8,8 +8,7 @@ function Update-OMGModuleVersion {
         [string]$ModuleName
     )
 
-    $basePath = Split-Path -Parent $PSScriptRoot
-    $modulePath = Join-Path $basePath $ModuleName
+    $modulePath = Join-Path $env:BASE_MODULE_PATH $ModuleName
 
     if (-not (Test-Path $modulePath)) {
         Write-Error "Module path not found: $modulePath"

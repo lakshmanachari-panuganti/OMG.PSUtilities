@@ -12,13 +12,10 @@ function Build-OMGModuleLocally {
     )
     process {
         try {
-            # Resolve base path dynamically
-            
-            $basePath = Split-Path -Parent $PSScriptRoot
-            $modulePath = Join-Path $basePath $ModuleName
+            $modulePath = Join-Path $env:BASE_MODULE_PATH $ModuleName
             $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
 
-            Write-Verbose "Base path for module: $basePath"
+            Write-Verbose "Base path for module: $env:BASE_MODULE_PATH"
             Write-Verbose "Module path: $modulePath"
             Write-Verbose "Module manifest path: $psd1Path"
     
