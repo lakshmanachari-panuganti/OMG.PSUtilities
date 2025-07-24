@@ -102,7 +102,6 @@ function Get-PSUADOVariableGroupInventory {
         Author: Lakshmanachari Panuganti
         Date: 2025-06-16
         Updated: 2025-07-24 - Added ThreadJobs for parallel processing
-        Version: 2.0
         
         Requirements:
         - PowerShell 5.1 or later
@@ -110,15 +109,10 @@ function Get-PSUADOVariableGroupInventory {
         - Network access to dev.azure.com
         - Valid Azure DevOps PAT with appropriate permissions
         
-        API Versions Used:
-        - Projects API: 7.1-preview.4
-        - Variable Groups API: 7.1-preview.2
-        
         Performance Considerations:
         - Uses Microsoft ThreadJobs for parallel processing of projects
         - Configurable throttle limit to balance speed with API rate limits
         - Includes progress reporting for long-running operations
-        - Optimized for organizations with many projects (200+)
 
     .LINK
         https://docs.microsoft.com/en-us/rest/api/azure/devops/distributedtask/variablegroups
