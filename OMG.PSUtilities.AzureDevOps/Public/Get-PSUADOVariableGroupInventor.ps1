@@ -44,7 +44,7 @@ function Get-PSUADOVariableGroupInventory {
         will attempt to use the $env:ADO_PAT or $env:PAT environment variable. The PAT must have at least 
         'Variable Groups (read)' and 'Project and Team (read)' permissions.
 
-    .PARAMETER ProjectNameFilter
+    .PARAMETER $project
         Optional wildcard filter for project names. Supports standard PowerShell wildcard patterns.
         Examples: '*Services*', 'Prod-*', '*API*'
         Default: '*' (all projects)
@@ -63,27 +63,42 @@ function Get-PSUADOVariableGroupInventory {
         Range: 1-20
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'myorg'
+        Get-PSUADOVariableGroupInventory -Organization 'OMG'
 
-        Retrieves variable group inventory for all projects in the 'myorg' organization.
-
-    .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'myorg' -ProjectNameFilter '*Services*' -OutputFilePath 'C:\Reports\VarGroups.csv'
-
-        Retrieves variable groups from projects containing 'Services' in the name and exports to CSV.
+        Retrieves variable group inventory for all projects in the 'OMG' organization.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'myorg' -ThrottleLimit 15
+        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Project @('ProjectA', 'ProjectB')
+
+        Retrieves variable group inventory for specific projects only.
+
+    .EXAMPLE
+        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Project @('*-Prod', '*-Dev') -OutputFilePath 'C:\Reports\VarGroups.csv'
+
+        Retrieves variable groups from projects matching wildcard patterns and exports to CSV.
+
+    .EXAMPLE
+        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Filter 'VariableGroupName -like "*prod*"'
+
+        Retrieves variable groups with names containing 'prod'.
+
+    .EXAMPLE
+        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Filter 'CreatedBy -eq "Lakshmanachari Panuganti" -and VariableGroupName -like "*api*"'
+
+        Retrieves variable groups created by 'Lakshmanachari Panuganti' with names containing 'api'.
+
+    .EXAMPLE
+        Get-PSUADOVariableGroupInventory -Organization 'OMG' -ThrottleLimit 15
 
         Retrieves variable group inventory with higher concurrency (15 parallel threads) for faster processing of large organizations.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'myorg' -IncludeVariableDetails -Verbose
+        Get-PSUADOVariableGroupInventory -Organization 'OMG' -IncludeVariableDetails -Verbose
 
         Retrieves detailed variable group inventory with verbose logging and additional variable metadata.
 
     .INPUTS
-        None. This function does not accept pipeline input.
+        None
 
     .OUTPUTS
         [PSCustomObject[]] 
@@ -122,14 +137,15 @@ function Get-PSUADOVariableGroupInventory {
         [Alias('OrganizationName', 'Org')]
         [string]$Organization,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [Alias('PersonalAccessToken', 'Token')]
         [string]$PAT,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$ProjectNameFilter = '*',
+        [Alias('Projects')]
+        [string[]]$Project = '*',
 
         [Parameter()]
         [ValidateScript({
@@ -177,7 +193,7 @@ function Get-PSUADOVariableGroupInventory {
         $variableGroupInventory = [System.Collections.Generic.List[PSCustomObject]]::new()
         
         Write-Verbose "Authentication configured for organization: $Organization"
-        Write-Verbose "Project filter: $ProjectNameFilter"
+        Write-Verbose "Project filter: $Project"
         Write-Verbose "Include variable details: $IncludeVariableDetails"
         Write-Verbose "Throttle limit: $ThrottleLimit"
 
@@ -211,33 +227,44 @@ function Get-PSUADOVariableGroupInventory {
             
             $projectsResponse = Invoke-RestMethod -Uri $projectsApiUrl -Method Get -Headers $authHeaders -ErrorAction Stop
 
-            #-----------------------------------------------------------------------------------------------
-            $filteredProjects = $projectsResponse.value | Where-Object { $_.name -like $ProjectNameFilter }
-            #-----------------------------------------------------------------------------------------------
+            # Filter projects based on Project parameter
+            if ($Project -and $Project.Count -gt 0) {
+                $filteredProjects = @()
+                foreach ($projectPattern in $Project) {
+                    $matchingProjects = $projectsResponse.value | Where-Object { $_.name -like $projectPattern }
+                    $filteredProjects += $matchingProjects
+                }
+                # Remove duplicates if any
+                $filteredProjects = $filteredProjects | Sort-Object id -Unique
+            }
+            else {
+                # Process all projects if no Project filter specified
+                $filteredProjects = $projectsResponse.value
+            }
 
             if (-not $filteredProjects) {
-                Write-Warning "No projects matched the filter: '$ProjectNameFilter'"
+                Write-Warning "No projects matched the filter: '$Project'"
                 Write-Warning "Available projects: $(($projectsResponse.value.name | Sort-Object) -join ', ')"
                 return @()
             }
 
             Write-Verbose "Found $($filteredProjects.Count) matching projects"
             $processingMethod = if ($useThreadJobs -and $filteredProjects.Count -gt 1) { "parallel ($ThrottleLimit threads)" } else { "sequential" }
-            Write-Information "Processing $($filteredProjects.Count) projects matching filter '$ProjectNameFilter' using $processingMethod processing" -InformationAction Continue
+            Write-Information "Processing $($filteredProjects.Count) projects matching filter '$Project' using $processingMethod processing" -InformationAction Continue
 
             if ($useThreadJobs -and $filteredProjects.Count -gt 1) {
-                # Use ThreadJobs for parallel processing
+                # Parallel processing
                 Write-Verbose "Starting parallel processing with ThreadJobs"
                 
                 # Create scriptblock for processing each project
                 $scriptBlock = {
-                    param($Project, $Organization, $AuthHeaders, $IncludeVariableDetails)
+                    param($projectObj, $Organization, $AuthHeaders, $IncludeVariableDetails)
                     
                     $results = [System.Collections.Generic.List[PSCustomObject]]::new()
                     
                     try {
                         # Get variable groups for current project
-                        $variableGroupsApiUrl = "https://dev.azure.com/$Organization/$($Project.name)/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
+                        $variableGroupsApiUrl = "https://dev.azure.com/$Organization/$($projectObj.name)/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
                         
                         $variableGroupsResponse = Invoke-RestMethod -Uri $variableGroupsApiUrl -Method Get -Headers $AuthHeaders -ErrorAction Stop
                         
@@ -251,13 +278,11 @@ function Get-PSUADOVariableGroupInventory {
                                     # Get all variable properties and count them properly
                                     $variableProperties = @($variableGroup.variables.PSObject.Properties)
                                     $totalVariables = [int]$variableProperties.Count
-                                    
-                                    if ($IncludeVariableDetails) {
-                                        $secretProps = @($variableProperties | Where-Object { 
-                                                $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true 
-                                            })
-                                        $secretVariables = [int]$secretProps.Count
-                                    }
+                                    $secretProps = @($variableProperties | Where-Object { 
+                                            $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true 
+                                        })
+                                    $secretVariables = [int]$secretProps.Count                                    
+
                                 }
                                 $KeyVaultName = if ($variableGroup.providerData -and $variableGroup.providerData.vault) { 
                                     $variableGroup.providerData.vault 
@@ -272,8 +297,8 @@ function Get-PSUADOVariableGroupInventory {
                                 # Create inventory object
                                 $inventoryItem = [PSCustomObject]@{
                                     OrganizationName    = $Organization
-                                    ProjectName         = $Project.name
-                                    ProjectId           = $Project.id
+                                    ProjectName         = $projectObj.name
+                                    ProjectId           = $projectObj.id
                                     VariableGroupId     = $variableGroup.id
                                     VariableGroupName   = $variableGroup.name
                                     VariableGroupType   = $variableGroup.type ?? 'Vsts'
@@ -288,14 +313,34 @@ function Get-PSUADOVariableGroupInventory {
                                     KeyVaultName        = $KeyVaultName
                                     PSTypeName          = 'PSU.ADO.VariableGroupInventory'
                                 }
+                                if ($IncludeVariableDetails) {
+                                    # Collect variable name and value (omit secrets)
+                                    $variableDetails = @()
 
+                                    foreach ($property in $variableProperties) {
+                                        $varName = $property.Name
+                                        $varValue = if ($property.Value.isSecret -eq $true) {
+                                            '[SECRET]'
+                                        }
+                                        else {
+                                            $property.Value.value
+                                        }
+
+                                        $variableDetails += [PSCustomObject]@{
+                                            Name     = $varName
+                                            Value    = $varValue
+                                            IsSecret = $property.Value.isSecret -eq $true
+                                        }
+                                        $inventoryItem | Add-Member -MemberType NoteProperty -Name Variables -Value $variableDetails -Force
+                                    }
+                                }
                                 $results.Add($inventoryItem)
                             }
                         }
                         
                         return @{
                             Success            = $true
-                            ProjectName        = $Project.name
+                            ProjectName        = $projectObj.name
                             Results            = $results.ToArray()
                             VariableGroupCount = $results.Count
                             ErrorMessage       = $null
@@ -304,7 +349,7 @@ function Get-PSUADOVariableGroupInventory {
                     catch {
                         return @{
                             Success            = $false
-                            ProjectName        = $Project.name
+                            ProjectName        = $projectObj.name
                             Results            = @()
                             VariableGroupCount = 0
                             ErrorMessage       = $_.Exception.Message
@@ -316,8 +361,8 @@ function Get-PSUADOVariableGroupInventory {
                 Write-Verbose "Starting $($filteredProjects.Count) ThreadJobs with throttle limit $ThrottleLimit"
                 $jobs = @()
                 
-                foreach ($project in $filteredProjects) {
-                    $job = Start-ThreadJob -ScriptBlock $scriptBlock -ArgumentList $project, $Organization, $authHeaders, $IncludeVariableDetails -ThrottleLimit $ThrottleLimit
+                foreach ($projectObj in $filteredProjects) {
+                    $job = Start-ThreadJob -ScriptBlock $scriptBlock -ArgumentList $projectObj, $Organization, $authHeaders, $IncludeVariableDetails -ThrottleLimit $ThrottleLimit
                     $jobs += $job
                 }
 
@@ -377,30 +422,30 @@ function Get-PSUADOVariableGroupInventory {
                 Write-Verbose "ThreadJob processing completed. Successful: $successfulProjects, Failed: $failedProjects"
             }
             else {
-                # Fallback to sequential processing
+                # Sequential processing
                 Write-Verbose "Using sequential processing (ThreadJobs not available or single project)"
                 
                 $projectIndex = 0
                 $totalProjects = $filteredProjects.Count
 
-                foreach ($project in $filteredProjects) {
+                foreach ($projectObj in $filteredProjects) {
                     $projectIndex++
                     $percentComplete = [math]::Round(($projectIndex / $totalProjects) * 70) + 20
                     
                     Write-Progress -Activity "Azure DevOps Variable Group Inventory" `
-                        -Status "Processing project: $($project.name) ($projectIndex of $totalProjects)" `
+                        -Status "Processing project: $($projectObj.name) ($projectIndex of $totalProjects)" `
                         -PercentComplete $percentComplete
 
-                    Write-Verbose "Processing project: $($project.name) (ID: $($project.id))"
+                    Write-Verbose "Processing project: $($projectObj.name) (ID: $($projectObj.id))"
 
                     try {
                         # Get variable groups for current project
-                        $variableGroupsApiUrl = "https://dev.azure.com/$Organization/$($project.name)/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
+                        $variableGroupsApiUrl = "https://dev.azure.com/$Organization/$($projectObj.name)/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
                         
                         $variableGroupsResponse = Invoke-RestMethod -Uri $variableGroupsApiUrl -Method Get -Headers $authHeaders -ErrorAction Stop
                         
                         if ($variableGroupsResponse.value -and $variableGroupsResponse.value.Count -gt 0) {
-                            Write-Verbose "Found $($variableGroupsResponse.value.Count) variable groups in project '$($project.name)'"
+                            Write-Verbose "Found $($variableGroupsResponse.value.Count) variable groups in project '$($projectObj.name)'"
                             
                             foreach ($variableGroup in $variableGroupsResponse.value) {
                                 # Calculate variable counts - ensure single integer values
@@ -411,20 +456,19 @@ function Get-PSUADOVariableGroupInventory {
                                     # Get all variable properties and count them properly
                                     $variableProperties = @($variableGroup.variables.PSObject.Properties)
                                     $totalVariables = [int]$variableProperties.Count
+
+                                    $secretProps = @($variableProperties | Where-Object { 
+                                            $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true 
+                                        })
+                                    $secretVariables = [int]$secretProps.Count
                                     
-                                    if ($IncludeVariableDetails) {
-                                        $secretProps = @($variableProperties | Where-Object { 
-                                                $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true 
-                                            })
-                                        $secretVariables = [int]$secretProps.Count
-                                    }
                                 }
 
                                 # Create inventory object
                                 $inventoryItem = [PSCustomObject]@{
                                     OrganizationName    = $Organization
-                                    ProjectName         = $project.name
-                                    ProjectId           = $project.id
+                                    ProjectName         = $projectObj.name
+                                    ProjectId           = $projectObj.id
                                     VariableGroupId     = $variableGroup.id
                                     VariableGroupName   = $variableGroup.name
                                     VariableGroupType   = $variableGroup.type ?? 'Vsts'
@@ -434,21 +478,43 @@ function Get-PSUADOVariableGroupInventory {
                                     ModifiedBy          = $variableGroup.modifiedBy.displayName
                                     ModifiedDate        = if ($variableGroup.modifiedOn) { [datetime]$variableGroup.modifiedOn } else { $null }
                                     VariableCount       = $totalVariables
-                                    SecretVariableCount = if ($IncludeVariableDetails) { $secretVariables } else { $null }
+                                    SecretVariableCount = $secretVariables
                                     IsShared            = $variableGroup.isShared ?? $false
                                     KeyVaultName        = if ($variableGroup.providerData) { $variableGroup.providerData.vault } else { $null }
                                     PSTypeName          = 'PSU.ADO.VariableGroupInventory'
+                                }
+
+                                if ($IncludeVariableDetails) {
+                                    # Collect variable name and value (omit secrets)
+                                    $variableDetails = @()
+
+                                    foreach ($property in $variableProperties) {
+                                        $varName = $property.Name
+                                        $varValue = if ($property.Value.isSecret -eq $true) {
+                                            '[SECRET]'
+                                        }
+                                        else {
+                                            $property.Value.value
+                                        }
+
+                                        $variableDetails += [PSCustomObject]@{
+                                            Name     = $varName
+                                            Value    = $varValue
+                                            IsSecret = $property.Value.isSecret -eq $true
+                                        }
+                                        $inventoryItem | Add-Member -MemberType NoteProperty -Name Variables -Value $variableDetails -Force
+                                    }
                                 }
 
                                 $variableGroupInventory.Add($inventoryItem)
                             }
                         }
                         else {
-                            Write-Verbose "No variable groups found in project '$($project.name)'"
+                            Write-Verbose "No variable groups found in project '$($projectObj.name)'"
                         }
                     }
                     catch {
-                        $errorMessage = "Failed to retrieve variable groups for project '$($project.name)': $($_.Exception.Message)"
+                        $errorMessage = "Failed to retrieve variable groups for project '$($projectObj.name)': $($_.Exception.Message)"
                         Write-Warning $errorMessage
                         Write-Verbose "Full error details: $($_.Exception | Format-List * | Out-String)"
                         continue
