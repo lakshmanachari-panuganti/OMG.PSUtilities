@@ -31,13 +31,13 @@ function Get-PSUADOVariableGroupInventory {
         - ModifiedBy: Display name of the user who last modified the variable group
         - ModifiedDate: Date and time when the variable group was last modified
         - VariableCount: Total number of variables in the group
-        - SecretVariableCount: Number of secret/encrypted variables (when IncludeVariableDetails is used)
+        - SecretVariableCount: Number of secret/encrypted variables
         - IsShared: Whether the variable group is shared across pipelines
         - PSTypeName: Custom type name for formatting
 
     .PARAMETER Organization
         The name of the Azure DevOps organization. This is the part that appears in your Azure DevOps URL
-        (e.g., 'myorg' in https://dev.azure.com/myorg).
+        (e.g., 'omg' in https://dev.azure.com/omg).
 
     .PARAMETER PAT
         Azure DevOps Personal Access Token with appropriate permissions. If not provided, the function 
@@ -81,11 +81,6 @@ function Get-PSUADOVariableGroupInventory {
         Get-PSUADOVariableGroupInventory -Organization 'OMG' -Filter 'VariableGroupName -like "*prod*"'
 
         Retrieves variable groups with names containing 'prod'.
-
-    .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Filter 'CreatedBy -eq "Lakshmanachari Panuganti" -and VariableGroupName -like "*api*"'
-
-        Retrieves variable groups created by 'Lakshmanachari Panuganti' with names containing 'api'.
 
     .EXAMPLE
         Get-PSUADOVariableGroupInventory -Organization 'OMG' -ThrottleLimit 15
@@ -320,19 +315,21 @@ function Get-PSUADOVariableGroupInventory {
                                     foreach ($property in $variableProperties) {
                                         $varName = $property.Name
                                         $varValue = if ($property.Value.isSecret -eq $true) {
-                                            '[SECRET]'
+                                            '********'
                                         }
                                         else {
                                             $property.Value.value
                                         }
 
                                         $variableDetails += [PSCustomObject]@{
-                                            Name     = $varName
-                                            Value    = $varValue
-                                            IsSecret = $property.Value.isSecret -eq $true
+                                            Project           = $projectObj.name
+                                            VariableGroupName = $variableGroup.name
+                                            VariableName      = $varName
+                                            VariableValue     = $varValue
+                                            IsSecret          = $property.Value.isSecret -eq $true
                                         }
-                                        $inventoryItem | Add-Member -MemberType NoteProperty -Name Variables -Value $variableDetails -Force
                                     }
+                                    $inventoryItem | Add-Member -MemberType NoteProperty -Name Variables -Value $variableDetails -Force
                                 }
                                 $results.Add($inventoryItem)
                             }
@@ -491,19 +488,21 @@ function Get-PSUADOVariableGroupInventory {
                                     foreach ($property in $variableProperties) {
                                         $varName = $property.Name
                                         $varValue = if ($property.Value.isSecret -eq $true) {
-                                            '[SECRET]'
+                                            '********'
                                         }
                                         else {
                                             $property.Value.value
                                         }
 
                                         $variableDetails += [PSCustomObject]@{
-                                            Name     = $varName
-                                            Value    = $varValue
-                                            IsSecret = $property.Value.isSecret -eq $true
+                                            Project           = $projectObj.name
+                                            VariableGroupName = $variableGroup.name
+                                            VariableName      = $varName
+                                            VariableValue     = $varValue
+                                            IsSecret          = $property.Value.isSecret -eq $true
                                         }
-                                        $inventoryItem | Add-Member -MemberType NoteProperty -Name Variables -Value $variableDetails -Force
                                     }
+                                    $inventoryItem | Add-Member -MemberType NoteProperty -Name Variables -Value $variableDetails -Force
                                 }
 
                                 $variableGroupInventory.Add($inventoryItem)
@@ -530,9 +529,14 @@ function Get-PSUADOVariableGroupInventory {
                 return @()
             }
             else {
+                # Apply Filter if specified (similar to Get-ADUser -Filter)
+                $finalResults = $variableGroupInventory
+                
+                # TODO: Integrate $Filter parameter to enable custom filter expressions
+                
                 # Calculate summary with proper error handling
                 $totalVariables = 0
-                foreach ($item in $variableGroupInventory) {
+                foreach ($item in $finalResults) {
                     $count = $item.VariableCount
                     if ($count -is [array]) { 
                         $totalVariables += [int]$count[0] 
@@ -543,9 +547,9 @@ function Get-PSUADOVariableGroupInventory {
                 }
 
                 $summary = @{
-                    TotalVariableGroups        = $variableGroupInventory.Count
+                    TotalVariableGroups        = $finalResults.Count
                     ProjectsProcessed          = $filteredProjects.Count
-                    ProjectsWithVariableGroups = ($variableGroupInventory | Select-Object -Unique ProjectName).Count
+                    ProjectsWithVariableGroups = ($finalResults | Select-Object -Unique ProjectName).Count
                     TotalVariables             = $totalVariables
                 }
 
@@ -564,13 +568,13 @@ function Get-PSUADOVariableGroupInventory {
                     try {
                         switch ($extension) {
                             '.csv' {
-                                $variableGroupInventory | Export-Csv -Path $OutputFilePath -NoTypeInformation -Encoding UTF8
+                                $finalResults | Export-Csv -Path $OutputFilePath -NoTypeInformation -Encoding UTF8
                             }
                             '.json' {
-                                $variableGroupInventory | ConvertTo-Json -Depth 10 | Out-File -FilePath $OutputFilePath -Encoding UTF8
+                                $finalResults | ConvertTo-Json -Depth 10 | Out-File -FilePath $OutputFilePath -Encoding UTF8
                             }
                             '.xml' {
-                                $variableGroupInventory | Export-Clixml -Path $OutputFilePath -Encoding UTF8
+                                $finalResults | Export-Clixml -Path $OutputFilePath -Encoding UTF8
                             }
                         }
                         Write-Information "Results exported to: $OutputFilePath" -InformationAction Continue
@@ -583,7 +587,7 @@ function Get-PSUADOVariableGroupInventory {
                 Write-Progress -Activity "Azure DevOps Variable Group Inventory" -Status "Complete" -PercentComplete 100 -Completed
                 
                 # Return the inventory
-                return $variableGroupInventory.ToArray()
+                return $finalResults.ToArray()
             }
         }
         catch {
