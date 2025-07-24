@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.Core.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.3'
+ModuleVersion = '1.0.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -71,7 +71,7 @@ RequiredModules = @(
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Find-PSUFilesContainingText', 'Get-PSUConnectedWifiInfo', 'Get-PSUFunctionCommentBasedHelp', 'Get-PSUGitRepositoryChanges', 'Get-PSUInstalledSoftware', 'Get-PSUUserSession', 'New-PSUHTMLReport', 'Remove-PSUUserSession', 'Send-PSUHTMLReport', 'Send-PSUTeamsMessage', 'Set-PSUUserEnvironmentVariable', 'Test-PSUInternetConnection', 'Uninstall-PSUInstalledSoftware')
+FunctionsToExport = @('Export-PSUExcel', 'Find-PSUFilesContainingText', 'Get-PSUConnectedWifiInfo', 'Get-PSUFunctionCommentBasedHelp', 'Get-PSUGitRepositoryChanges', 'Get-PSUInstalledSoftware', 'Get-PSUUserSession', 'New-PSUHTMLReport', 'Remove-PSUUserSession', 'Send-PSUHTMLReport', 'Send-PSUTeamsMessage', 'Set-PSUUserEnvironmentVariable', 'Test-PSUInternetConnection', 'Uninstall-PSUInstalledSoftware')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
