@@ -20,6 +20,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
 $PublicFunctions = @(
     'Get-PSUADOPipelineBuildDetails'
     'Get-PSUADOPipelineLatestRun'
+    'Get-PSUADOVariableGroupInventory'
 )
 
 Export-ModuleMember -Function $PublicFunctions

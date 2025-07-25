@@ -123,7 +123,7 @@ function Get-PSUAksWorkloadIdentityInventory {
 
                     foreach ($cluster in $aksClusters) {
                         try {
-                            Write-Host "  Processing cluster: $($cluster.Name) in RG: $($cluster.ResourceGroupName)" -ForegroundColor Cyan
+                            Write-Host "    Processing cluster: $($cluster.Name) in RG: $($cluster.ResourceGroupName)" -ForegroundColor Cyan
 
                             # Get AKS credentials
                             $credResult = az aks get-credentials --resource-group $cluster.ResourceGroupName --name $cluster.Name --overwrite-existing --admin --only-show-errors 2>&1
@@ -135,9 +135,11 @@ function Get-PSUAksWorkloadIdentityInventory {
 
                             # Get pods with workload identity labels (more efficient than getting all pods)
                             $podsJson = kubectl get pods --all-namespaces -l "azure.workload.identity/use" -o json 2>$null
+                            #$podsJson = kubectl get pods --all-namespaces -o json 2>$null
+
 
                             if ($LASTEXITCODE -ne 0 -or -not $podsJson) {
-                                Write-Host "    No pods with workload identity found in cluster '$($cluster.Name)'" -ForegroundColor Yellow
+                                Write-Host "      No pods with workload identity found in cluster '$($cluster.Name)'" -ForegroundColor Yellow
                                 continue
                             }
 
@@ -145,11 +147,11 @@ function Get-PSUAksWorkloadIdentityInventory {
                                 $podsObj = $podsJson | ConvertFrom-Json -ErrorAction Stop
 
                                 if ($podsObj.items.Count -eq 0) {
-                                    Write-Host "    No pods with workload identity found in cluster '$($cluster.Name)'" -ForegroundColor Yellow
+                                    Write-Host "         No pods with workload identity found in cluster '$($cluster.Name)'" -ForegroundColor Yellow
                                     continue
                                 }
 
-                                Write-Host "    Found $($podsObj.items.Count) pod(s) with workload identity" -ForegroundColor Green
+                                Write-Host "         Found $($podsObj.items.Count) pod(s) with workload identity label" -ForegroundColor Green
 
                                 foreach ($pod in $podsObj.items) {
                                     $null = $data.Add([pscustomobject]@{
@@ -167,10 +169,10 @@ function Get-PSUAksWorkloadIdentityInventory {
                                         })
                                 }
                             } catch {
-                                Write-Warning "    Failed to parse pod data for cluster '$($cluster.Name)': $($_.Exception.Message)"
+                                Write-Warning "         Failed to parse pod data for cluster '$($cluster.Name)': $($_.Exception.Message)"
                             }
                         } catch {
-                            Write-Warning "    Failed to process cluster '$($cluster.Name)': $($_.Exception.Message)"
+                            Write-Warning "         Failed to process cluster '$($cluster.Name)': $($_.Exception.Message)"
                         }
                     }
                 } catch {
