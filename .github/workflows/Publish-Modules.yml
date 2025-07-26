@@ -3,7 +3,7 @@ name: Publish PowerShell Modules
 on:
   push:
     branches:
-      - main
+      - main  # Trigger only when pushing to the main branch
 
 env:
   PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
@@ -26,7 +26,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup PowerShell
-        uses: actions/setup-powershell@v2
+        uses: PowerShell/setup-powershell@v1
 
       - name: Install PowerShellGet Module (if needed)
         shell: pwsh
@@ -56,22 +56,25 @@ jobs:
 
               $newVersion = (Import-PowerShellDataFile -Path $psd1Path).ModuleVersion
 
-              # Get the file old version from already published moduled
-              $publishedModule = Find-Module -Name $psd1.BaseName -ErrorAction Stop
-              $publishedVersion = $publishedModule.Version
+              try {
+                  $publishedModule = Find-Module -Name $module -ErrorAction Stop
+                  $publishedVersion = $publishedModule.Version
+              } catch {
+                  Write-Warning "Module $module not found in PSGallery. Assuming it's a new module."
+                  $publishedVersion = [version]'0.0.0'
+              }
 
-              if ($publishedVersion -and $newVersion -gt $publishedVersion) {
-                  Write-Host "Version changed ($publishedModule → $newVersion). Publishing $module..." -ForegroundColor Yellow
+              if ($newVersion -gt $publishedVersion) {
+                  Write-Host "Version changed ($publishedVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
                   try {
                       Publish-Module -Path $module -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
                       Write-Host "Published $module successfully!" -ForegroundColor Green
                   } catch {
-                      Write-Warning "Failed to publish $module: $_" 
+                      Write-Warning "Failed to publish $module: $_"
                   }
               } else {
-                  Write-Host "The current module version is $newVersion & the already published version is $publishedVersion"
-                  Write-Host "No version change for $module. Skipping publish."
+                  Write-Host "No version change for $module. Skipping publish. (Current: $newVersion, Published: $publishedVersion)"
               }
           }
 
@@ -81,9 +84,9 @@ jobs:
               Write-Host "`nPublished modules: $($updatedModules -join ', ')"
           }
 
-      # Notify via GitHub summary or issue comment
       - name: Summarize Published Modules
         if: always()
+        shell: bash
         run: |
           echo "### PowerShell Modules Publishing Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
