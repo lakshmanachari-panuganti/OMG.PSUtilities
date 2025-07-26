@@ -1,22 +1,22 @@
 function Remove-PSUUserSession {
-<#
-.SYNOPSIS
-    Logs off selected user sessions.
+    <#
+    .SYNOPSIS
+        Logs off selected user sessions.
 
-.DESCRIPTION
-    Accepts piped input from Get-PSUUserSession and logs off the specified sessions
-    using the session ID. Supports WhatIf and Confirm for safety.
+    .DESCRIPTION
+        Accepts piped input from Get-PSUUserSession and logs off the specified sessions
+        using the session ID. Supports WhatIf and Confirm for safety.
 
-.EXAMPLE
-    Get-PSUUserSession | Where-Object { $_.State -eq 'Disc' } | Remove-PSUUserSession
+    .EXAMPLE
+        Get-PSUUserSession | Where-Object { $_.State -eq 'Disc' } | Remove-PSUUserSession
 
-.EXAMPLE
-    Get-PSUUserSession | Out-GridView -PassThru | Remove-PSUUserSession -WhatIf
+    .EXAMPLE
+        Get-PSUUserSession | Out-GridView -PassThru | Remove-PSUUserSession -WhatIf
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    Created: 2025-07-03
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Created: 2025-07-03
+    #>
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     param (
         [Parameter(ValueFromPipeline = $true, Mandatory = $true)]

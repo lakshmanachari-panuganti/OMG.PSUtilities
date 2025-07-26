@@ -1,60 +1,61 @@
-<#
-.SYNOPSIS
-  Creates an HTML report as PowerShell object.
-
-.DESCRIPTION
-  Creates an HTML report as PowerShell object.
-  This HTML report is basically a table or list that is added with formatted pre-content.
-
-.PARAMETER PSObject
-  It is a PScustomobject to create the report with.
-
-.PARAMETER ConditionalForegroundColor
-  Same Text in all cells is formatted with a custom font color based on condition.
-  It should be hashtable. KEY represents the text. VALUE represents the color of the text.
-
-.PARAMETER PreContent
-  Pre content for the report.
-
-.PARAMETER PreContentColor
-  Colour for the pre content. Default color for the pre content is Black.
-
-.PARAMETER PreContentBold
-  This switch makes the pre content as bold.
-
-.PARAMETER PreContentItalic
-  This switch makes the pre content as Italic.
-
-.PARAMETER Type
-  To create the report as table or List.
-
-.EXAMPLE
-  $ServiceParams = @{
-    PSObject = Get-Service | Select-Object Name, Displayname, Status -First 5
-    PreContent = 'Below is the list of first 5 services'
-    PreContentColor = 'Blue'
-    PreContentBold = $true
-    PreContentItalic = $true
-    As = 'Table'
-  }
-  $ServicesHtml = New-PSUHTMLReport @ServiceParams
-
-.OUTPUTS
-  <p><font color = Blue><i><b>Below is the list of first 5 services</b></i></font></p>
-  <table>
-    <colgroup><col/><col/><col/></colgroup>
-    <tr><th>Name</th><th>DisplayName</th><th>Status</th></tr>
-    <tr><td>AbtSvcHost</td><td>AbtSvcHost</td><td>Running</td></tr>
-    <tr><td>AdobeARMservice</td><td>Adobe Acrobat Update Service</td><td>Running</td></tr>
-    <tr><td>AGMService</td><td>Adobe Genuine Monitor Service</td><td>Running</td></tr>
-    <tr><td>AGSService</td><td>Adobe Genuine Software Integrity Service</td><td>Running</td></tr>
-    <tr><td>AJRouter</td><td>AllJoyn Router Service</td><td>Stopped</td></tr>
-  </table>
-
-.NOTES
-  Author:         LakshmanaChari Panuganti
-#>
 Function New-PSUHTMLReport {
+  <#
+  .SYNOPSIS
+    Creates an HTML report as PowerShell object.
+
+  .DESCRIPTION
+    Creates an HTML report as PowerShell object.
+    This HTML report is basically a table or list that is added with formatted pre-content.
+
+  .PARAMETER PSObject
+    It is a PScustomobject to create the report with.
+
+  .PARAMETER ConditionalForegroundColor
+    Same Text in all cells is formatted with a custom font color based on condition.
+    It should be hashtable. KEY represents the text. VALUE represents the color of the text.
+
+  .PARAMETER PreContent
+    Pre content for the report.
+
+  .PARAMETER PreContentColor
+    Colour for the pre content. Default color for the pre content is Black.
+
+  .PARAMETER PreContentBold
+    This switch makes the pre content as bold.
+
+  .PARAMETER PreContentItalic
+    This switch makes the pre content as Italic.
+
+  .PARAMETER Type
+    To create the report as table or List.
+
+  .EXAMPLE
+    $ServiceParams = @{
+      PSObject = Get-Service | Select-Object Name, Displayname, Status -First 5
+      PreContent = 'Below is the list of first 5 services'
+      PreContentColor = 'Blue'
+      PreContentBold = $true
+      PreContentItalic = $true
+      As = 'Table'
+    }
+    $ServicesHtml = New-PSUHTMLReport @ServiceParams
+
+  .OUTPUTS
+    <p><font color = Blue><i><b>Below is the list of first 5 services</b></i></font></p>
+    <table>
+      <colgroup><col/><col/><col/></colgroup>
+      <tr><th>Name</th><th>DisplayName</th><th>Status</th></tr>
+      <tr><td>AbtSvcHost</td><td>AbtSvcHost</td><td>Running</td></tr>
+      <tr><td>AdobeARMservice</td><td>Adobe Acrobat Update Service</td><td>Running</td></tr>
+      <tr><td>AGMService</td><td>Adobe Genuine Monitor Service</td><td>Running</td></tr>
+      <tr><td>AGSService</td><td>Adobe Genuine Software Integrity Service</td><td>Running</td></tr>
+      <tr><td>AJRouter</td><td>AllJoyn Router Service</td><td>Stopped</td></tr>
+    </table>
+
+  .NOTES
+    Author:         LakshmanaChari Panuganti
+  #>
+
   [CmdletBinding(DefaultParameterSetName = 'PSObject')]
   Param(
     [Parameter(

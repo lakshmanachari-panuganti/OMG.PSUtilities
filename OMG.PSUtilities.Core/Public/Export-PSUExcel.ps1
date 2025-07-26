@@ -1,53 +1,53 @@
 function Export-PSUExcel {
-<#
-.SYNOPSIS
-    Converts an array of objects to a styled Excel file.
+    <#
+    .SYNOPSIS
+        Converts an array of objects to a styled Excel file.
 
-.DESCRIPTION
-    This advanced wrapper around 'Export-Excel' enhances usability, reliability, and presentation for exporting PowerShell data to Excel.
+    .DESCRIPTION
+        This advanced wrapper around 'Export-Excel' enhances usability, reliability, and presentation for exporting PowerShell data to Excel.
 
-    Key improvements over plain Export-Excel:
-    Validates Excel file path and ensures `.xlsx` extension and parent folder exists.
-    Adds optional `-KeepBackup` support: backs up existing files in timestamped subfolders.
-    Similar to Export-Excel it adds optional `-AutoOpen` switch to open the Excel file after creation. 
-    Adds optional `-AutoFilter` switch to enable Excel-style column filters.
-    Applies professional formatting:
-        • Bold black header with white font
-        • LightGray background with borders
-        • Calibri font with 10.5pt size
-    Automatically freezes the top header row for easier scrolling.
-    Supports clean handling of pipeline input, making it easy to integrate into larger reporting scripts.
+        Key improvements over plain Export-Excel:
+        Validates Excel file path and ensures `.xlsx` extension and parent folder exists.
+        Adds optional `-KeepBackup` support: backs up existing files in timestamped subfolders.
+        Similar to Export-Excel it adds optional `-AutoOpen` switch to open the Excel file after creation. 
+        Adds optional `-AutoFilter` switch to enable Excel-style column filters.
+        Applies professional formatting:
+            • Bold black header with white font
+            • LightGray background with borders
+            • Calibri font with 10.5pt size
+        Automatically freezes the top header row for easier scrolling.
+        Supports clean handling of pipeline input, making it easy to integrate into larger reporting scripts.
 
-    Use this function for more visually appealing Excel reports — especially useful in automation, reporting tools, or audit exports.
+        Use this function for more visually appealing Excel reports — especially useful in automation, reporting tools, or audit exports.
 
-.PARAMETER DataObject
-    The array of objects to export to Excel.
+    .PARAMETER DataObject
+        The array of objects to export to Excel.
 
-.PARAMETER ExcelPath
-    The path where the Excel file will be saved.
+    .PARAMETER ExcelPath
+        The path where the Excel file will be saved.
 
-.PARAMETER KeepBackup
-    If specified, keeps a backup of the existing Excel file (if any) in a timestamped folder.
+    .PARAMETER KeepBackup
+        If specified, keeps a backup of the existing Excel file (if any) in a timestamped folder.
 
-.EXAMPLE
-    Export-PSUExcel -DataObject $data -ExcelPath 'C:\Reports\report.xlsx'
+    .EXAMPLE
+        Export-PSUExcel -DataObject $data -ExcelPath 'C:\Reports\report.xlsx'
 
-.EXAMPLE
-    $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -KeepBackup
+    .EXAMPLE
+        $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -KeepBackup
 
-.EXAMPLE
-    # Export data and automatically open the Excel file after creation
-    $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -AutoOpen
+    .EXAMPLE
+        # Export data and automatically open the Excel file after creation
+        $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -AutoOpen
 
-.EXAMPLE
-    # Export data with Excel-style column filters enabled
-    $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -AutoFilter
+    .EXAMPLE
+        # Export data with Excel-style column filters enabled
+        $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -AutoFilter
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    File Creation Date: 2025-06-27
-    Updated: 2025-07-03 - Now supports pipeline input for DataObject and backup handling.
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        File Creation Date: 2025-06-27
+        Updated: 2025-07-03 - Now supports pipeline input for DataObject and backup handling.
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, ValueFromPipeline = $true)]

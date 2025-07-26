@@ -1,28 +1,28 @@
 function Get-PSUInstalledSoftware {
-<#
-.SYNOPSIS
-    Lists installed software on the system.
+    <#
+    .SYNOPSIS
+        Lists installed software on the system.
 
-.DESCRIPTION
-    Retrieves a list of installed applications from both 32-bit and 64-bit registry paths.
-    Optionally filters results by software name or publisher.
+    .DESCRIPTION
+        Retrieves a list of installed applications from both 32-bit and 64-bit registry paths.
+        Optionally filters results by software name or publisher.
 
-.PARAMETER Name
-    Filter the results by display name (supports wildcards, e.g., '*Chrome*').
+    .PARAMETER Name
+        Filter the results by display name (supports wildcards, e.g., '*Chrome*').
 
-.PARAMETER Publisher
-    Filter the results by publisher (supports wildcards, e.g., '*Microsoft*').
+    .PARAMETER Publisher
+        Filter the results by publisher (supports wildcards, e.g., '*Microsoft*').
 
-.EXAMPLE
-    Get-PSUInstalledSoftware -Name '*Chrome*'
+    .EXAMPLE
+        Get-PSUInstalledSoftware -Name '*Chrome*'
 
-.EXAMPLE
-    Get-PSUInstalledSoftware -Publisher '*Microsoft*'
+    .EXAMPLE
+        Get-PSUInstalledSoftware -Publisher '*Microsoft*'
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    File Creation Date: 2025-07-03
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        File Creation Date: 2025-07-03
+    #>
     [CmdletBinding()]
     [OutputType([pscustomobject])]
     param(
