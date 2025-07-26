@@ -46,7 +46,7 @@ jobs:
           $updatedModules = @()
           $modules = $env:MODULES -split "`n"
           Try{
-              Register-PSRepository -Default -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+              Register-PSRepository -Default -WarningAction SilentlyContinue
           } Catch{
               Write-Host " Error occurred while Register-PSRepository -Default: $_"
           }
