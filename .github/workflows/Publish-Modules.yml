@@ -75,7 +75,7 @@ jobs:
                       $updatedModules += $module
                       Write-Host "Published $module successfully!" -ForegroundColor Green
                   } catch {
-                      Write-Warning "Failed to publish $module: $_"
+                      Write-Warning "Failed to publish $module : $_"
                   }
               } else {
                   Write-Host "No version change for $module. Skipping publish."
