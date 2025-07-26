@@ -4,10 +4,11 @@ function Invoke-PSUPromptOnPerplexityAi {
         Calls the Perplexity API to generate AI-powered answers with web search and citations.
     .DESCRIPTION
         This function sends chat-style prompts to the Perplexity API and returns AI-generated responses 
-        with sources, using the selected Sonar model. Specify your API key via -ApiKey or the 
-        environment variable API_KEY_PERPLEXITY.
+        with sources, using the selected Sonar model. Specify your API key via -ApiKey or the environment variable API_KEY_PERPLEXITY.
+        How to Get Perplexity API key: https://www.youtube.com/watch?v=Xwcc-DQIOCs
     .PARAMETER ApiKey
         Your Perplexity API key (set via environment variable API_KEY_PERPLEXITY by default).
+        How to Get Perplexity API key: https://www.youtube.com/watch?v=Xwcc-DQIOCs
     .PARAMETER Model
         The Perplexity model to use. Options:
         - "sonar" (default, fast and economical)
@@ -59,43 +60,43 @@ function Invoke-PSUPromptOnPerplexityAi {
     #>
     [CmdletBinding()]
     param(
-        [Parameter(Mandatory = $true)]
+        [Parameter(Mandatory)]
         [hashtable[]]$Prompt,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [string]$ApiKey = $env:API_KEY_PERPLEXITY,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [ValidateSet("sonar", "sonar-pro", "sonar-reasoning", "sonar-deep-research")]
         [string]$Model = "sonar-pro",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [int]$MaxTokens = 1000,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [ValidateRange(0.0, 2.0)]
         [double]$Temperature = 0.7,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [bool]$Stream = $false,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [ValidateSet("web", "academic")]
         [string]$SearchMode = "web",
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [bool]$ReturnCitations = $true,
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [string[]]$SearchDomainFilter = @(),
 
-        [Parameter(Mandatory = $false)]
+        [Parameter()]
         [ValidateSet("", "hour", "day", "week", "month", "year")]
         [string]$SearchRecencyFilter = ""
     )
 
     if ([string]::IsNullOrWhiteSpace($ApiKey)) {
-        throw "API Key is required. Set the API_KEY_PERPLEXITY environment variable or pass the -ApiKey parameter."
+        throw '$env:API_KEY_PERPLEXITY not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_PERPLEXITY' -Value '<your-api-key>''
     }
 
     $headers = @{

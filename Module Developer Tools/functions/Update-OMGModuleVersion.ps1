@@ -24,8 +24,7 @@ function Update-OMGModuleVersion {
         }
 
         $content = Get-Content $psd1Path.FullName
-        $currentVersionLine = $content | Where-Object { $_ -match 'ModuleVersion\s*=' } | Select-Object -First 1
-        $currentVersion = $currentVersionLine -replace '.*=\s*["'']?', '' -replace '["'']', ''
+        $currentVersion = (Find-Module $ModuleName -Repository PSGallery).Version
 
         if (-not $currentVersion -or $currentVersion -notmatch '^\d+\.\d+\.\d+$') {
             Write-Error "Invalid or missing version in $($psd1Path.Name)"

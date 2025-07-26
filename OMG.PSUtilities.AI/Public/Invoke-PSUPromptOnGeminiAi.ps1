@@ -7,7 +7,7 @@ function Invoke-PSUPromptOnGeminiAi {
     This function interacts with Google's Generative Language API (Gemini 2.0 Flash model) to perform fast and
     lightweight AI content generation.
 
-    📌 How to get started:
+    How to get started:
     ----------------------
     1️ Visit: https://makersuite.google.com/app/apikey  
     2️ Sign in with your Google account  
@@ -33,7 +33,6 @@ function Invoke-PSUPromptOnGeminiAi {
 .NOTES
     Author: Lakshmanachari Panuganti
     Created: 2025-07-03
-    Alias: Ask-Ai, Start-PSUAiChat, Query-PSUAi
     Model: Gemini 2.0 Flash (Generative Language API)
 #>
     [CmdletBinding()]
@@ -53,7 +52,7 @@ function Invoke-PSUPromptOnGeminiAi {
         return
     }
     if ($ReturnJsonResponse.IsPresent) {
-        $Prompt += "`nRespond ONLY with a valid JSON object. Do NOT include any explanations, text. DO NOT include any Markdown Fencing formatting like triple backticks. Return raw JSON only."
+        $Prompt += "`nRespond ONLY with a valid JSON object. Do NOT include any explanations, text. DO NOT include any Markdown Fencing formatting like triple backticks. Return raw JSON only with suitable properties."
     }
 
     $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"

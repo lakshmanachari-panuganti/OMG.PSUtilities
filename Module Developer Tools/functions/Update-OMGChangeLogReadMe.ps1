@@ -1,4 +1,4 @@
-function Update-ChangeLogReadMe {
+function Update-OMGChangeLogReadMe {
     [CmdletBinding()]
     param (
         [string]$ModuleName,
