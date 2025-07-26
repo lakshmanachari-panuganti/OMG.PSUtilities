@@ -1,4 +1,4 @@
-function Start-PSUAiChat {
+function Start-PSUGeminiChat {
 <#
 .SYNOPSIS
     Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API.
@@ -13,20 +13,20 @@ function Start-PSUAiChat {
 
     📌 How to get started:
     ----------------------
-    1️⃣ Visit: https://makersuite.google.com/app/apikey  
-    2️⃣ Sign in with your Google account  
-    3️⃣ Click **"Create API Key"**  
-    4️⃣ Copy the key and save it using:
+    1️ Visit: https://makersuite.google.com/app/apikey  
+    2️ Sign in with your Google account  
+    3️ Click **"Create API Key"**  
+    4️ Copy the key and save it using:
 
     Set-PSUUserEnvironmentVariable -Name "GOOGLE_GEMINI_API_KEY" -Value "<your-api-key>"
 
 .NOTES
     Author: Lakshmanachari Panuganti
     Date: 4th July 2025
-    History: Initial development of Start-PSUAiChat Chatbot.
+    History: Initial development of Start-PSUGeminiChat Chatbot.
 
 .EXAMPLE
-    Start-PSUAiChat
+    Start-PSUGeminiChat
 #>
 
     [CmdletBinding()]

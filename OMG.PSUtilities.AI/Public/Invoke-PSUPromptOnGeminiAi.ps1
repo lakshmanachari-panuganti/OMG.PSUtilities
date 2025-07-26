@@ -1,5 +1,5 @@
-function Invoke-PSUPromptAI {
-    <#
+function Invoke-PSUPromptOnGeminiAi {
+<#
 .SYNOPSIS
     Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response.
 
@@ -7,16 +7,16 @@ function Invoke-PSUPromptAI {
     This function interacts with Google's Generative Language API (Gemini 2.0 Flash model) to perform fast and
     lightweight AI content generation.
 
-    📌 How to get started:
+    How to get started:
     ----------------------
-    1️⃣ Visit: https://makersuite.google.com/app/apikey  
-    2️⃣ Sign in with your Google account  
-    3️⃣ Click **"Create API Key"**  
-    4️⃣ Copy the key and save it using:
+    1️ Visit: https://makersuite.google.com/app/apikey  
+    2️ Sign in with your Google account  
+    3️ Click **"Create API Key"**  
+    4️ Copy the key and save it using:
 
         Set-PSUUserEnvironmentVariable -Name "GOOGLE_GEMINI_API_KEY" -Value "<your-api-key>"
 
-    ✅ You're now ready to call `Invoke-PSUPromptAI` with your prompt!
+    You're now ready to call `Invoke-PSUPromptOnGeminiAi` with your prompt!
 
 .PARAMETER Prompt
     The text you want Gemini AI to process and respond to.
@@ -25,15 +25,14 @@ function Invoke-PSUPromptAI {
     Optional. Overrides the environment variable GOOGLE_GEMINI_API_KEY with a manually supplied key.
 
 .EXAMPLE
-    Invoke-PSUPromptAI -Prompt "Generate a PowerShell script to get system uptime"
+    Invoke-PSUPromptOnGeminiAi -Prompt "Generate a PowerShell script to get system uptime"
 
 .EXAMPLE
-    Invoke-PSUPromptAI -Prompt "Summarize cloud computing in one line"
+    Invoke-PSUPromptOnGeminiAi -Prompt "Summarize cloud computing in one line"
 
 .NOTES
     Author: Lakshmanachari Panuganti
     Created: 2025-07-03
-    Alias: Ask-Ai, Start-PSUAiChat, Query-PSUAi
     Model: Gemini 2.0 Flash (Generative Language API)
 #>
     [CmdletBinding()]
@@ -53,7 +52,7 @@ function Invoke-PSUPromptAI {
         return
     }
     if ($ReturnJsonResponse.IsPresent) {
-        $Prompt += "`nRespond ONLY with a valid JSON object. Do NOT include any explanations, text. DO NOT include any Markdown Fencing formatting like triple backticks. Return raw JSON only."
+        $Prompt += "`nRespond ONLY with a valid JSON object. Do NOT include any explanations, text. DO NOT include any Markdown Fencing formatting like triple backticks. Return raw JSON only with suitable properties."
     }
 
     $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"

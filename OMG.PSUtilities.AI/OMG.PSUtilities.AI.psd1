@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AI.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.0'
+ModuleVersion = '1.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -70,7 +70,7 @@ RequiredModules = @('OMG.PSUtilities.Core')
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Invoke-PSUPromptAI', 'Start-PSUAiChat')
+FunctionsToExport = @('Invoke-PSUPromptOnGeminiAi', 'Invoke-PSUPromptOnPerplexityAi', 'Start-PSUGeminiChat')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'

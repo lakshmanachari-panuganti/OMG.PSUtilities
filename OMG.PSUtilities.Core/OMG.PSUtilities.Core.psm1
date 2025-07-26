@@ -18,6 +18,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
 
 # Export public functions
 $PublicFunctions = @(
+    'Export-PSUExcel'
     'Find-PSUFilesContainingText'
     'Get-PSUConnectedWifiInfo'
     'Get-PSUFunctionCommentBasedHelp'
