@@ -45,7 +45,11 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $updatedModules = @()
           $modules = $env:MODULES -split "`n"
-
+          Try{
+              Register-PSRepository -Default -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+          } Catch{
+              Write-Host " Error occurred while Register-PSRepository -Default: $_"
+          }
           foreach ($module in $modules) {
               $module = $module.Trim()
               if (-not $module) { continue }
@@ -72,7 +76,6 @@ jobs:
                   Write-Host "Version changed ($publishedVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
                   try {
                       $moduleRootPath = Split-Path -Parent $psd1Path
-                      Register-PSRepository -Default -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
                       Install-Module OMG.PSUtilities.Core -force -repository PSGallery
                       Publish-Module -Path $moduleRootPath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
