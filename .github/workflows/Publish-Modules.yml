@@ -51,7 +51,7 @@ jobs:
               if (-not $module) { continue }
 
               $psd1Path = "$module/$module.psd1"
-              Write-Host "`nChecking module: $module" -NoNewline
+              Write-Host "`nChecking module: [$module] " -NoNewline
 
               if (-not (Test-Path $psd1Path)) {
                   Write-Warning "Could not find $psd1Path, skipping."
