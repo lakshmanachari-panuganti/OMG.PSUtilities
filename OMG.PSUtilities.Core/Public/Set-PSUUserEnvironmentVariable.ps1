@@ -1,24 +1,24 @@
-<#
-.SYNOPSIS
-    Sets or updates a user environment variable.
-
-.DESCRIPTION
-    Sets a user environment variable both for the current session and persistently for the user.
-
-.PARAMETER Name
-    The name of the environment variable.
-
-.PARAMETER Value
-    The value to set for the environment variable.
-
-.EXAMPLE
-    Set-PSUUserEnvironmentVariable -Name "MyVar" -Value "MyValue"
-
-.NOTES
-    Author: Lakshmanachari Panuganti
-    File Creation Date: 2025-06-27
-#>
 function Set-PSUUserEnvironmentVariable {
+    <#
+    .SYNOPSIS
+        Sets or updates a user environment variable.
+
+    .DESCRIPTION
+        Sets a user environment variable both for the current session and persistently for the user.
+
+    .PARAMETER Name
+        The name of the environment variable.
+
+    .PARAMETER Value
+        The value to set for the environment variable.
+
+    .EXAMPLE
+        Set-PSUUserEnvironmentVariable -Name "MyVar" -Value "MyValue"
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        File Creation Date: 2025-06-27
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

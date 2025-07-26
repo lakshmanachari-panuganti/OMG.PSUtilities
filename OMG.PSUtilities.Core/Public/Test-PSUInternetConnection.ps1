@@ -1,18 +1,18 @@
 function Test-PSUInternetConnection {
-<#
-.SYNOPSIS
-    Tests general internet connectivity.
+    <#
+    .SYNOPSIS
+        Tests general internet connectivity.
 
-.DESCRIPTION
-    Attempts to connect to www.google.com to verify internet access.
+    .DESCRIPTION
+        Attempts to connect to www.google.com to verify internet access.
 
-.EXAMPLE
-    Test-PSUInternetConnection
+    .EXAMPLE
+        Test-PSUInternetConnection
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    File Creation Date: 2025-06-27
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        File Creation Date: 2025-06-27
+    #>
     [CmdletBinding()]
     [OutputType([bool])]
     param()

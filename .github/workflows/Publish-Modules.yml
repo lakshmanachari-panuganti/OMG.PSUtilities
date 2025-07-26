@@ -46,10 +46,6 @@ jobs:
           $updatedModules = @()
           $modules = $env:MODULES -split "`n"
           Try{
-              Register-PSRepository -Default -WarningAction SilentlyContinue
-          } Catch{
-              Write-Host " Error occurred while Register-PSRepository -Default: $_"
-          }
           foreach ($module in $modules) {
               $module = $module.Trim()
               if (-not $module) { continue }
@@ -75,8 +71,12 @@ jobs:
               if ($newVersion -gt $publishedVersion) {
                   Write-Host "Version changed ($publishedVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
                   try {
-                      $moduleRootPath = Split-Path -Parent $psd1Path
+                      if(-not (Get-PSRepository -Name PSGallery)){
+                          Register-PSRepository -Default -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+                      }
+                      # Install the dependency modules
                       Install-Module OMG.PSUtilities.Core -force -repository PSGallery
+                      $moduleRootPath = Split-Path -Parent $psd1Path
                       Publish-Module -Path $moduleRootPath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
                       Write-Host "Published $module successfully!" -ForegroundColor Green

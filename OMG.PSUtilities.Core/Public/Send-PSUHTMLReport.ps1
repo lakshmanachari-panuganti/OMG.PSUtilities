@@ -1,102 +1,103 @@
-<#
-.SYNOPSIS
-  Sends HTML reports that are created with New-PSUHTMLReport function.
 
-.DESCRIPTION
-  Sends HTML reports that are created with New-PSUHTMLReport function.
-  We can send add Heading, Heading color, Summary, Summary color, Footer, Footer color along with the reports.
-  We have to provide the valid html color name or color code.
-
-  Note: SMTP server is hardcoded in the script, you can change it as per your environment.
-  The report can be an array of HTML reports that are created with New-PSUHTMLReport function.
-  The report can be a string or array of strings that are represented in the email body line by line.
-  
-.PARAMETER Heading
-  Heading for the email body that appears at the top.
-
-.PARAMETER HeadingColor
-  Valid HTML color name or color code for heading.
-
-.PARAMETER Summary
-  Summary for the email body, It can be an array that is represented in the email report line by line.
-
-.PARAMETER SummaryColor
-  Valid HTML color name or color code for summary.
-
-.PARAMETER Report
-  Report or Array of Reports that needs to send via email.
-
-.PARAMETER Footer
-  Text in the email body that presented all over the down. It can be a string or array.
-
-.PARAMETER FooterColor
-  Valid HTML color name or color code for footer.
-
-.PARAMETER ReportRecipient
-  One or array of email IDs that receives the report.
-
-.PARAMETER From
-  The Email address that the email needs to be sent from.
-
-.PARAMETER Subject
-  The subject of the email.
-
-.EXAMPLE
-$ReportsHtml = @()
-
-$ErrorsList = $Error | Select-Object -Property TargetObject, @{N = 'ExceptionMessage'; E={$_.exception.message}}
-$ServicesList = Get-Service | Select-Object Name, DisplayName, Status
-
-$ConditionalForegroundColor = @{}
-$ConditionalForegroundColor.Add('Running', 'Green')
-$ConditionalForegroundColor.Add('Stopped', 'Red')
-
-$ErrorParams = @{
-  PSObject = $ErrorsList
-  PreContent = "List of errors while automation was running"
-  PreContentColor = 'Red'
-  As = 'Table'
-}
-$ServiceParams = @{
-  PSObject = $ServicesList
-  ConditionalForegroundColor = $ConditionalForegroundColor
-  PreContent = "Services Running on $env:computername"
-  PreContentColor = 'Green'
-  PreContentBold = $true
-  As = 'Table'
-}
-$ReportsHtml += New-PSUHTMLReport @ErrorParams
-$ReportsHtml += New-PSUHTMLReport @ServiceParams
-
-
-$Summary = @(
-    "Total number of services running: $($ServicesList.count)",
-    "Total number of Errors: $($ErrorsList.count)"
-)
-
-$Footer = @(
-    "The automation has been executed on $env:computername",
-    "Time elapsed for execution is $Timespan"
-)
-
-$Params = @{
-    Heading = "Services running on $env:computername [$(Get-Date)]"
-    Summary = $Summary
-    Report = $ReportsHtml
-    Footer = $Footer
-    From = 'No-Reply@xyz.com'
-    Subject = "Services running on $env:computername"
-    ReportRecipient = 'lakshmanacharii@xyz.com'
-}
-New-PSUHTMLReport @Params
-
-.OUTPUTS
-None
-
-.NOTES
-  Author:         Lakshmanachari Panuganti
-#>
 Function New-PSUHTMLReport {
+  <#
+  .SYNOPSIS
+    Sends HTML reports that are created with New-PSUHTMLReport function.
+
+  .DESCRIPTION
+    Sends HTML reports that are created with New-PSUHTMLReport function.
+    We can send add Heading, Heading color, Summary, Summary color, Footer, Footer color along with the reports.
+    We have to provide the valid html color name or color code.
+
+    Note: SMTP server is hardcoded in the script, you can change it as per your environment.
+    The report can be an array of HTML reports that are created with New-PSUHTMLReport function.
+    The report can be a string or array of strings that are represented in the email body line by line.
+    
+  .PARAMETER Heading
+    Heading for the email body that appears at the top.
+
+  .PARAMETER HeadingColor
+    Valid HTML color name or color code for heading.
+
+  .PARAMETER Summary
+    Summary for the email body, It can be an array that is represented in the email report line by line.
+
+  .PARAMETER SummaryColor
+    Valid HTML color name or color code for summary.
+
+  .PARAMETER Report
+    Report or Array of Reports that needs to send via email.
+
+  .PARAMETER Footer
+    Text in the email body that presented all over the down. It can be a string or array.
+
+  .PARAMETER FooterColor
+    Valid HTML color name or color code for footer.
+
+  .PARAMETER ReportRecipient
+    One or array of email IDs that receives the report.
+
+  .PARAMETER From
+    The Email address that the email needs to be sent from.
+
+  .PARAMETER Subject
+    The subject of the email.
+
+  .EXAMPLE
+    $ReportsHtml = @()
+
+    $ErrorsList = $Error | Select-Object -Property TargetObject, @{N = 'ExceptionMessage'; E={$_.exception.message}}
+    $ServicesList = Get-Service | Select-Object Name, DisplayName, Status
+
+    $ConditionalForegroundColor = @{}
+    $ConditionalForegroundColor.Add('Running', 'Green')
+    $ConditionalForegroundColor.Add('Stopped', 'Red')
+
+    $ErrorParams = @{
+      PSObject = $ErrorsList
+      PreContent = "List of errors while automation was running"
+      PreContentColor = 'Red'
+      As = 'Table'
+    }
+    $ServiceParams = @{
+      PSObject = $ServicesList
+      ConditionalForegroundColor = $ConditionalForegroundColor
+      PreContent = "Services Running on $env:computername"
+      PreContentColor = 'Green'
+      PreContentBold = $true
+      As = 'Table'
+    }
+    $ReportsHtml += New-PSUHTMLReport @ErrorParams
+    $ReportsHtml += New-PSUHTMLReport @ServiceParams
+
+
+    $Summary = @(
+        "Total number of services running: $($ServicesList.count)",
+        "Total number of Errors: $($ErrorsList.count)"
+    )
+
+    $Footer = @(
+        "The automation has been executed on $env:computername",
+        "Time elapsed for execution is $Timespan"
+    )
+
+    $Params = @{
+        Heading = "Services running on $env:computername [$(Get-Date)]"
+        Summary = $Summary
+        Report = $ReportsHtml
+        Footer = $Footer
+        From = 'No-Reply@xyz.com'
+        Subject = "Services running on $env:computername"
+        ReportRecipient = 'lakshmanacharii@xyz.com'
+    }
+    New-PSUHTMLReport @Params
+
+  .OUTPUTS
+  None
+
+  .NOTES
+    Author:         Lakshmanachari Panuganti
+  #>
   [CmdletBinding()]
   Param(
     [Parameter(Mandatory)]

@@ -1,34 +1,34 @@
 
 function Find-PSUFilesContainingText {
-<#
-.SYNOPSIS
-    Searches files for a specific text string.
+    <#
+    .SYNOPSIS
+        Searches files for a specific text string.
 
-.DESCRIPTION
-    Recursively or non-recursively searches files in a directory for a given text string, with options to filter by extension and exclude certain file types.
+    .DESCRIPTION
+        Recursively or non-recursively searches files in a directory for a given text string, with options to filter by extension and exclude certain file types.
 
-.PARAMETER SearchPath
-    Directory to search.
+    .PARAMETER SearchPath
+        Directory to search.
 
-.PARAMETER SearchText
-    Text to search for in files.
+    .PARAMETER SearchText
+        Text to search for in files.
 
-.PARAMETER FileExtension
-    Only search files with this extension.
+    .PARAMETER FileExtension
+        Only search files with this extension.
 
-.PARAMETER ExcludeExtensions
-    Array of file extensions to exclude.
+    .PARAMETER ExcludeExtensions
+        Array of file extensions to exclude.
 
-.PARAMETER NoRecurse
-    If specified, search only the top-level directory.
+    .PARAMETER NoRecurse
+        If specified, search only the top-level directory.
 
-.EXAMPLE
-    Find-PSUFilesContainingText -SearchPath 'C:\Projects' -SearchText 'TODO'
+    .EXAMPLE
+        Find-PSUFilesContainingText -SearchPath 'C:\Projects' -SearchText 'TODO'
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    File Creation Date: 2025-06-27
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        File Creation Date: 2025-06-27
+    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]

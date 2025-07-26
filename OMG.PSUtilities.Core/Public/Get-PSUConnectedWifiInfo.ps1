@@ -1,19 +1,19 @@
 function Get-PSUConnectedWifiInfo {
-<#
-.SYNOPSIS
-    Gets details of the currently connected Wi-Fi network.
+    <#
+    .SYNOPSIS
+        Gets details of the currently connected Wi-Fi network.
 
-.DESCRIPTION
-    Returns connection details for the currently connected Wi-Fi:
-    SSID, Signal Strength, Private IP, Band, Transmit/Receive Rate, and Public IP.
+    .DESCRIPTION
+        Returns connection details for the currently connected Wi-Fi:
+        SSID, Signal Strength, Private IP, Band, Transmit/Receive Rate, and Public IP.
 
-.EXAMPLE
-    Get-PSUConnectedWifiInfo
+    .EXAMPLE
+        Get-PSUConnectedWifiInfo
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    Created: 2025-07-03
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Created: 2025-07-03
+    #>
 
     [CmdletBinding()]
     [OutputType([pscustomobject])]

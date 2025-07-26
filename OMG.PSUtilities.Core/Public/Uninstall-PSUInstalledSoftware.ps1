@@ -1,22 +1,22 @@
 function Uninstall-PSUInstalledSoftware {
     <#
-.SYNOPSIS
-    Uninstalls software objects piped in from Get-PSUInstalledSoftware.
+    .SYNOPSIS
+        Uninstalls software objects piped in from Get-PSUInstalledSoftware.
 
-.DESCRIPTION
-    Accepts piped input of software entries with DisplayName and UninstallString properties
-    and runs the uninstaller in silent mode where possible. Supports -WhatIf for safe preview.
+    .DESCRIPTION
+        Accepts piped input of software entries with DisplayName and UninstallString properties
+        and runs the uninstaller in silent mode where possible. Supports -WhatIf for safe preview.
 
-.EXAMPLE
-    Get-PSUInstalledSoftware -Name '*Zoom*' | Uninstall-PSUInstalledSoftware
+    .EXAMPLE
+        Get-PSUInstalledSoftware -Name '*Zoom*' | Uninstall-PSUInstalledSoftware
 
-.EXAMPLE
-    Get-PSUInstalledSoftware -Name '*Zoom*' | Uninstall-PSUInstalledSoftware -WhatIf
+    .EXAMPLE
+        Get-PSUInstalledSoftware -Name '*Zoom*' | Uninstall-PSUInstalledSoftware -WhatIf
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    Updated: 2025-07-03
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Updated: 2025-07-03
+    #>
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     [Alias('Remove-PSUInstalledSoftware', 'Uninstall-Software')]
     param (
