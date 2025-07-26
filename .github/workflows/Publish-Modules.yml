@@ -45,7 +45,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $updatedModules = @()
           $modules = $env:MODULES -split "`n"
-          Try{
+          
           foreach ($module in $modules) {
               $module = $module.Trim()
               if (-not $module) { continue }
