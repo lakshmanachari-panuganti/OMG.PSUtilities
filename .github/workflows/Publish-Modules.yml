@@ -73,6 +73,7 @@ jobs:
                   try {
                       $moduleRootPath = Split-Path -Parent $psd1Path
                       Register-PSRepository -Default -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+                      Install-Module OMG.PSUtilities.Core -force -repository PSGallery
                       Publish-Module -Path $moduleRootPath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
                       Write-Host "Published $module successfully!" -ForegroundColor Green
