@@ -45,13 +45,13 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $updatedModules = @()
           $modules = $env:MODULES -split "`n"
-          
+
           foreach ($module in $modules) {
               $module = $module.Trim()
               if (-not $module) { continue }
 
               $psd1Path = "$module/$module.psd1"
-              Write-Host "`nChecking module: $module"
+              Write-Host "`nChecking module: $module" -NoNewline
 
               if (-not (Test-Path $psd1Path)) {
                   Write-Warning "Could not find $psd1Path, skipping."
@@ -69,7 +69,7 @@ jobs:
               }
 
               if ($newVersion -gt $publishedVersion) {
-                  Write-Host "Version changed ($publishedVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
+                  Write-Host "Detected [$publishedVersion → $newVersion]. Publishing $module..." -ForegroundColor Yellow
                   try {
                       if(-not (Get-PSRepository -Name PSGallery)){
                           Register-PSRepository -Default -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
