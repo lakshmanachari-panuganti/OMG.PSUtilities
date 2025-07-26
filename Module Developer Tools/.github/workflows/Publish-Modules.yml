@@ -1,0 +1,94 @@
+name: Publish PowerShell Modules
+
+on:
+  push:
+    branches:
+      - master
+
+env:
+  PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+  MODULES: |
+    OMG.PSUtilities.ActiveDirectory
+    OMG.PSUtilities.VSphere
+    OMG.PSUtilities.AI
+    OMG.PSUtilities.AzureCore
+    OMG.PSUtilities.AzureDevOps
+    OMG.PSUtilities.ServiceNow
+    OMG.PSUtilities.Core
+
+jobs:
+  publish-modules:
+    name: Publish Updated PowerShell Modules
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup PowerShell
+        uses: actions/setup-powershell@v2
+
+      - name: Install PowerShellGet Module (if needed)
+        shell: pwsh
+        run: |
+          if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
+            Install-Module -Name PowerShellGet -Force -Scope CurrentUser -AllowClobber
+          }
+
+      - name: Compare and Publish Updated Modules
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $updatedModules = @()
+          $modules = $env:MODULES -split "`n"
+
+          foreach ($module in $modules) {
+              $module = $module.Trim()
+              if (-not $module) { continue }
+
+              $psd1Path = "$module/$module.psd1"
+              Write-Host "`nChecking module: $module"
+
+              if (-not (Test-Path $psd1Path)) {
+                  Write-Warning "Could not find $psd1Path, skipping."
+                  continue
+              }
+
+              $newVersion = (Import-PowerShellDataFile -Path $psd1Path).ModuleVersion
+
+              # Get the file contents from the previous commit
+              $oldContent = (git show HEAD^:"$psd1Path" 2>$null) 
+              if ($oldContent) {
+                  $oldVersion = ($oldContent | Out-String | Invoke-Expression | Select-Object -ExpandProperty ModuleVersion)
+              } else {
+                  $oldVersion = ''
+              }
+
+              if ($newVersion -ne $oldVersion) {
+                  Write-Host "Version changed ($oldVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
+                  try {
+                      Publish-Module -Path $module -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
+                      $updatedModules += $module
+                      Write-Host "Published $module successfully!" -ForegroundColor Green
+                  } catch {
+                      Write-Warning "Failed to publish $module: $_" 
+                  }
+              } else {
+                  Write-Host "No version change for $module. Skipping publish."
+              }
+          }
+
+          if ($updatedModules.Count -eq 0) {
+              Write-Host "`nNo modules needed publishing."
+          } else {
+              Write-Host "`nPublished modules: $($updatedModules -join ', ')"
+          }
+
+      # Optional: Notify via GitHub summary or issue comment
+      - name: Summarize Published Modules
+        if: always()
+        run: |
+          echo "### PowerShell Modules Publishing Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- Triggered by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
