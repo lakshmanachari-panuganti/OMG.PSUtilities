@@ -25,8 +25,12 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup PowerShell
-        uses: actions/setup-powershell@v1
+      # Setup step REMOVED - setup-powershell@v1 does not exist, PowerShell is already available
+
+      # [Optional] Setup a specific PowerShell version (uncomment if needed)
+      # - uses: powershell/setup-pwsh@v1
+      #   with:
+      #     pwsh-version: '7.2.12'
 
       - name: Install PowerShellGet Module (if needed)
         shell: pwsh
@@ -86,8 +90,10 @@ jobs:
 
       - name: Summarize Published Modules
         if: always()
+        shell: pwsh
         run: |
-          echo "### PowerShell Modules Publishing Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- Triggered by: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
-          echo "- Branch: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "### PowerShell Modules Publishing Summary" >> $env:GITHUB_STEP_SUMMARY
+          echo "" >> $env:GITHUB_STEP_SUMMARY
+          echo "- Triggered by: $env:GITHUB_ACTOR" >> $env:GITHUB_STEP_SUMMARY
+          echo "- Branch: $env:GITHUB_REF_NAME" >> $env:GITHUB_STEP_SUMMARY
+
