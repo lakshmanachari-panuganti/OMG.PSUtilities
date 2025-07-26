@@ -71,7 +71,8 @@ jobs:
               if ($newVersion -gt $publishedVersion) {
                   Write-Host "Version changed ($publishedVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
                   try {
-                      Publish-Module -Path $psd1Path -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
+                      $moduleRootPath = Split-Path -Parent $psd1Path
+                      Publish-Module -Path $moduleRootPath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
                       Write-Host "Published $module successfully!" -ForegroundColor Green
                   } catch {
