@@ -56,16 +56,12 @@ jobs:
 
               $newVersion = (Import-PowerShellDataFile -Path $psd1Path).ModuleVersion
 
-              # Get the file contents from the previous commit
-              $oldContent = (git show HEAD^:"$psd1Path" 2>$null) 
-              if ($oldContent) {
-                  $oldVersion = ($oldContent | Out-String | Invoke-Expression | Select-Object -ExpandProperty ModuleVersion)
-              } else {
-                  $oldVersion = ''
-              }
+              # Get the file old version from already published moduled
+              $publishedModule = Find-Module -Name $psd1.BaseName -ErrorAction Stop
+              $publishedVersion = $publishedModule.Version
 
-              if ($newVersion -ne $oldVersion) {
-                  Write-Host "Version changed ($oldVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
+              if ($publishedVersion -and $newVersion -gt $publishedVersion) {
+                  Write-Host "Version changed ($publishedModule → $newVersion). Publishing $module..." -ForegroundColor Yellow
                   try {
                       Publish-Module -Path $module -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
@@ -74,6 +70,7 @@ jobs:
                       Write-Warning "Failed to publish $module: $_" 
                   }
               } else {
+                  Write-Host "The current module version is $newVersion & the already published version is $publishedVersion"
                   Write-Host "No version change for $module. Skipping publish."
               }
           }
@@ -84,7 +81,7 @@ jobs:
               Write-Host "`nPublished modules: $($updatedModules -join ', ')"
           }
 
-      # Optional: Notify via GitHub summary or issue comment
+      # Notify via GitHub summary or issue comment
       - name: Summarize Published Modules
         if: always()
         run: |
