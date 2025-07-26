@@ -3,7 +3,7 @@ name: Publish PowerShell Modules
 on:
   push:
     branches:
-      - master
+      - main
 
 env:
   PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
