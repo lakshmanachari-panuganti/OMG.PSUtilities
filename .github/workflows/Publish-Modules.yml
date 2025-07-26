@@ -72,6 +72,7 @@ jobs:
                   Write-Host "Version changed ($publishedVersion → $newVersion). Publishing $module..." -ForegroundColor Yellow
                   try {
                       $moduleRootPath = Split-Path -Parent $psd1Path
+                      Register-PSRepository -Name PSGallery -SourceLocation "https://www.powershellgallery.com/api/v2/" -InstallationPolicy Trusted -ErrorAction SilentlyContinue
                       Publish-Module -Path $moduleRootPath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
                       Write-Host "Published $module successfully!" -ForegroundColor Green
