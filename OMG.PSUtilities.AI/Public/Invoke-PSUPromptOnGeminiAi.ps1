@@ -70,14 +70,19 @@ function Invoke-PSUPromptOnGeminiAi {
         
         if ($ReturnJsonResponse.IsPresent) {
             $jsonBlock = ''
-            if ($rawText -match '(?s)```json\s*(\{.*?\})\s*```') {
+                
+            # Match fenced JSON block
+            if ($rawText -match '(?s)```json\s*(\[.*?\]|\{.*?\})\s*```') {
                 $jsonBlock = $matches[1]
                 $jsonBlock = $jsonBlock -replace '```json\s*|\s*```', ''
                 return $jsonBlock
             }
-            elseif ($rawText -match '(\{.*?\})') {
+
+            # Match raw JSON array or object
+            elseif ($rawText -match '(\[.*?\]|\{.*?\})') {
                 return $matches[1]
             }
+
             else {
                 Write-Warning "Could not find a JSON object in the response."
                 return $rawText
