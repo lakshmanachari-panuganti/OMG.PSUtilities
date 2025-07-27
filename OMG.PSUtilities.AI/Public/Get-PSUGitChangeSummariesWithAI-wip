@@ -1,31 +1,32 @@
 function Get-PSUGitChangeSummariesWithAI-wip {
-<#
-.SYNOPSIS
-    Summarizes file-level changes between two Git branches using Google Gemini AI.
+    <#
+    .SYNOPSIS
+        Summarizes file-level changes between two Git branches using Google Gemini AI.
 
-.DESCRIPTION
-    Compares a feature branch to a base branch (e.g., main) and identifies all changed files.
-    Sends the diffs in batch to Gemini AI for per-file summarization, returning a structured object
-    with filename, type of change (New/Modify/Delete), and a concise summary.
+    .DESCRIPTION
+        Compares a feature branch to a base branch (e.g., main) and identifies all changed files.
+        Sends the diffs in batch to Gemini AI for per-file summarization, returning a structured object
+        with filename, type of change (New/Modify/Delete), and a concise summary.
 
-.PARAMETER BaseBranch
-    The base branch to compare against. Defaults to 'main'.
+    .PARAMETER BaseBranch
+        The base branch to compare against. Defaults to 'main'.
 
-.PARAMETER FeatureBranch
-    The feature branch being merged. Defaults to 'feature/dev'.
+    .PARAMETER FeatureBranch
+        The feature branch being merged. Defaults to 'feature/dev'.
 
-.EXAMPLE
-    Get-PSUGitChangeSummariesWithAI -BaseBranch main -FeatureBranch feature/login-ui
+    .EXAMPLE
+        Get-PSUGitChangeSummariesWithAI -BaseBranch main -FeatureBranch feature/login-ui
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    Created: 2025-07-27
-    Depends: git CLI, Invoke-PSUPromptOnGeminiAi
-#>
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Created: 2025-07-27
+        Depends: git CLI, Invoke-PSUPromptOnGeminiAi
+    #>
     [CmdletBinding()]
     param(
         [string]$BaseBranch = "main",
         [string]$FeatureBranch = "feature/dev"
+        [string]$ApiKeyGemini = $env:API_KEY_GEMINI
     )
 
     # Ensure Git is installed
@@ -93,7 +94,7 @@ Here are the file-level diffs:
     }
 
     # Call Gemini for summarization
-    $json = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ReturnJsonResponse
+    $json = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ApiKey $ApiKeyGemini -ReturnJsonResponse
     
     try {
         $results = $json | ConvertFrom-Json -ErrorAction Stop
