@@ -41,7 +41,7 @@ function Get-PSUGitChangeSummariesWithAI-wip {
     if ($LASTEXITCODE -ne 0) { throw "Feature branch '$FeatureBranch' does not exist." }
 
     # Fetch list of changed files and type of change
-    $gitChanges = git diff --name-status $BaseBranch..$FeatureBranch | ForEach-Object {
+    $gitChanges = git diff --name-status $BaseBranch $FeatureBranch | ForEach-Object {
         $parts = $_ -split "\t"
         [PSCustomObject]@{
             Type = switch ($parts[0]) {
@@ -56,7 +56,7 @@ function Get-PSUGitChangeSummariesWithAI-wip {
     }
 
     if (-not $gitChanges) {
-        Write-Host "✅ No differences found between $BaseBranch and $FeatureBranch." -ForegroundColor Green
+        Write-Host "No differences found between $BaseBranch and $FeatureBranch." -ForegroundColor Green
         return @()
     }
 
@@ -82,7 +82,7 @@ Here are the file-level diffs:
         $diff = if ($item.Type -eq "Delete") {
             "[Deleted File]"
         } elseif ($item.Type -eq "New") {
-            git show "$FeatureBranch:$($item.File)" 2>$null
+            git show "$($FeatureBranch):$($item.File)" 2>$null
         } else {
             git diff $BaseBranch $FeatureBranch -- "$($item.File)"
         }
