@@ -1,58 +1,56 @@
 function Invoke-PSUPromptOnPerplexityAi {
     <#
     .SYNOPSIS
-        Calls the Perplexity API to generate AI-powered answers with web search and citations.
+        Sends a text prompt to the Perplexity AI API and returns the generated response.
+
     .DESCRIPTION
-        This function sends chat-style prompts to the Perplexity API and returns AI-generated responses 
-        with sources, using the selected Sonar model. Specify your API key via -ApiKey or the environment variable API_KEY_PERPLEXITY.
-        How to Get Perplexity API key: https://www.youtube.com/watch?v=Xwcc-DQIOCs
-    .PARAMETER ApiKey
-        Your Perplexity API key (set via environment variable API_KEY_PERPLEXITY by default).
-        How to Get Perplexity API key: https://www.youtube.com/watch?v=Xwcc-DQIOCs
-    .PARAMETER Model
-        The Perplexity model to use. Options:
-        - "sonar" (default, fast and economical)
-        - "sonar-pro" (for complex or longer queries)
-        - "sonar-reasoning" (for multi-step logic)
-        - "sonar-deep-research" (for comprehensive research)
+        This function interacts with the Perplexity AI chat completions API to perform
+        AI content generation based on the provided prompt and configurable parameters.
+
+        How to get started:
+        ----------------------
+        1. Visit: https://labs.perplexity.ai/
+        2. Sign up or log in.
+        3. Navigate to your API keys or developer settings.
+        4. Create an API key.
+        5. Copy the key and save it using:
+
+            Set-PSUUserEnvironmentVariable -Name "API_KEY_PERPLEXITY" -Value "<your-api-key>"
+
+        You're now ready to call `Invoke-PSUPromptOnPerplexityAi` with your prompt!
+
     .PARAMETER Prompt
-        Array of hashtables: each object must include 'role' ('system', 'user', or 'assistant') 
-        and 'content'.
+        The text you want Perplexity AI to process and respond to.
+
+    .PARAMETER ApiKey
+        Optional. Overrides the environment variable API_KEY_PERPLEXITY with a manually supplied key.
+
+    .PARAMETER Model
+        Optional. Specifies the Perplexity AI model to use for generation.
+        Common models include "sonar" (default), "sonar-small-online", "sonar-medium-online", etc.
+        Refer to Perplexity AI documentation for available models.
+
     .PARAMETER MaxTokens
-        Maximum response tokens (default is 1000).
+        Optional. The maximum number of tokens (words or word pieces) the AI should generate in its response.
+        A higher value allows for longer responses. Default is 512.
+
     .PARAMETER Temperature
-        0.0 (more deterministic) to 2.0 (more random); default is 0.7.
-    .PARAMETER Stream
-        Enable streaming responses (default: $false).
-    .PARAMETER SearchMode
-        "web" (default) or "academic" for scholarly sources.
-    .PARAMETER ReturnCitations
-        $true (default): include sources in the response.
-    .PARAMETER SearchDomainFilter
-        Array of website domains to restrict web search (e.g. "learn.microsoft.com").
-    .PARAMETER SearchRecencyFilter
-        Filter for recency: "", "hour", "day", "week", "month", or "year"; default is empty.
-    .EXAMPLE
-        # Basic usage with message prompt and environment variable for API key
-        $Prompt = @(
-            @{ role = "system"; content = "You are a concise technical assistant." },
-            @{ role = "user"; content = "Explain what an Azure Resource Group is." }
-        )
+        Optional. Controls the randomness and creativity of the generated response.
+        Values closer to 0 make the output more focused and deterministic, while higher values (e.g., 1.0)
+        make it more diverse and creative. Default is 0.7.
 
-        $result = Invoke-PSUPromptOnPerplexityAi -Prompt $Prompt
-        $result.Content
+    .PARAMETER ReturnJsonResponse
+        Optional. If specified, the function will return the raw JSON response received from the Perplexity AI API.
+        This is useful for debugging or when you need to parse the full API response programmatically.
 
     .EXAMPLE
-        # With explicit API key, return only results from microsoft.com
-        $Prompt = @(
-        @{ role = "user"; content = "List top Azure VM series." }
-        )
+        Invoke-PSUPromptOnPerplexityAi -Prompt "Write a short poem about the future of AI."
 
-        $result = Invoke-PSUPromptOnPerplexityAi -ApiKey 'your-key-here' `
-            -Prompt $Prompt `
-            -SearchDomainFilter @("learn.microsoft.com") `
-            -ReturnCitations $true
-        $result.Content
+    .EXAMPLE
+        Invoke-PSUPromptOnPerplexityAi -Prompt "Explain quantum computing in simple terms" -Model "sonar-small-online" -MaxTokens 200
+
+    .EXAMPLE
+        Invoke-PSUPromptOnPerplexityAi -Prompt "List the main components of a computer" -ReturnJsonResponse | ConvertFrom-Json | Select-Object -ExpandProperty choices
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -61,90 +59,62 @@ function Invoke-PSUPromptOnPerplexityAi {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [hashtable[]]$Prompt,
+        [string]$Prompt,
 
         [Parameter()]
         [string]$ApiKey = $env:API_KEY_PERPLEXITY,
 
         [Parameter()]
-        [ValidateSet("sonar", "sonar-pro", "sonar-reasoning", "sonar-deep-research")]
-        [string]$Model = "sonar-pro",
+        [string]$Model = "sonar",
 
         [Parameter()]
-        [int]$MaxTokens = 1000,
+        [int]$MaxTokens = 512,
 
         [Parameter()]
-        [ValidateRange(0.0, 2.0)]
         [double]$Temperature = 0.7,
 
         [Parameter()]
-        [bool]$Stream = $false,
-
-        [Parameter()]
-        [ValidateSet("web", "academic")]
-        [string]$SearchMode = "web",
-
-        [Parameter()]
-        [bool]$ReturnCitations = $true,
-
-        [Parameter()]
-        [string[]]$SearchDomainFilter = @(),
-
-        [Parameter()]
-        [ValidateSet("", "hour", "day", "week", "month", "year")]
-        [string]$SearchRecencyFilter = ""
+        [switch]$ReturnJsonResponse
     )
 
-    if ([string]::IsNullOrWhiteSpace($ApiKey)) {
-        throw '$env:API_KEY_PERPLEXITY not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_PERPLEXITY' -Value '<your-api-key>''
+    if (-not $ApiKey) {
+        Write-Error "Perplexity API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_PERPLEXITY' -Value '<your-api-key>'"
+        return
     }
 
-    $headers = @{
-        'Authorization' = "Bearer $ApiKey"
-        'Content-Type'  = 'application/json'
-        'Accept'        = 'application/json'
+    # Build request body
+    $body = @{
+        model       = $Model
+        temperature = $Temperature
+        max_tokens  = $MaxTokens
+        messages    = @(
+            @{
+                role    = "user"
+                content = $Prompt
+            }
+        )
     }
 
-    $requestBody = @{
-        model            = $Model
-        Prompt           = $Prompt
-        max_tokens       = $MaxTokens
-        temperature      = $Temperature
-        stream           = $Stream
-        search_mode      = $SearchMode
-        return_citations = $ReturnCitations
-    }
-
-    if ($SearchDomainFilter.Count -gt 0) {
-        $requestBody.search_domain_filter = $SearchDomainFilter
-    }
-    if (-not [string]::IsNullOrEmpty($SearchRecencyFilter)) {
-        $requestBody.search_recency_filter = $SearchRecencyFilter
-    }
-
-    $jsonBody = $requestBody | ConvertTo-Json -Depth 10
+    $uri = "https://api.perplexity.ai/chat/completions"
+    $headers = @{ "Authorization" = "Bearer $ApiKey" }
 
     try {
-        Write-Verbose "Sending request to Perplexity API with model: $Model"
-        $response = Invoke-RestMethod -Uri "https://api.perplexity.ai/chat/completions" `
-            -Method POST `
-            -Headers $headers `
-            -Body $jsonBody `
-            -ErrorAction Stop
-        return @{
-            Content       = $response.choices[0].message.content
-            Model         = $response.model
-            Usage         = $response.usage
-            Citations     = $response.citations
-            SearchResults = $response.search_results
-            FinishReason  = $response.choices[0].finish_reason
-            RawResponse   = $response
+        Write-Host "🧠 Thinking..." -ForegroundColor Cyan
+        $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers `
+                     -Body ($body | ConvertTo-Json -Depth 100) -ContentType 'application/json'
+
+        if ($ReturnJsonResponse.IsPresent) {
+            return ($response | ConvertTo-Json -Depth 10)
+        }
+
+        if ($response.choices.Count -gt 0 -and $response.choices[0].message.content) {
+            return $response.choices[0].message.content.Trim()
+        }
+        else {
+            throw "No content received from Perplexity API."
         }
     }
     catch {
-        $statusCode = $_.Exception.Response.StatusCode.value__
-        $errorMessage = $_.ErrorDetails.Message
-        Write-Error "Perplexity API Error (HTTP $statusCode): $errorMessage"
-        throw "Failed to call Perplexity API: $($_.Exception.Message)"
+        Write-Error "Failed to get response from Perplexity:`n$($_.Exception.Message)"
     }
 }

@@ -9,10 +9,10 @@ function Invoke-PSUPromptOnGeminiAi {
 
     How to get started:
     ----------------------
-    1️ Visit: https://makersuite.google.com/app/apikey  
-    2️ Sign in with your Google account  
-    3️ Click **"Create API Key"**  
-    4️ Copy the key and save it using:
+    1. Visit: https://makersuite.google.com/app/apikey  
+    2. Sign in with your Google account  
+    3. Click **"Create API Key"**  
+    4. Copy the key and save it using:
 
         Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "<your-api-key>"
 
@@ -79,7 +79,7 @@ function Invoke-PSUPromptOnGeminiAi {
                 return $matches[1]
             }
             else {
-                Write-Warning "❗ Could not find a JSON object in the response."
+                Write-Warning "Could not find a JSON object in the response."
                 return $rawText
             }
         } else {
