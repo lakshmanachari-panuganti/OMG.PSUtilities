@@ -47,20 +47,20 @@ function Get-PSUGitChangeSummariesWithAI {
 
 
     # Fetch latest from remote
-    git fetch origin $BaseBranch > $null
+    git fetch origin $BaseBranch > $null | Out-Null
     
     # Safe checkout to $BaseBranch branch. 
     # If uncommitted changes exist, prompts to commit, stash, or abort.
     Invoke-SafeGitCheckout -TargetBranch $BaseBranch
     
     # Checkout base branch
-    git checkout $BaseBranch > $null
+    git checkout $BaseBranch > $null | Out-Null
 
     # Switch back to feature branch
-    git checkout $FeatureBranch > $null
+    git checkout $FeatureBranch > $null | Out-Null
 
     # Switch back to feature branch
-    git checkout $FeatureBranch
+    git checkout $FeatureBranch > $null | Out-Null
 
     # Fetch list of changed files and type of change
     $gitChanges = Get-GitFileChangeMetadata -BaseBranch $BaseBranch -FeatureBranch $FeatureBranch
