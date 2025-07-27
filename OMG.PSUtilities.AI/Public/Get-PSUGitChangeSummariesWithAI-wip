@@ -26,7 +26,6 @@ function Get-PSUGitChangeSummariesWithAI-wip {
     param(
         [string]$BaseBranch = "main",
         [string]$FeatureBranch = "feature/dev"
-        [string]$ApiKeyGemini = $env:API_KEY_GEMINI
     )
 
     # Ensure Git is installed
@@ -94,7 +93,7 @@ Here are the file-level diffs:
     }
 
     # Call Gemini for summarization
-    $json = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ApiKey $ApiKeyGemini -ReturnJsonResponse
+    $json = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ReturnJsonResponse 
     
     try {
         $results = $json | ConvertFrom-Json -ErrorAction Stop
