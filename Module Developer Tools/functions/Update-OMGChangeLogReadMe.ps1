@@ -154,7 +154,7 @@ function Update-OMGChangeLogReadMe {
 
         # Update Manifest + Build
         if (-not $DryRun) {
-            Reset-OMGModuleManifests.ps1 -ModuleName "$thismodule"
+            Reset-OMGModuleManifests -ModuleName "$thismodule"
             Build-OMGModuleLocally -ModuleName "$thismodule"
         }
         else {

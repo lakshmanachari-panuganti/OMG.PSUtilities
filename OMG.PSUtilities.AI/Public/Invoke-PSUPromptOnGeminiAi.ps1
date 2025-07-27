@@ -14,7 +14,7 @@ function Invoke-PSUPromptOnGeminiAi {
     3️ Click **"Create API Key"**  
     4️ Copy the key and save it using:
 
-        Set-PSUUserEnvironmentVariable -Name "GOOGLE_GEMINI_API_KEY" -Value "<your-api-key>"
+        Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "<your-api-key>"
 
     You're now ready to call `Invoke-PSUPromptOnGeminiAi` with your prompt!
 
@@ -22,7 +22,7 @@ function Invoke-PSUPromptOnGeminiAi {
     The text you want Gemini AI to process and respond to.
 
 .PARAMETER ApiKey
-    Optional. Overrides the environment variable GOOGLE_GEMINI_API_KEY with a manually supplied key.
+    Optional. Overrides the environment variable API_KEY_GEMINI with a manually supplied key.
 
 .EXAMPLE
     Invoke-PSUPromptOnGeminiAi -Prompt "Generate a PowerShell script to get system uptime"
@@ -41,14 +41,14 @@ function Invoke-PSUPromptOnGeminiAi {
         [string]$Prompt,
 
         [Parameter()]
-        [string]$ApiKey = $env:GOOGLE_GEMINI_API_KEY,
+        [string]$ApiKey = $env:API_KEY_GEMINI,
 
         [Parameter()]
         [switch]$ReturnJsonResponse
     )
 
     if (-not $ApiKey) {
-        Write-Error "Gemini API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'GOOGLE_GEMINI_API_KEY' -Value '<your-api-key>'"
+        Write-Error "Gemini API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_GEMINI' -Value '<your-api-key>'"
         return
     }
     if ($ReturnJsonResponse.IsPresent) {

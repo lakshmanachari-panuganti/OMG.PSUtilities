@@ -13,7 +13,10 @@ function Set-PSUUserEnvironmentVariable {
         The value to set for the environment variable.
 
     .EXAMPLE
-        Set-PSUUserEnvironmentVariable -Name "MyVar" -Value "MyValue"
+        Set-PSUUserEnvironmentVariable -Name 'API_KEY_OPENAI' -Value 'sk-proj-S@MpLe-Gk4NL--gFyTu305hMnQoYE6GuT3BlbkFJggn'
+    
+    .EXAMPLE
+        Set-PSUUserEnvironmentVariable -Name 'ADO_ORGANIZATION' -Value 'OmgIT'
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -34,8 +37,7 @@ function Set-PSUUserEnvironmentVariable {
 
         # Set in current session
         Set-Item -Path "Env:\$Name" -Value $Value
-    }
-    catch {
+    } catch {
         $PSCmdlet.ThrowTerminatingError($_)
     }
 }

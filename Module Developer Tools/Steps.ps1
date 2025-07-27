@@ -1,4 +1,28 @@
-# initiate
+# Check environment variables if not exist ask for create
+@(
+    '$env:BASE_MODULE_PATH'
+    '$env:API_KEY_GEMINI'
+    '$env:API_KEY_CLAUDE'
+    '$env:API_KEY_OPENAI'
+    '$env:API_KEY_PERPLEXITY'
+    '$env:API_KEY_PSGALLERY'
+).foreach({
+    $envVarName = $_
+    $envVarValue = Invoke-Expression $envVarName
+
+    if([string]::IsNullOrEmpty($envVarValue) -or [string]::IsNullOrWhiteSpace($envVarValue)){
+        $readHost = $null
+        $readHost = Read-Host "The variable $envVarName is not set or empty. Please enter a value or press Enter to skip."
+        
+        If(-not [string]::IsNullOrEmpty($readHost) -or -not [string]::IsNullOrWhiteSpace($readHost)){
+            Set-PSUUserEnvironmentVariable -Name $($envVarName.replace('$env:','')) -Value $readHost
+        }
+    } else{
+        Write-Host "The variable $envVarName is already set! skipping..." -ForegroundColor Green
+    }
+})
+
+# Initiate
 . $($env:BASE_MODULE_PATH + '\Module Developer Tools\Set-ModuleEnvironmentVariables.ps1')
 
 # importing all the Module Developer Tools functions

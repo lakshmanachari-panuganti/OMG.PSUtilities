@@ -9,16 +9,16 @@ function Start-PSUGeminiChat {
     This function interacts with Google's Generative Language API (Gemini 2.0 Flash model) to perform fast and
     lightweight AI content generation.
 
-    Requires an environment variable named 'GOOGLE_GEMINI_API_KEY'.
+    Requires an environment variable named 'API_KEY_GEMINI'.
 
-    📌 How to get started:
+    How to get started:
     ----------------------
-    1️ Visit: https://makersuite.google.com/app/apikey  
-    2️ Sign in with your Google account  
-    3️ Click **"Create API Key"**  
-    4️ Copy the key and save it using:
+    1. Visit: https://makersuite.google.com/app/apikey  
+    2. Sign in with your Google account  
+    3. Click **"Create API Key"**  
+    4. Copy the key and save it using:
 
-    Set-PSUUserEnvironmentVariable -Name "GOOGLE_GEMINI_API_KEY" -Value "<your-api-key>"
+    Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "<your-api-key>"
 
 .NOTES
     Author: Lakshmanachari Panuganti
@@ -32,11 +32,11 @@ function Start-PSUGeminiChat {
     [CmdletBinding()]
     [Alias("Ask-Ai")]
     param (
-        [string]$ApiKey = $env:GOOGLE_GEMINI_API_KEY
+        [string]$ApiKey = $env:API_KEY_GEMINI
     )
 
     if (-not $ApiKey) {
-        Write-Error "Gemini API key not found. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'GOOGLE_GEMINI_API_KEY' -Value '<your-api-key>'"
+        Write-Error "Gemini API key not found. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_GEMINI' -Value '<your-api-key>'"
         return
     }
 
