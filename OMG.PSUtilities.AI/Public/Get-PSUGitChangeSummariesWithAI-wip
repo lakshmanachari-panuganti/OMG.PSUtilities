@@ -21,6 +21,9 @@ function Get-PSUGitChangeSummariesWithAI-wip {
         Author: Lakshmanachari Panuganti
         Created: 2025-07-27
         Depends: git CLI, Invoke-PSUPromptOnGeminiAi
+    
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
     #>
     [CmdletBinding()]
     param(
@@ -40,6 +43,21 @@ function Get-PSUGitChangeSummariesWithAI-wip {
 
     git rev-parse --verify $FeatureBranch 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Feature branch '$FeatureBranch' does not exist." }
+
+
+
+    # Ensure latest changes from remote are available
+    git fetch origin $BaseBranch
+    
+    # Safe checkout to $BaseBranch branch. If uncommitted changes exist, prompts to commit, stash, or abort.
+    Invoke-SafeGitCheckout -TargetBranch $BaseBranch
+    
+    # Checkout base branch and pull latest changes
+    git checkout $BaseBranch
+    git pull origin $BaseBranch
+
+    # Switch back to feature branch
+    git checkout $FeatureBranch
 
     # Fetch list of changed files and type of change
     $gitChanges = git diff --name-status $BaseBranch $FeatureBranch | ForEach-Object {
@@ -106,7 +124,7 @@ Here are the file-level diffs:
             }
         }
     } catch {
-        Write-Warning "⚠ Failed to parse Gemini response as JSON. Raw response:`n$json"
+        Write-Warning "Failed to parse Gemini response as JSON. Raw response:`n$json"
         return @()
     }
 }
