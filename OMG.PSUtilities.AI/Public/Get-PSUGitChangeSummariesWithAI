@@ -1,4 +1,4 @@
-function Get-PSUGitChangeSummariesWithAI-wip {
+function Get-PSUGitChangeSummariesWithAI {
     <#
     .SYNOPSIS
         Summarizes file-level changes between two Git branches using Google Gemini AI.
