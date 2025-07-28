@@ -18,23 +18,34 @@ function Get-PSUAksWorkloadIdentityInventory {
         If specified, exports the results to a CSV file.
 
     .PARAMETER OutputPath
-        Specifies the path for the CSV export. Default is "workload-identity-inventory.csv".
+        Specifies the path for the excel file to export. Default is "workload-identity-inventory.csv".
 
     .EXAMPLE
+        az login --use-device-code
         Get-PSUAksWorkloadIdentityInventory
+        
         Scans all accessible subscriptions and clusters for workload identity usage.
 
     .EXAMPLE
+        az login --use-device-code
+        Get-PSUAksWorkloadIdentityInventory
         Get-PSUAksWorkloadIdentityInventory -SubscriptionId "12345678-1234-1234-1234-123456789012"
+        
         Scans only the specified subscription.
 
     .EXAMPLE
+        az login --use-device-code
+        Get-PSUAksWorkloadIdentityInventory
         Get-PSUAksWorkloadIdentityInventory -SubscriptionId "12345678-1234-1234-1234-123456789012" -ClusterName "prod-aks-*"
+        
         Scans clusters matching the pattern in the specified subscription.
 
     .EXAMPLE
-        Get-PSUAksWorkloadIdentityInventory -ClusterName "dev-aks-01", "staging-aks-01" -ExportToCsv
-        Scans specific clusters and exports results to CSV.
+        az login --use-device-code
+        Get-PSUAksWorkloadIdentityInventory
+        Get-PSUAksWorkloadIdentityInventory -ClusterName "dev-aks-01", "staging-aks-01" -Export
+        
+        Scans specific clusters and exports results to Excel.
     #>
 
     [CmdletBinding()]
@@ -46,10 +57,10 @@ function Get-PSUAksWorkloadIdentityInventory {
         [string[]]$ClusterName,
 
         [Parameter()]
-        [switch]$ExportToCsv,
+        [switch]$Export,
 
         [Parameter()]
-        [string]$OutputPath = "workload-identity-inventory.csv"
+        [string]$OutputPath = "C:\Temp\workload-identity-inventory.xlsx"
     )
 
     begin {
@@ -134,8 +145,8 @@ function Get-PSUAksWorkloadIdentityInventory {
                             }
 
                             # Get pods with workload identity labels (more efficient than getting all pods)
-                            $podsJson = kubectl get pods --all-namespaces -l "azure.workload.identity/use" -o json 2>$null
-                            #$podsJson = kubectl get pods --all-namespaces -o json 2>$null
+                            #$podsJson = kubectl get pods --all-namespaces -l "azure.workload.identity/use" -o json 2>$null
+                            $podsJson = kubectl get pods --all-namespaces -o json 2>$null
 
 
                             if ($LASTEXITCODE -ne 0 -or -not $podsJson) {
@@ -190,9 +201,9 @@ function Get-PSUAksWorkloadIdentityInventory {
         if ($data.Count -gt 0) {
             Write-Host "`nInventory completed. Found $($data.Count) pod(s) using Azure Workload Identity." -ForegroundColor Green
 
-            if ($ExportToCsv) {
+            if ($Export) {
                 try {
-                    $data | Export-Csv -Path $OutputPath -NoTypeInformation -Force
+                    $data | Export-PSUExcel -ExcelPath $OutputPath -AutoOpen -AutoFilter
                     Write-Host "Results exported to: $OutputPath" -ForegroundColor Green
                 } catch {
                     Write-Warning "Failed to export to CSV: $($_.Exception.Message)"
