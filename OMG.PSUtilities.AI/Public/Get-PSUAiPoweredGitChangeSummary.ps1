@@ -1,4 +1,4 @@
-function Get-PSUGitChangeSummariesAI {
+function Get-PSUAiPoweredGitChangeSummary {
     <#
     .SYNOPSIS
         Summarizes file-level changes between two Git branches using Google Gemini AI.
@@ -8,6 +8,8 @@ function Get-PSUGitChangeSummariesAI {
         Sends the diffs in batch to Gemini AI for per-file summarization, returning a structured object
         with filename, type of change (New/Modify/Delete), and a concise summary.
 
+        Depends: git CLI
+
     .PARAMETER BaseBranch
         The base branch to compare against. Defaults to 'main'.
 
@@ -15,12 +17,11 @@ function Get-PSUGitChangeSummariesAI {
         The feature branch being merged. Defaults to 'feature/dev'.
 
     .EXAMPLE
-        Get-PSUGitChangeSummariesAI -BaseBranch main -FeatureBranch feature/login-ui
+        Get-PSUAiPoweredGitChangeSummary -BaseBranch main -FeatureBranch feature/login-ui
 
     .NOTES
         Author: Lakshmanachari Panuganti
         Created: 2025-07-27
-        Depends: git CLI, Invoke-PSUPromptOnGeminiAi
     
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
