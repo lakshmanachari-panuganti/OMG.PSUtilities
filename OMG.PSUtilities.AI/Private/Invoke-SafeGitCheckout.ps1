@@ -1,77 +1,71 @@
 function Invoke-SafeGitCheckout {
     <#
     .SYNOPSIS
-    Safely switches to a specified Git branch by checking for uncommitted changes and prompting for action.
+        Safely checks out a target Git branch and pulls the latest changes, then returns to the original branch.
 
     .DESCRIPTION
-    This function attempts to switch to a specified Git branch. If uncommitted local changes would be overwritten during checkout,
-    it prompts the user to either:
-    - Commit the changes with a custom message,
-    - Stash the changes (optionally with a stash message), or
-    - Abort the operation.
-
-    This is useful when automating Git workflows or when ensuring the local working directory stays consistent across branch switches.
+        Handles uncommitted changes by prompting the user to commit, stash, or abort.
+        Fetches and pulls the latest changes from the remote for the target branch.
+        Ensures a safe switch to the target branch and back to the original branch.
 
     .PARAMETER TargetBranch
-    The name of the Git branch to switch to. This should be a valid local or remote branch name.
+        The branch to checkout and pull the latest changes into.
+
+    .PARAMETER ReturnToBranch
+        The branch to return to after syncing the target branch. If not specified, it uses the current branch before switch.
 
     .EXAMPLE
-    Invoke-SafeGitCheckout -TargetBranch "main"
-
-    Attempts to switch to the "main" branch. If uncommitted changes exist, prompts to commit, stash, or abort.
-
-    .OUTPUTS
-    String output from git commands and warnings based on action taken.
+        Invoke-SafeGitCheckout -TargetBranch main -ReturnToBranch feature/login-ui
 
     .NOTES
-    Author      : Lakshmanachari Panuganti
-    Date        : 2025-07-27
-    Version     : 1.0
-    Git Required: Yes (CLI must be available in environment)
-
-    .LINK
-    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
-
+        Author: Lakshmanachari Panuganti
+        Created: 2025-07-28
     #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$TargetBranch
+        [string]$TargetBranch,
+
+        [string]$ReturnToBranch
     )
 
-    try {
-        git checkout $TargetBranch 2>&1 | ForEach-Object {
-            if ($_ -match "would be overwritten by checkout") {
-                Write-Warning "Uncommitted changes would be overwritten by switching to '$TargetBranch'."
-                
-                $choice = Read-Host "Choose an action: (C)ommit, (S)tash, or (A)bort"
+    # Get current branch if not explicitly passed
+    if (-not $ReturnToBranch) {
+        $ReturnToBranch = git rev-parse --abbrev-ref HEAD
+    }
 
-                switch ($choice.ToUpper()) {
-                    "C" {
-                        $commitMessage = Read-Host "Enter a commit message"
-                        git add .
-                        git commit -m "$commitMessage"
-                        git checkout $TargetBranch
-                    }
-                    "S" {
-                        $msg = Read-Host "Enter stash message (or leave empty)"
-                        if ($msg) {
-                            git stash push -m "$msg"
-                        } else {
-                            git stash
-                        }
-                        git checkout $TargetBranch
-                    }
-                    default {
-                        Write-Host "Aborted switching branches." -ForegroundColor Yellow
-                    }
-                }
+    # Check for uncommitted changes
+    $hasUncommitted = git status --porcelain
+    if ($hasUncommitted) {
+        Write-Warning "You have uncommitted changes in your working directory."
+
+        $choice = Read-Host "Choose an action: (C)ommit, (S)tash, or (A)bort"
+        switch ($choice.ToUpper()) {
+            'C' {
+                git add . *> $null
+                $msg = Read-Host "Enter commit message"
+                git commit -m "$msg"
             }
-            else {
-                Write-Output $_
+            'S' {
+                git stash push -m "Auto-stash before switching to $TargetBranch"
+            }
+            default {
+                throw "Aborted due to uncommitted changes."
             }
         }
-    } catch {
-        Write-Error "Error while checking out branch: $_"
+    }
+
+    Write-Host "Fetching latest from origin/$TargetBranch..." -ForegroundColor Cyan
+    git fetch origin $TargetBranch *> $null
+
+    Write-Host "Checking out $TargetBranch..." -ForegroundColor Cyan
+    git checkout $TargetBranch *> $null
+
+    Write-Host "Pulling latest into $TargetBranch..." -ForegroundColor Cyan
+    git pull origin $TargetBranch *> $null
+
+    if ($ReturnToBranch -ne $TargetBranch) {
+        Write-Host "Switching back to $ReturnToBranch..." -ForegroundColor Cyan
+        git checkout $ReturnToBranch *> $null
     }
 }

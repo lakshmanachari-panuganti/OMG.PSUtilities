@@ -44,23 +44,7 @@ function Get-PSUGitChangeSummariesWithAI {
     git rev-parse --verify $FeatureBranch 2>$null | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Feature branch '$FeatureBranch' does not exist." }
 
-
-
-    # Fetch latest from remote
-    git fetch origin $BaseBranch *> $null
-    
-    # Safe checkout to $BaseBranch branch. 
-    # If uncommitted changes exist, prompts to commit, stash, or abort.
-    Invoke-SafeGitCheckout -TargetBranch $BaseBranch
-    
-    # Checkout base branch
-    git checkout $BaseBranch *> $null
-
-    # Switch back to feature branch
-    git checkout $FeatureBranch *> $null
-
-    # Switch back to feature branch
-    git checkout $FeatureBranch *> $null
+    $null = Invoke-SafeGitCheckout -TargetBranch $BaseBranch -ReturnToBranch $FeatureBranch
 
     # Fetch list of changed files and type of change
     $gitChanges = Get-GitFileChangeMetadata -BaseBranch $BaseBranch -FeatureBranch $FeatureBranch
