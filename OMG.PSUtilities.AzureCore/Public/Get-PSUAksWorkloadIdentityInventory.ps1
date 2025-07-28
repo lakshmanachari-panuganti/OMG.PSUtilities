@@ -18,23 +18,34 @@ function Get-PSUAksWorkloadIdentityInventory {
         If specified, exports the results to a CSV file.
 
     .PARAMETER OutputPath
-        Specifies the path for the CSV export. Default is "workload-identity-inventory.csv".
+        Specifies the path for the excel file to export. Default is "workload-identity-inventory.csv".
 
     .EXAMPLE
+        az login --use-device-code
         Get-PSUAksWorkloadIdentityInventory
+        
         Scans all accessible subscriptions and clusters for workload identity usage.
 
     .EXAMPLE
+        az login --use-device-code
+        Get-PSUAksWorkloadIdentityInventory
         Get-PSUAksWorkloadIdentityInventory -SubscriptionId "12345678-1234-1234-1234-123456789012"
+        
         Scans only the specified subscription.
 
     .EXAMPLE
+        az login --use-device-code
+        Get-PSUAksWorkloadIdentityInventory
         Get-PSUAksWorkloadIdentityInventory -SubscriptionId "12345678-1234-1234-1234-123456789012" -ClusterName "prod-aks-*"
+        
         Scans clusters matching the pattern in the specified subscription.
 
     .EXAMPLE
-        Get-PSUAksWorkloadIdentityInventory -ClusterName "dev-aks-01", "staging-aks-01" -ExportToCsv
-        Scans specific clusters and exports results to CSV.
+        az login --use-device-code
+        Get-PSUAksWorkloadIdentityInventory
+        Get-PSUAksWorkloadIdentityInventory -ClusterName "dev-aks-01", "staging-aks-01" -Export
+        
+        Scans specific clusters and exports results to Excel.
     #>
 
     [CmdletBinding()]
@@ -192,7 +203,6 @@ function Get-PSUAksWorkloadIdentityInventory {
 
             if ($Export) {
                 try {
-                    $data | Export-Csv -Path $OutputPath -NoTypeInformation -Force
                     $data | Export-PSUExcel -ExcelPath $OutputPath -AutoOpen -AutoFilter
                     Write-Host "Results exported to: $OutputPath" -ForegroundColor Green
                 } catch {
