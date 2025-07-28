@@ -1,4 +1,4 @@
-function Get-PSUGitChangeSummariesWithAI {
+function Get-PSUGitChangeSummariesAI {
     <#
     .SYNOPSIS
         Summarizes file-level changes between two Git branches using Google Gemini AI.
@@ -15,7 +15,7 @@ function Get-PSUGitChangeSummariesWithAI {
         The feature branch being merged. Defaults to 'feature/dev'.
 
     .EXAMPLE
-        Get-PSUGitChangeSummariesWithAI -BaseBranch main -FeatureBranch feature/login-ui
+        Get-PSUGitChangeSummariesAI -BaseBranch main -FeatureBranch feature/login-ui
 
     .NOTES
         Author: Lakshmanachari Panuganti
