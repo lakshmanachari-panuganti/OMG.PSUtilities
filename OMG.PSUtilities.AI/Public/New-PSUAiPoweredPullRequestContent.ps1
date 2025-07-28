@@ -1,29 +1,36 @@
 function New-PSUAiPoweredPullRequestContent {
     <#
     .SYNOPSIS
-    Generates a professional Pull Request (PR) title and description from AI-powered Git change summaries.
+        Uses Gemini AI to generate a professional Pull Request (PR) title and description from Git change summaries.
 
     .DESCRIPTION
-    This function takes input from `Get-PSUAiPoweredGitChangeSummary` via pipeline and builds a clear and concise PR title and description suitable for developers and DevOps engineers. It groups changes by type and summarizes affected files.
+        This function takes Git change summaries and uses the Gemini model (via Invoke-PSUPromptOnGeminiAi)
+        to produce a high-quality PR title and description written from a developer or DevOps perspective.
 
-    .PARAMETER ChangeSummaries
-    An array or pipeline input of Git file change summaries, each with properties: File, TypeOfChange, Summary.
+    .PARAMETER ChangeSummary
+        Input array or pipeline of Git file change summaries, with File, TypeOfChange, and Summary fields.
+
+    .PARAMETER ApiKey
+        Optional API key to pass to Gemini if needed.
 
     .OUTPUTS
-    [PSCustomObject] with 'Title' and 'Description' properties.
+        [PSCustomObject]
 
     .EXAMPLE
-    Get-PSUAiPoweredGitChangeSummary | New-PSUAiPoweredPullRequestContent
+        Get-PSUAiPoweredGitChangeSummary | New-PSUAiPoweredPullRequestContent -ApiKey $GeminiKey
 
     .NOTES
-    Author: Lakshmanachari Panuganti
-    Date  : 2025-07-28
+        Author: Lakshmanachari Panuganti
+        Date  : 2025-07-28
     #>
 
     [CmdletBinding()]
     param (
         [Parameter(Mandatory, ValueFromPipeline)]
-        [PSCustomObject[]] $ChangeSummaries
+        [PSCustomObject[]] $ChangeSummary,
+
+        [Parameter()]
+        [string] $ApiKey = $env:API_KEY_GEMINI
     )
 
     begin {
@@ -31,7 +38,7 @@ function New-PSUAiPoweredPullRequestContent {
     }
 
     process {
-        $allChanges += $ChangeSummaries
+        $allChanges += $ChangeSummary
     }
 
     end {
@@ -40,33 +47,44 @@ function New-PSUAiPoweredPullRequestContent {
             return
         }
 
-        $changeGroups = $allChanges | Group-Object TypeOfChange
+        # Convert summaries into a nice prompt for Gemini
+        $formattedChanges = ($allChanges | ForEach-Object {
+            "- File: `$($_.File)` | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
+        }) -join "`n"
 
-        $titleSegment = ($changeGroups | ForEach-Object {
-            "$($_.Name): $($_.Count)"
-        }) -join ", "
+        $prompt = @"
+You are a professional software engineer and DevOps expert.
+Given the following Git change summaries, generate a high-quality Pull Request title and a detailed, clear description suitable for code review.
 
-        $title = "Feature Update: $titleSegment"
+Use a professional tone, and ensure the description is helpful to both developers and reviewers.
 
-        $description = @()
-        $description += "### Summary of Changes"
-        foreach ($group in $changeGroups) {
-            $description += "`n**$($group.Name)**:"
-            foreach ($item in $group.Group) {
-                $description += "- `$($item.File)`: $($item.Summary)"
+### Git Change Summaries:
+$formattedChanges
+
+Respond in the following JSON format:
+{
+  "title": "<generated-title>",
+  "description": "<generated-description>"
+}
+"@.Trim()
+
+        # Call Gemini to generate PR content
+        $response = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ApiKey:$ApiKey -ReturnJsonResponse
+
+        # Try parsing the AI response as JSON
+        try {
+            $parsed = $response | ConvertFrom-Json -ErrorAction Stop
+            [PSCustomObject]@{
+                Title       = $parsed.title
+                Description = $parsed.description
             }
         }
-
-        $filesModified = ($allChanges.File | Sort-Object -Unique)
-        $fileListString = ($filesModified | ForEach-Object { "`"$($_)`"" }) -join ", "
-
-        $description += "`n---"
-        $description += "### Affected Files"
-        $description += $fileListString
-
-        [PSCustomObject]@{
-            Title       = $title
-            Description = ($description -join "`n")
+        catch {
+            Write-Warning "Failed to parse AI response as JSON. Raw output returned."
+            [PSCustomObject]@{
+                Title       = "PR Title (AI parsing failed)"
+                Description = $response
+            }
         }
     }
 }
