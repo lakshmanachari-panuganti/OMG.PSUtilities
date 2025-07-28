@@ -2,7 +2,7 @@
   <metadata>
     <name>OMG.PSUtilities.AzureCore</name>
     <id>3b9e052d-0931-4f80-9d61-761b2eeb0b65</id>
-    <version>1.0.2</version>
+    <version>1.0.3</version>
     <title>OMG.PSUtilities.AzureCore</title>
     <description>Core Azure-related scripting, including identity and subscription management.</description>
     <author>OMG IT Solutions</author>
