@@ -70,7 +70,7 @@ RequiredModules = @('OMG.PSUtilities.Core')
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Get-PSUGitChangeSummariesWithAI', 'Invoke-PSUPromptOnGeminiAi', 'Invoke-PSUPromptOnPerplexityAi', 'Start-PSUGeminiChat')
+FunctionsToExport = @('Get-PSUGitChangeSummariesAI', 'Invoke-PSUPromptOnGeminiAi', 'Invoke-PSUPromptOnPerplexityAi', 'Start-PSUGeminiChat')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'
