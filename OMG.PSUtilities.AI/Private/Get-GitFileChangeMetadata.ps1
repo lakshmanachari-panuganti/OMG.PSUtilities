@@ -1,4 +1,4 @@
-function Get-GitFileChangeMetadata {
+function Get-PSUGitFileChangeMetadata {
     <#
     .SYNOPSIS
     Gets metadata about file changes between two Git branches.

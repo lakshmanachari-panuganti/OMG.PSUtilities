@@ -48,7 +48,7 @@ function Get-PSUAiPoweredGitChangeSummary {
     $null = Invoke-SafeGitCheckout -TargetBranch $BaseBranch -ReturnToBranch $FeatureBranch
 
     # Fetch list of changed files and type of change
-    $gitChanges = Get-GitFileChangeMetadata -BaseBranch $BaseBranch -FeatureBranch $FeatureBranch
+    $gitChanges = Get-PSUGitFileChangeMetadata -BaseBranch $BaseBranch -FeatureBranch $FeatureBranch
 
 
     if (-not $gitChanges) {
