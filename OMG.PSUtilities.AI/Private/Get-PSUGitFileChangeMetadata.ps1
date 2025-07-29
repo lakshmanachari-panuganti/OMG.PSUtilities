@@ -33,7 +33,7 @@ function Get-PSUGitFileChangeMetadata {
 
         if ($status -match "^R(\d{3})") {
             $similarity = [int]$matches[1]
-            if ($similarity -ge 95) {
+            if ($similarity -ge 90) {
                 [PSCustomObject]@{
                     File         = "$($parts[1]) → $($parts[2])"
                     TypeOfChange = "Rename"
