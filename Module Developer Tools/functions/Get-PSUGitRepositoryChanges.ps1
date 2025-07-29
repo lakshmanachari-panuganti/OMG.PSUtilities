@@ -20,11 +20,9 @@ function Get-PSUGitRepositoryChanges {
 
     .EXAMPLE
         Get-PSUGitRepositoryChanges -RootPath "C:\repos\OMG.PSUtilities"
-        [PSCustomObject] containing:
-            - Name       : Name of the file or folder
-            - ItemType   : File, Folder, Removed, or Unknown
-            - ChangeType : Type of change detected (Modified, Added, Deleted, Renamed, New, etc.)
-            - Path       : Full path to the changed item
+
+    .EXAMPLE
+        Get-PSUGitRepositoryChanges -RootPath "C:\repos\OMG.PSUtilities" -UseAI
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -33,7 +31,8 @@ function Get-PSUGitRepositoryChanges {
 
     [CmdletBinding()]
     param (
-        [string]$RootPath = (Get-Location).Path
+        [string]$RootPath = (Get-Location).Path,
+        [switch]$UseAI
     )
 
     Push-Location $RootPath
@@ -44,8 +43,8 @@ function Get-PSUGitRepositoryChanges {
             $line = $line.Trim()
 
             $changeCode = $line.Split(' ')[0].Trim()
-            $path       = $line.Split(' ', 2)[1].Trim() -replace '"'
-            $fullPath   = Join-Path -Path $RootPath -ChildPath $path
+            $path = $line.Split(' ', 2)[1].Trim() -replace '"'
+            $fullPath = Join-Path -Path $RootPath -ChildPath $path
 
             $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
 
@@ -66,19 +65,44 @@ function Get-PSUGitRepositoryChanges {
                 Name       = Split-Path $path -Leaf
                 ItemType   = $itemType
                 ChangeType = switch ($changeCode) {
-                    'M'  { 'Modified' }
-                    'A'  { 'Added' }
-                    'D'  { 'Deleted' }
-                    'R'  { 'Renamed' }
-                    'C'  { 'Copied ' }
-                    'U'  { 'Unmerged' }
+                    'M' { 'Modified' }
+                    'A' { 'Added' }
+                    'D' { 'Deleted' }
+                    'R' { 'Renamed' }
+                    'C' { 'Copied ' }
+                    'U' { 'Unmerged' }
                     '??' { 'New' }
                     default { "Other: $changeCode" }
                 }
                 Path       = $fullPath
             }
         }
+        if ($UseAI) {
+            $prompt = @'
+You are a commit message generator with expertise in Git and DevOps.
 
+Based on the following list of file changes (from `git status --porcelain`),
+generate a concise, conventional commit message that follows this format:
+
+Type: Short summary
+
+Example types:
+- feat: for new features
+- fix: for bug fixes
+- refactor: for code cleanup or restructuring
+- docs: for documentation
+- chore: for general tasks
+
+Avoid paragraphs. Only return the commit message in the above format.
+Do not include explanations or context.
+
+Here are the changes:
+'@
+            $prompt += "`n" + ($changedItems | Out-String)
+
+            $changedItems = Invoke-PSUPromptOnGeminiAi -Prompt ($Prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
+            $changedItems | Set-Clipboard
+        }
         return $changedItems
     }
     Catch {

@@ -1,0 +1,21 @@
+Feature Example
+feat: Implement user profile page
+
+Adds a new user profile section where users can view and edit their
+personal information, including name, email, and password. Includes
+client-side validation for all input fields.
+-------------------------------------------
+Bug Fix Example
+fix: Resolve infinite loop in data fetching
+
+Corrects an issue where the data fetching mechanism would enter an
+infinite loop under specific error conditions, causing the application
+to freeze. Ensures proper error handling and retry logic.
+
+-------------------------------------------
+Refactoring Example
+refactor: Extract API calls into dedicated service
+
+Moves all data fetching logic from component files into a new `apiService.js`.
+This centralizes API interactions, improves code reusability, and makes
+components cleaner and easier to test.
