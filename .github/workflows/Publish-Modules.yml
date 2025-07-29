@@ -79,7 +79,7 @@ jobs:
                       $moduleRootPath = Split-Path -Parent $psd1Path
                       Publish-Module -Path $moduleRootPath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
                       $updatedModules += $module
-                      Write-Host "Published $module successfully!" -ForegroundColor Green
+                      Write-Host "=======> Published $module successfully!" -ForegroundColor Green
                   } catch {
                       Write-Warning "Failed to publish $module : $_"
                   }

@@ -28,8 +28,8 @@ function Get-PSUAiPoweredGitChangeSummary {
     #>
     [CmdletBinding()]
     param(
-        [string]$BaseBranch = "main",
-        [string]$FeatureBranch = "feature/dev",
+        [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
+        [string]$FeatureBranch = $(git branch --show-current),
         [string]$ApiKeyGemini = $env:API_KEY_GEMINI
     )
 
