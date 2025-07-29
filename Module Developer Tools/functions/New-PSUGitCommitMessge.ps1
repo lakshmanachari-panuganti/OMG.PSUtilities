@@ -1,38 +1,30 @@
-function Get-PSUGitRepositoryChanges {
+function New-PSUGitCommitMessge {
     <#
     .SYNOPSIS
-        Shows the specific modifications, additions, and deletions made in your Git working directory since the last commit.
+        Generates a conventional Git commit message based on uncommitted changes.
 
     .DESCRIPTION
-        This function gives you a super clear report for every change it finds.
-        For each change, it tells you the name of the file or folder.
-        It also says what kind of item it is (like a file, a folder, or if it's been removed).
-        Then, it explains how it changed – was it modified, added, deleted, or renamed?
-        Finally, it gives you the full location of that item, making everything easy to understand.
-
-        It is especially useful for automated module building, tagging, changelogs, and version control workflows.
+        This function leverages `git status --porcelain` to identify changed files (added, modified, deleted, renamed, copied, unmerged, or new). 
+        It then constructs a prompt using these changes and sends it to the Gemini AI to generate a concise, conventional commit message. 
+        The generated message is automatically copied to the clipboard and also returned as output.
 
     .PARAMETER RootPath
-        The root path of your Git repository. If not specified, it defaults to the current directory.
+        (Optional) Specifies the root directory of the Git repository to analyze.
+        Deffault is the current working directory.
 
+    .EXAMPLE 
+        New-PSUGitCommitMessge
+        
     .OUTPUTS
-        [PSCustomObject]
-
-    .EXAMPLE
-        Get-PSUGitRepositoryChanges -RootPath "C:\repos\OMG.PSUtilities"
-
-    .EXAMPLE
-        Get-PSUGitRepositoryChanges -RootPath "C:\repos\OMG.PSUtilities" -UseAI
+        [string]
 
     .NOTES
         Author: Lakshmanachari Panuganti
         Date  : 2025-07-16
     #>
-
     [CmdletBinding()]
     param (
-        [string]$RootPath = (Get-Location).Path,
-        [switch]$UseAI
+        [string]$RootPath = (Get-Location).Path
     )
 
     Push-Location $RootPath
@@ -77,8 +69,8 @@ function Get-PSUGitRepositoryChanges {
                 Path       = $fullPath
             }
         }
-        if ($UseAI) {
-            $prompt = @"
+
+        $prompt = @"
 You are a commit message generator with expertise in Git and DevOps.
 
 Based on the following list of file changes (from `git status --porcelain`),
@@ -118,12 +110,12 @@ Includes updates to React, Webpack, and various development tools to improve per
 
 Here are the changes:
 "@
-            $prompt += "`n" + ($changedItems | Out-String)
+        $prompt += "`n" + ($changedItems | Out-String)
 
-            $changedItems = Invoke-PSUPromptOnGeminiAi -Prompt ($Prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
-            $changedItems | Set-Clipboard
-        }
-        return $changedItems
+        $CommitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($Prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
+        $CommitMessage | Set-Clipboard
+        Return $CommitMessage
+        
     }
     Catch {
         Pop-Location

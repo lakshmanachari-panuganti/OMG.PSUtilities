@@ -1,0 +1,26 @@
+- Feature Example
+---------------
+feat: Implement user profile page! 
+Adds a new user profile section where users can view and edit their personal information, including name, email, and password. 
+Includes client-side validation for all input fields.
+
+- Bug Fix Example
+---------------
+fix: Resolve infinite loop in data fetching! 
+Corrects an issue where the data fetching mechanism would enter aninfinite loop under specific error conditions, causing the application to freeze. 
+Ensures proper error handling and retry logic.
+
+- Refactoring Example
+-------------------
+refactor: Extract API calls into dedicated service! Moves all data fetching logic from component files into a new `apiService.js`. 
+This centralizes API interactions, improves code reusability, and makescomponents cleaner and easier to test.
+
+- Documentation Example
+----------------------
+docs: Update README with setup instructions! 
+Adds a detailed section to the README.md file explaining how to set up the development environment, install dependencies, and run the project locally.
+
+- Chore/Maintenance Example
+--------------------------
+chore: Upgrade dependencies to latest versions! Updates all project dependencies to their most recent stable versions. 
+Includes updates to React, Webpack, and various development tools to improve performance and security.
