@@ -21,9 +21,6 @@ function Get-PSUGitRepositoryChanges {
     .EXAMPLE
         Get-PSUGitRepositoryChanges -RootPath "C:\repos\OMG.PSUtilities"
 
-    .EXAMPLE
-        Get-PSUGitRepositoryChanges -RootPath "C:\repos\OMG.PSUtilities" -UseAI
-
     .NOTES
         Author: Lakshmanachari Panuganti
         Date  : 2025-07-16
@@ -31,8 +28,7 @@ function Get-PSUGitRepositoryChanges {
 
     [CmdletBinding()]
     param (
-        [string]$RootPath = (Get-Location).Path,
-        [switch]$UseAI
+        [string]$RootPath = (Get-Location).Path
     )
 
     Push-Location $RootPath
@@ -76,52 +72,6 @@ function Get-PSUGitRepositoryChanges {
                 }
                 Path       = $fullPath
             }
-        }
-        if ($UseAI) {
-            $prompt = @"
-You are a commit message generator with expertise in Git and DevOps.
-
-Based on the following list of file changes (from `git status --porcelain`),
-generate a concise, conventional commit message that follows this format:
-
-Type: Short summary
-
-Example types:
-- Feature Example
----------------
-feat: Implement user profile page! 
-Adds a new user profile section where users can view and edit their personal information, including name, email, and password. 
-Includes client-side validation for all input fields.
-
-- Bug Fix Example
----------------
-fix: Resolve infinite loop in data fetching! 
-Corrects an issue where the data fetching mechanism would enter aninfinite loop under specific error conditions, causing the application to freeze. 
-Ensures proper error handling and retry logic.
-
-- Refactoring Example
--------------------
-refactor: Extract API calls into dedicated service! Moves all data fetching logic from component files into a new `apiService.js`. 
-This centralizes API interactions, improves code reusability, and makescomponents cleaner and easier to test.
-
-- Documentation Example
-----------------------
-docs: Update README with setup instructions! 
-Adds a detailed section to the README.md file explaining how to set up the development environment, install dependencies, and run the project locally.
-
-- Chore/Maintenance Example
---------------------------
-chore: Upgrade dependencies to latest versions! Updates all project dependencies to their most recent stable versions. 
-Includes updates to React, Webpack, and various development tools to improve performance and security.
-
---> should be very short in two or three lines
-
-Here are the changes:
-"@
-            $prompt += "`n" + ($changedItems | Out-String)
-
-            $changedItems = Invoke-PSUPromptOnGeminiAi -Prompt ($Prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
-            $changedItems | Set-Clipboard
         }
         return $changedItems
     }
