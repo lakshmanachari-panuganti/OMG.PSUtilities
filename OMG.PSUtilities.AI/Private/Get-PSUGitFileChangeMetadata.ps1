@@ -23,11 +23,8 @@ function Get-PSUGitFileChangeMetadata {
 
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory)]
-        [string]$BaseBranch,
-
-        [Parameter(Mandatory)]
-        [string]$FeatureBranch
+        [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
+        [string]$FeatureBranch = $(git branch --show-current)
     )
 
     git diff --name-status $BaseBranch $FeatureBranch | ForEach-Object {
