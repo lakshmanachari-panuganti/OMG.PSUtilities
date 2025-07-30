@@ -48,7 +48,7 @@ function Get-PSUAiPoweredGitChangeSummary {
     $null = Invoke-SafeGitCheckout -TargetBranch $BaseBranch -ReturnToBranch $FeatureBranch
 
     # Fetch list of changed files and type of change
-    $gitChanges = Get-GitFileChangeMetadata -BaseBranch $BaseBranch -FeatureBranch $FeatureBranch
+    $gitChanges = Get-PSUGitFileChangeMetadata -BaseBranch $BaseBranch -FeatureBranch $FeatureBranch
 
 
     if (-not $gitChanges) {
@@ -58,7 +58,7 @@ function Get-PSUAiPoweredGitChangeSummary {
 
     # Build prompt for Gemini summarization
     $prompt = @"
-You are a helpful assistant summarizing code changes. Analyze the following list of files and their diffs.
+You are a helpful assistant summarizing code changes with expert in understanding the response give by Git cmds. Analyze the following list of files and their diffs.
 For each file, return a JSON array element with:
 - File: file name
 - TypeOfChange: New/Modify/Delete
@@ -68,6 +68,7 @@ Respond with a pure JSON array only. Example:
 [
   {"File": "src/module/file1.ps1", "TypeOfChange": "New", "Summary": "Added logging for user authentication."},
   {"File": "scripts/util.ps1", "TypeOfChange": "Modify", "Summary": "Refactored parameter parsing logic."}
+  {"File": "scripts/util.ps1", "TypeOfChange": "Renamed", "Summary": "The <Old File Name> was fanamed to <New File Name, with so and so refactors>"}
 ]
 
 Here are the file-level diffs:
@@ -84,6 +85,9 @@ Here are the file-level diffs:
         }
 
         $prompt += "\n### File: $($item.File) [$($item.Type)]\n"
+        if($item.Comment){
+            $prompt +=  $item.Comment   
+        }
         $prompt += $diff
         $prompt += "\n"
     }

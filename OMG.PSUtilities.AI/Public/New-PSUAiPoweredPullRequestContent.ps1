@@ -74,10 +74,12 @@ Respond in the following JSON format:
         # Try parsing the AI response as JSON
         try {
             $parsed = $response | ConvertFrom-Json -ErrorAction Stop
-            [PSCustomObject]@{
+            $PRContent = [PSCustomObject]@{
                 Title       = $parsed.title
                 Description = $parsed.description
             }
+            ($parsed.Title +"`n`n" + $parsed.Description) | Out-String | Set-Clipboard
+            $PRContent
         }
         catch {
             Write-Warning "Failed to parse AI response as JSON. Raw output returned."

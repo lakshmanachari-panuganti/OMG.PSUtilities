@@ -20,11 +20,6 @@ function Get-PSUGitRepositoryChanges {
 
     .EXAMPLE
         Get-PSUGitRepositoryChanges -RootPath "C:\repos\OMG.PSUtilities"
-        [PSCustomObject] containing:
-            - Name       : Name of the file or folder
-            - ItemType   : File, Folder, Removed, or Unknown
-            - ChangeType : Type of change detected (Modified, Added, Deleted, Renamed, New, etc.)
-            - Path       : Full path to the changed item
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -44,8 +39,8 @@ function Get-PSUGitRepositoryChanges {
             $line = $line.Trim()
 
             $changeCode = $line.Split(' ')[0].Trim()
-            $path       = $line.Split(' ', 2)[1].Trim() -replace '"'
-            $fullPath   = Join-Path -Path $RootPath -ChildPath $path
+            $path = $line.Split(' ', 2)[1].Trim() -replace '"'
+            $fullPath = Join-Path -Path $RootPath -ChildPath $path
 
             $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
 
@@ -66,19 +61,18 @@ function Get-PSUGitRepositoryChanges {
                 Name       = Split-Path $path -Leaf
                 ItemType   = $itemType
                 ChangeType = switch ($changeCode) {
-                    'M'  { 'Modified' }
-                    'A'  { 'Added' }
-                    'D'  { 'Deleted' }
-                    'R'  { 'Renamed' }
-                    'C'  { 'Copied ' }
-                    'U'  { 'Unmerged' }
+                    'M' { 'Modified' }
+                    'A' { 'Added' }
+                    'D' { 'Deleted' }
+                    'R' { 'Renamed' }
+                    'C' { 'Copied ' }
+                    'U' { 'Unmerged' }
                     '??' { 'New' }
                     default { "Other: $changeCode" }
                 }
                 Path       = $fullPath
             }
         }
-
         return $changedItems
     }
     Catch {
