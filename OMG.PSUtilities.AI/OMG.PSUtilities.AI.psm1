@@ -22,6 +22,7 @@ $PublicFunctions = @(
     'Invoke-PSUPromptOnGeminiAi'
     'Invoke-PSUPromptOnPerplexityAi'
     'New-PSUAiPoweredPullRequestContent'
+    'New-PSUGitCommitMessge'
     'Start-PSUGeminiChat'
 )
 

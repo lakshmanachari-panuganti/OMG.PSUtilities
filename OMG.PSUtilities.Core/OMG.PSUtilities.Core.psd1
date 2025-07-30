@@ -71,7 +71,7 @@ RequiredModules = @(
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Export-PSUExcel', 'Find-PSUFilesContainingText', 'Get-PSUConnectedWifiInfo', 'Get-PSUFunctionCommentBasedHelp', 'Get-PSUGitRepositoryChanges', 'Get-PSUInstalledSoftware', 'Get-PSUUserEnvironmentVariable', 'Get-PSUUserSession', 'New-PSUHTMLReport', 'Remove-PSUUserEnvironmentVariable', 'Remove-PSUUserSession', 'Send-PSUHTMLReport', 'Send-PSUTeamsMessage', 'Set-PSUUserEnvironmentVariable', 'Test-PSUInternetConnection', 'Uninstall-PSUInstalledSoftware')
+FunctionsToExport = @('Export-PSUExcel', 'Find-PSUFilesContainingText', 'Get-PSUConnectedWifiInfo', 'Get-PSUFunctionCommentBasedHelp', 'Get-PSUGitFileChangeMetadata', 'Get-PSUInstalledSoftware', 'Get-PSUUserEnvironmentVariable', 'Get-PSUUserSession', 'New-PSUHTMLReport', 'Remove-PSUUserEnvironmentVariable', 'Remove-PSUUserSession', 'Send-PSUHTMLReport', 'Send-PSUTeamsMessage', 'Set-PSUUserEnvironmentVariable', 'Test-PSUInternetConnection', 'Uninstall-PSUInstalledSoftware')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = '*'

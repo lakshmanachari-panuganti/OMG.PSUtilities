@@ -22,7 +22,7 @@ $PublicFunctions = @(
     'Find-PSUFilesContainingText'
     'Get-PSUConnectedWifiInfo'
     'Get-PSUFunctionCommentBasedHelp'
-    'Get-PSUGitRepositoryChanges'
+    'Get-PSUGitFileChangeMetadata'
     'Get-PSUInstalledSoftware'
     'Get-PSUUserEnvironmentVariable'
     'Get-PSUUserSession'
