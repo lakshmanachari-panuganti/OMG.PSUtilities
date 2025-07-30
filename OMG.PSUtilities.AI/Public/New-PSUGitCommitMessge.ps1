@@ -70,6 +70,25 @@ function New-PSUGitCommitMessge {
             }
         }
 
+        $FileChanges = $changedItems | ForEach-Object{
+            $item = $_
+            $status = $item.ChangeType
+            $Path = $item.Path
+            $itemType = $item.ItemType
+            $diff = switch ($status) {
+                'Modified'   { git diff -- "$Path" }
+                'New'  { if($itemType -eq 'File') {Get-Content -Path $Path }}
+                default { "" }
+            }
+
+            [PSCustomObject]@{
+                Path   = $Path
+                ItemType = $itemType
+                Status = $status
+                Diff   = $diff -join "`n"
+            }
+        }
+
         $prompt = @"
 You are a commit message generator with expertise in Git and DevOps.
 
@@ -110,9 +129,19 @@ Includes updates to React, Webpack, and various development tools to improve per
 
 Here are the changes:
 "@
-        $prompt += "`n" + ($changedItems | Out-String)
+        
 
-        $CommitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($Prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
+        foreach ($item in $fileChanges) {
+        $prompt += @"
+### File: $($item.File)
+Change Type: $($item.Status)
+Full Path: $($item.Path)
+```diff
+$($item.Diff)
+"@
+}
+
+        $CommitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt| Out-String) -ApiKey $env:API_KEY_GEMINI
         $CommitMessage | Set-Clipboard
         Return $CommitMessage
         

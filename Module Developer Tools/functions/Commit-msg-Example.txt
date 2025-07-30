@@ -24,3 +24,33 @@ Adds a detailed section to the README.md file explaining how to set up the devel
 --------------------------
 chore: Upgrade dependencies to latest versions! Updates all project dependencies to their most recent stable versions. 
 Includes updates to React, Webpack, and various development tools to improve performance and security.
+
+- Test Example
+test: Add unit tests for login component!
+Adds comprehensive unit tests for the login component using Jest and React Testing Library.
+Covers input validation, form submission, and error message rendering to ensure robustness.
+
+- Style Example
+style: Format code using Prettier rules!
+Applies consistent formatting across the codebase using Prettier configuration.
+Includes spacing, indentation, and quote style changes—no functional changes made.
+
+- Performance Improvement Example
+perf: Optimize image loading with lazy loading!
+Implements lazy loading for images in the homepage carousel.
+Improves initial page load time and reduces unnecessary resource usage.
+
+- CI/CD Example
+ci: Add GitHub Actions workflow for testing!
+Introduces a CI workflow that runs tests on every pull request using GitHub Actions.
+Ensures automated quality checks before code is merged into the main branch.
+
+- Build Example
+build: Configure Webpack for production build!
+Sets up Webpack production mode with minification and code splitting.
+Reduces final bundle size and improves application load performance.
+
+- Revert Example
+revert: Revert "feat: Add dark mode support"
+Reverts the previous commit that introduced dark mode due to breaking layout issues on smaller screens.
+Will re-implement after proper responsive testing.
