@@ -31,6 +31,11 @@ function New-PSUGitCommitMessge {
     try {
         $gitOutput = git status --porcelain
 
+        if ($null -eq $gitOutput) {
+            Write-Host "No uncommited changes found" -ForegroundColor Green
+            Continue
+        }
+        
         $changedItems = foreach ($line in $gitOutput) {
             $line = $line.Trim()
 
@@ -70,22 +75,22 @@ function New-PSUGitCommitMessge {
             }
         }
 
-        $FileChanges = $changedItems | ForEach-Object{
+        $FileChanges = $changedItems | ForEach-Object {
             $item = $_
             $status = $item.ChangeType
             $Path = $item.Path
             $itemType = $item.ItemType
             $diff = switch ($status) {
-                'Modified'   { git diff -- "$Path" }
-                'New'  { if($itemType -eq 'File') {Get-Content -Path $Path }}
+                'Modified' { git diff -- "$Path" }
+                'New' { if ($itemType -eq 'File') { Get-Content -Path $Path } }
                 default { "" }
             }
 
             [PSCustomObject]@{
-                Path   = $Path
+                Path     = $Path
                 ItemType = $itemType
-                Status = $status
-                Diff   = $diff -join "`n"
+                Status   = $status
+                Diff     = $diff -join "`n"
             }
         }
 
@@ -132,16 +137,16 @@ Here are the changes:
         
 
         foreach ($item in $fileChanges) {
-        $prompt += @"
+            $prompt += @"
 ### File: $($item.File)
 Change Type: $($item.Status)
 Full Path: $($item.Path)
 ```diff
 $($item.Diff)
 "@
-}
+        }
 
-        $CommitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt| Out-String) -ApiKey $env:API_KEY_GEMINI
+        $CommitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
         $CommitMessage | Set-Clipboard
         Return $CommitMessage
         
