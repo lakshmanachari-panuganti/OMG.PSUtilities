@@ -52,6 +52,10 @@ function New-PSUAiPoweredPullRequest {
             "- File: `$($_.File)` | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
         }) -join "`n"
 
+    if($PullRequestTemplate ){
+        $PRTemplateStatement = "Try to accomodate the description in the following Pull Request template" + $PullRequestTemplate| out-string
+    }
+
     $prompt = @"
 You are a professional software engineer and DevOps expert.
 Given the following Git change summaries, generate a high-quality Pull Request title and a detailed, clear description suitable for code review.
@@ -61,7 +65,7 @@ Use a professional tone, and ensure the description is helpful to both developer
 ### Git Change Summaries:
 $formattedChanges
 
-Finally remove any duplicate data in description and respond in the following JSON format:
+Finally remove any duplicate data in description $PRTemplateStatement and respond in the following JSON format:
 {
   "title": "<generated-title>",
   "description": "<generated-description>"
@@ -74,17 +78,19 @@ Finally remove any duplicate data in description and respond in the following JS
     # Try parsing the AI response as JSON
     try {
         $parsed = $response | ConvertFrom-Json -ErrorAction Stop
-        $PRContent = [PSCustomObject]@{
-            Title       = $parsed.title
-            Description = $parsed.description
-        }
+        #$PRContent = [PSCustomObject]@{
+        #    Title       = $parsed.title
+        #    Description = $parsed.description
+        #}
         ($parsed.Title + "`n`n" + $parsed.Description) | Out-String | Set-Clipboard
-        $PRContent
+
+        Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
+        
         #TODO: write the code to submit PR:
         #Logic to get the Base branch -like refs/heads/main
         #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
-        Invoke-PSUPullRequestCreation
-
+        #Invoke-PSUPullRequestCreation
+        
     }
     catch {
         Write-Warning "Failed to parse AI response as JSON. Raw output returned."
