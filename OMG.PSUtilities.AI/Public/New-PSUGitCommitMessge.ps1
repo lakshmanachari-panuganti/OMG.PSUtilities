@@ -127,10 +127,6 @@ $($item.Diff)
             # Stage and commit
             git add . *> $null
             git commit -m "$commitMessage" *> $null
-
-            Write-Host "Committed with message:" -ForegroundColor Cyan
-            Write-Host "`"$commitMessage`"" -ForegroundColor Yellow
-
             # Sync with remote
             Write-Host "`⇅ Syncing with remote..." -ForegroundColor Cyan
             git pull --rebase *> $null
