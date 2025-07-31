@@ -94,7 +94,6 @@ $PRTemplateStatement
         #    Title       = $parsed.title
         #    Description = $parsed.description
         #}
-        ($parsed.Title + "`n`n" + $parsed.Description) | Out-String | Set-Clipboard
 
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
         
