@@ -40,15 +40,15 @@ function New-PSUAiPoweredPullRequest {
     )
 
 
-    $allChanges = Get-PSUAiPoweredGitChangeSummary -BaseBranch $BaseBranch -FeatureBranch $FeatureBranch -ApiKeyGemini $ApiKey
+    $ChangeSummary = Get-PSUAiPoweredGitChangeSummary
 
-    if (-not $allChanges) {
+    if (-not $ChangeSummary) {
         Write-Warning "No changes found "
         return
     }
 
     # Convert summaries into a nice prompt for Gemini
-    $formattedChanges = ($allChanges | ForEach-Object {
+    $formattedChanges = ($ChangeSummary | ForEach-Object {
             "- File: `$($_.File)` | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
         }) -join "`n"
 
@@ -83,7 +83,8 @@ Finally remove any duplicate data in description and respond in the following JS
         #TODO: write the code to submit PR:
         #Logic to get the Base branch -like refs/heads/main
         #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
-        Invoke-PSUPullRequestCreation    
+        Invoke-PSUPullRequestCreation
+
     }
     catch {
         Write-Warning "Failed to parse AI response as JSON. Raw output returned."
