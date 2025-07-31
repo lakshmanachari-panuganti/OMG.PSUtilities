@@ -1,4 +1,4 @@
-function New-PSUAiPoweredPullRequest {
+#function New-PSUAiPoweredPullRequest {
     <#
     .SYNOPSIS
         Uses Gemini AI to generate a professional Pull Request (PR) title and description from Git change summaries.
@@ -33,14 +33,14 @@ function New-PSUAiPoweredPullRequest {
         [string]$FeatureBranch = $(git branch --show-current),
 
         [Parameter()]
-        $PullRequestTemplate,
+        $PullRequestTemplate = "C:\Temp\PRTemplate.txt",
 
         [Parameter()]
         [string] $ApiKey = $env:API_KEY_GEMINI
     )
 
 
-    $ChangeSummary = Get-PSUAiPoweredGitChangeSummary
+    $ChangeSummary = Get-PSUAiPoweredGitChangeSummary -ApiKeyGemini $ApiKey
 
     if (-not $ChangeSummary) {
         Write-Warning "No changes found "
@@ -52,10 +52,20 @@ function New-PSUAiPoweredPullRequest {
             "- File: `$($_.File)` | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
         }) -join "`n"
 
-    if($PullRequestTemplate ){
-        $PRTemplateStatement = "Please try to fit the description into the following Pull Request template: " + $PullRequestTemplate + " Do not modify the template structure or checklists—only update the description thoughtfully." | Out-String
+    $PRTemplateContent = Get-Content -Path $PullRequestTemplate | Out-String
 
-    }
+    $PRTemplateStatement = @(
+        "NOTE: Please follow the Pull Request template guidelines below carefully:",
+        "",
+        $PRTemplateContent,
+        "",
+        "DO NOT modify the template structure.",
+        "DO NOT change the checklists or their wording.",
+        "Update the checklists by marking the correct [X] where applicable.",
+        "DO NOT alter anything that impacts organizational standards.",
+        "ONLY update the DESCRIPTION section thoughtfully and clearly."
+    )
+
 
     $prompt = @"
 You are a professional software engineer and DevOps expert.
@@ -66,15 +76,16 @@ Use a professional tone, and ensure the description is helpful to both developer
 ### Git Change Summaries:
 $formattedChanges
 
-Finally remove any duplicate data in description $PRTemplateStatement and respond in the following JSON format:
+Finally remove any duplicate data in description and respond in the following JSON format:
 {
   "title": "<generated-title>",
   "description": "<generated-description>"
 }
+$PRTemplateStatement 
 "@.Trim()
 
     # Call Gemini to generate PR content
-    $response = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ApiKey:$ApiKey -ReturnJsonResponse
+    $response = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ReturnJsonResponse
 
     # Try parsing the AI response as JSON
     try {
@@ -101,4 +112,4 @@ Finally remove any duplicate data in description $PRTemplateStatement and respon
         }
     }
     
-}
+#}
