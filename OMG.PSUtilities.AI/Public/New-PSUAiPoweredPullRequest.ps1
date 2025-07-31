@@ -53,7 +53,8 @@ function New-PSUAiPoweredPullRequest {
         }) -join "`n"
 
     if($PullRequestTemplate ){
-        $PRTemplateStatement = "Try to accomodate the description in the following Pull Request template" + $PullRequestTemplate| out-string
+        $PRTemplateStatement = "Please try to fit the description into the following Pull Request template: " + $PullRequestTemplate + " Do not modify the template structure or checklists—only update the description thoughtfully." | Out-String
+
     }
 
     $prompt = @"
