@@ -21,7 +21,7 @@ $PublicFunctions = @(
     'Get-PSUAiPoweredGitChangeSummary'
     'Invoke-PSUPromptOnGeminiAi'
     'Invoke-PSUPromptOnPerplexityAi'
-    'New-PSUAiPoweredPullRequestContent'
+    'New-PSUAiPoweredPullRequest'
     'New-PSUGitCommitMessge'
     'Start-PSUGeminiChat'
 )

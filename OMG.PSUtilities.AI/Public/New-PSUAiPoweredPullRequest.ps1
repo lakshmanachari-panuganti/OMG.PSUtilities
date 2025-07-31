@@ -60,7 +60,7 @@ function New-PSUAiPoweredPullRequest {
 You are a professional software engineer and DevOps expert.
 Given the following Git change summaries, generate a high-quality Pull Request title and a detailed, clear description suitable for code review.
 
-Use a professional tone, and ensure the description is helpful to both developers and reviewers.
+Use a professional tone, and ensure the description is helpful to both developers, reviewers and should be in human writing style.
 
 ### Git Change Summaries:
 $formattedChanges
@@ -90,7 +90,7 @@ Finally remove any duplicate data in description $PRTemplateStatement and respon
         #Logic to get the Base branch -like refs/heads/main
         #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
         #Invoke-PSUPullRequestCreation
-        
+
     }
     catch {
         Write-Warning "Failed to parse AI response as JSON. Raw output returned."
