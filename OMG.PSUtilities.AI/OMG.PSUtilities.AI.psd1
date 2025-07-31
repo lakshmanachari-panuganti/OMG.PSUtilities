@@ -33,7 +33,7 @@ Copyright = '(c) Lakshmanachari Panuganti. All rights reserved.'
 Description = 'AI-powered scripting tools, including chat, summarization, and generation.'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '5.1'
+PowerShellVersion = '7.4'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
