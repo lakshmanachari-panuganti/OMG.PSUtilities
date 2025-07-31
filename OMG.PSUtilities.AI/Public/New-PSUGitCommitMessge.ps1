@@ -1,26 +1,45 @@
 function New-PSUGitCommitMessge {
     <#
     .SYNOPSIS
-        Generates a conventional Git commit message based on uncommitted changes.
+        Generates and commits a conventional Git commit message using Gemini AI.
 
     .DESCRIPTION
-        This function leverages `git status --porcelain` to identify changed files (added, modified, deleted, renamed, copied, unmerged, or new). 
-        It then constructs a prompt using these changes and sends it to the Gemini AI to generate a concise, conventional commit message. 
-        The generated message is automatically copied to the clipboard and also returned as output.
+        This function analyzes uncommitted changes in a Git repository using `git status --porcelain` and optionally `git diff`.
+        It prepares a structured prompt summarizing these changes and sends it to Gemini AI (via `Invoke-PSUPromptOnGeminiAi`)
+        to generate a short, conventional commit message (e.g., feat:, fix:, refactor:, etc.).
+
+        The generated commit message is:
+        - Copied to clipboard
+        - Returned to the user
+        - Used to commit all staged changes
 
     .PARAMETER RootPath
-        (Optional) Specifies the root directory of the Git repository to analyze.
-        Deffault is the current working directory.
+        Optional. The root path of the Git repository to analyze.
+        Defaults to the current working directory.
 
-    .EXAMPLE 
+    .EXAMPLE
         New-PSUGitCommitMessge
-        
+
+        Prompts Gemini AI to generate and commit a message for uncommitted changes in the current Git repository.
+
+    .EXAMPLE
+        New-PSUGitCommitMessge -RootPath "C:\Projects\MyRepo"
+
+        Runs the commit message generator and commit process for the specified Git repository.
+
     .OUTPUTS
-        [string]
+        System.String
 
     .NOTES
         Author: Lakshmanachari Panuganti
         Date  : 2025-07-16
+        Requires:
+            - Git CLI
+            - Google Gemini API key in $env:API_KEY_GEMINI
+            - Custom function Invoke-PSUPromptOnGeminiAi
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti
     #>
     [CmdletBinding()]
     param (
