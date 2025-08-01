@@ -106,13 +106,28 @@ function Get-PSUADOPullRequestInventory {
             # Match project patterns and deduplicate
             Write-Verbose "Filtering projects with patterns: $($Project -join ', ')"
             $matchedProjects = @()
+            
+            # Debug: Check for projects with null/empty names
+            $emptyNameProjects = $projectsResponse.value | Where-Object { -not $_.name -or $_.name.Trim() -eq '' }
+            if ($emptyNameProjects) {
+                Write-Warning "Found $($emptyNameProjects.Count) projects with empty names. These will be skipped."
+                foreach ($emptyProj in $emptyNameProjects) {
+                    Write-Verbose "Skipping project with empty name - ID: $($emptyProj.id), State: $($emptyProj.state)"
+                }
+            }
+            
             foreach ($pattern in $Project) {
                 $matchedProjects += $projectsResponse.value | Where-Object { 
-                    $_.name -and $_.name.Trim() -ne '' -and $_.name -like $pattern 
+                    $_.name -and 
+                    $_.name.Trim() -ne '' -and 
+                    $_.name -like $pattern -and
+                    $_.state -eq 'wellFormed'
                 }
             }
             
             $filteredProjects = $matchedProjects | Sort-Object id -Unique
+            
+            Write-Verbose "After filtering: $($filteredProjects.Count) projects remain"
 
             if (-not $filteredProjects) {
                 Write-Warning "No matching projects found for patterns: $($Project -join ', ')"
@@ -127,34 +142,43 @@ function Get-PSUADOPullRequestInventory {
             $projectRepoData = @{}
             
             foreach ($project in $filteredProjects) {
-                # Skip projects with empty or null names
-                if (-not $project.name -or $project.name.Trim() -eq '') {
-                    Write-Warning "Skipping project with empty name (ID: $($project.id))"
+                # Double-check project name safety
+                if (-not $project -or -not $project.name -or $project.name.Trim() -eq '') {
+                    Write-Warning "Skipping invalid project object during repository counting"
                     continue
                 }
 
                 $projectName = $project.name.Trim()
-                $escapedProject = [uri]::EscapeDataString($projectName)
-                $reposUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
+                Write-Verbose "Processing project: '$projectName' (ID: $($project.id))"
                 
                 try {
+                    $escapedProject = [uri]::EscapeDataString($projectName)
+                    $reposUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
+                    
                     $reposResponse = Invoke-RestMethod -Uri $reposUri -Headers $headers -Method Get -ErrorAction Stop
                     $repoCount = if ($reposResponse.value) { $reposResponse.value.Count } else { 0 }
                     
-                    $projectRepoData[$projectName] = @{
+                    # Use a safe key for the hashtable
+                    $safeKey = if ($projectName) { $projectName } else { "Unknown_$($project.id)" }
+                    
+                    $projectRepoData[$safeKey] = @{
                         Count = $repoCount
                         Repositories = if ($reposResponse.value) { $reposResponse.value } else { @() }
                         ProjectObject = $project
+                        ProjectName = $projectName
                     }
                     $totalRepos += $repoCount
                     Write-Verbose "Project '$projectName': $repoCount repositories"
                 }
                 catch {
                     Write-Warning "Failed to get repositories for project '$projectName': $($_.Exception.Message)"
-                    $projectRepoData[$projectName] = @{
+                    $safeKey = if ($projectName) { $projectName } else { "Error_$($project.id)" }
+                    
+                    $projectRepoData[$safeKey] = @{
                         Count = 0
                         Repositories = @()
                         ProjectObject = $project
+                        ProjectName = $projectName
                     }
                 }
             }
@@ -168,9 +192,16 @@ function Get-PSUADOPullRequestInventory {
 
             # Process each project and repository
             $processedRepos = 0
-            foreach ($projectName in $projectRepoData.Keys) {
-                $projectData = $projectRepoData[$projectName]
+            foreach ($projectKey in $projectRepoData.Keys) {
+                $projectData = $projectRepoData[$projectKey]
+                $projectName = $projectData.ProjectName
                 $projectRepos = $projectData.Repositories
+                
+                # Skip if project name is still invalid
+                if (-not $projectName -or $projectName.Trim() -eq '') {
+                    Write-Warning "Skipping project with invalid name (Key: $projectKey)"
+                    continue
+                }
                 
                 if ($projectRepos.Count -eq 0) {
                     Write-Verbose "Skipping project '$projectName' - no repositories found"
@@ -181,8 +212,9 @@ function Get-PSUADOPullRequestInventory {
 
                 foreach ($repo in $projectRepos) {
                     # Skip repositories with empty names
-                    if (-not $repo.name -or $repo.name.Trim() -eq '') {
+                    if (-not $repo -or -not $repo.name -or $repo.name.Trim() -eq '') {
                         Write-Warning "Skipping repository with empty name in project '$projectName'"
+                        $processedRepos++  # Still increment to keep count accurate
                         continue
                     }
 
