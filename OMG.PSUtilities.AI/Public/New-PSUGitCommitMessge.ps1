@@ -114,26 +114,27 @@ Change Type: $($item.Status)
 ```diff
 $($item.Diff)
 "@
-            $commitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
-            $commitMessage = $commitMessage.Trim() | where-object { $_ }
-
-            Write-Host "Following is the Commit message!" -ForegroundColor Cyan
-            Write-Host $CommitMessage -ForegroundColor DarkYellow
-            $CustomCommitMsg = Read-Host "Press enter to commit with this message or provide your own commit message"
-        
-            if ($CustomCommitMsg) {
-                $commitMessage = $CustomCommitMsg
-            }
-            # Stage and commit
-            git add . *> $null
-            git commit -m "$commitMessage" *> $null
-            # Sync with remote
-            Write-Host "`⇅ Syncing with remote..." -ForegroundColor Cyan
-            git pull --rebase *> $null
-            git push *> $null
-
-            Write-Host "Sync complete." -ForegroundColor Green
         }
+        $commitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
+        $commitMessage = $commitMessage.Trim() | where-object { $_ }
+
+        Write-Host "Following is the Commit message!" -ForegroundColor Cyan
+        Write-Host $CommitMessage -ForegroundColor DarkYellow
+        $CustomCommitMsg = Read-Host "Press enter to commit with this message or provide your own commit message"
+        
+        if ($CustomCommitMsg) {
+            $commitMessage = $CustomCommitMsg
+        }
+        # Stage and commit
+        git add . *> $null
+        git commit -m "$commitMessage" *> $null
+        # Sync with remote
+        Write-Host "`⇅ Syncing with remote..." -ForegroundColor Cyan
+        git pull --rebase *> $null
+        git push *> $null
+
+        Write-Host "Sync complete." -ForegroundColor Green
+        
     }
     catch {
         Write-Error "Error: $_"
