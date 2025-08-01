@@ -22,14 +22,24 @@ function Get-PSUADOPullRequestInventory {
     .PARAMETER ThrottleLimit
         Max number of parallel threads. Default: 20.
 
+    .PARAMETER TimeoutMinutes
+        Timeout in minutes for job completion. Default: 10.
+
+    .PARAMETER WhatIf
+        Shows what would be processed without actually executing.
+
     .OUTPUTS
         [PSCustomObject[]]
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter()]
         [ValidateNotNullOrEmpty()]
+        [ValidateScript({
+            if ($_ -match '^[a-zA-Z0-9-_]+$') { return $true }
+            throw "Organization name contains invalid characters. Use only letters, numbers, hyphens, and underscores."
+        })]
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
@@ -38,24 +48,42 @@ function Get-PSUADOPullRequestInventory {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string[]]$Project = @('Technical Services'),
+        [string[]]$Project = @('*'),
 
         [Parameter()]
+        [ValidateScript({
+            $ext = [IO.Path]::GetExtension($_).ToLower()
+            if ($ext -notin @('.csv', '.json', '.xml')) {
+                throw "OutputFilePath must have .csv, .json, or .xml extension"
+            }
+            return $true
+        })]
         [string]$OutputFilePath,
 
         [Parameter()]
-        [int]$ThrottleLimit = 20
+        [ValidateRange(1, 50)]
+        [int]$ThrottleLimit = 20,
+
+        [Parameter()]
+        [ValidateRange(1, 60)]
+        [int]$TimeoutMinutes = 10
     )
 
-
     begin {
-        Write-Verbose "Starting pull request inventory for organization: $Organization"
+        Write-Verbose "Initializing Azure DevOps pull request inventory..."
 
-        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
+        # Validate required parameters
+        if ([string]::IsNullOrWhiteSpace($Organization)) {
+            throw "Organization parameter is required. Set via parameter or ORGANIZATION environment variable."
+        }
+        if ([string]::IsNullOrWhiteSpace($PAT)) {
+            throw "PAT parameter is required. Set via parameter or PAT environment variable."
+        }
+
+        $authToken = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
         $headers = @{
-            Authorization  = "Basic $base64AuthInfo"
-            "Content-Type" = "application/json"
-            Accept         = "application/json"
+            Authorization = "Basic $authToken"
+            Accept        = "application/json"
         }
 
         $pullRequests = [System.Collections.Concurrent.ConcurrentBag[object]]::new()
@@ -64,42 +92,119 @@ function Get-PSUADOPullRequestInventory {
 
     process {
         try {
-            # Get projects
+            # Get all projects
+            Write-Verbose "Fetching projects from organization: $Organization"
             $projectsUri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
-            $projectsResponse = Invoke-RestMethod -Uri $projectsUri -Headers $headers -Method Get -ErrorAction Stop
-
-            $filteredProjects = foreach ($pattern in $Project) {
-                $projectsResponse.value | Where-Object { $_.name -like $pattern} 
+            
+            if ($PSCmdlet.ShouldProcess("$Organization", "Fetch project list")) {
+                $projectsResponse = Invoke-RestMethod -Uri $projectsUri -Headers $headers -Method Get -ErrorAction Stop
+            } else {
+                Write-Host "WhatIf: Would fetch projects from $projectsUri"
+                return
             }
 
-                if (-not $filteredProjects) {
-                    Write-Warning "No matching projects found."
-                    return
+            # Match project patterns and deduplicate
+            Write-Verbose "Filtering projects with patterns: $($Project -join ', ')"
+            $matchedProjects = @()
+            foreach ($pattern in $Project) {
+                $matchedProjects += $projectsResponse.value | Where-Object { $_.name -like $pattern }
+            }
+            
+            $filteredProjects = $matchedProjects | Sort-Object id -Unique
+
+            if (-not $filteredProjects) {
+                Write-Warning "No matching projects found for patterns: $($Project -join ', ')"
+                return @()
+            }
+
+            Write-Host "Found $($filteredProjects.Count) matching projects" -ForegroundColor Green
+
+            # Count total repositories for progress tracking
+            Write-Verbose "Calculating total repositories across $($filteredProjects.Count) projects..."
+            $totalRepos = 0
+            $projectRepoData = @{}
+            
+            foreach ($project in $filteredProjects) {
+                $escapedProject = [uri]::EscapeDataString($project.name)
+                $reposUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
+                
+                try {
+                    $reposResponse = Invoke-RestMethod -Uri $reposUri -Headers $headers -Method Get -ErrorAction Stop
+                    $repoCount = $reposResponse.value.Count
+                    $projectRepoData[$project.name] = @{
+                        Count = $repoCount
+                        Repositories = $reposResponse.value
+                    }
+                    $totalRepos += $repoCount
+                    Write-Verbose "Project '$($project.name)': $repoCount repositories"
+                }
+                catch {
+                    Write-Warning "Failed to get repositories for project '$($project.name)': $($_.Exception.Message)"
+                    $projectRepoData[$project.name] = @{
+                        Count = 0
+                        Repositories = @()
+                    }
+                }
+            }
+            
+            Write-Host "Total repositories to process: $totalRepos across $($filteredProjects.Count) projects" -ForegroundColor Green
+
+            if ($totalRepos -eq 0) {
+                Write-Warning "No repositories found in any projects."
+                return @()
+            }
+
+            # Process each project and repository
+            $processedRepos = 0
+            foreach ($project in $filteredProjects) {
+                $projectRepos = $projectRepoData[$project.name].Repositories
+                if ($projectRepos.Count -eq 0) {
+                    Write-Verbose "Skipping project '$($project.name)' - no repositories found"
+                    continue
                 }
 
-                foreach ($project in $filteredProjects) {
-                    $escapedProject = [uri]::EscapeDataString($project.name)
-                    $reposUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
-                    $reposResponse = Invoke-RestMethod -Uri $reposUri -Headers $headers -Method Get -ErrorAction Stop
+                Write-Host "`nProcessing project: '$($project.name)' ($($projectRepos.Count) repositories)" -ForegroundColor Yellow
 
-                    foreach ($repo in $reposResponse.value) {
-                        # Throttle jobs
-                        while ((Get-Job -State Running | Measure-Object).Count -ge $ThrottleLimit) {
-                            Start-Sleep -Seconds 1
-                        }
+                foreach ($repo in $projectRepos) {
+                    # Throttle jobs
+                    while ((Get-Job -State Running).Count -ge $ThrottleLimit) {
+                        Start-Sleep -Milliseconds 500
+                    }
+
+                    # Update progress
+                    $processedRepos++
+                    $progressParams = @{
+                        Activity        = "Processing Azure DevOps Repositories"
+                        Status          = "Repository '$($repo.name)' in project '$($project.name)' ($processedRepos of $totalRepos)"
+                        PercentComplete = if ($totalRepos -gt 0) { [math]::Min(100, ($processedRepos / $totalRepos) * 100) } else { 0 }
+                    }
+                    Write-Progress @progressParams
+
+                    if ($PSCmdlet.ShouldProcess("$($project.name)/$($repo.name)", "Fetch pull requests")) {
+                        Write-Host "  Processing repository '$($repo.name)' [$processedRepos/$totalRepos]" -ForegroundColor Cyan
 
                         $job = Start-ThreadJob -ScriptBlock {
                             param (
-                                $org, $projName, $escapedProj, $repoId, $repoName, $authHeaders
+                                $org, $projName, $repoId, $repoName, $token
                             )
+                            
+                            $localHeaders = @{
+                                Authorization = "Basic $token"
+                                Accept        = "application/json"
+                            }
 
-                            $result = @()
-                            $prsUri = "https://dev.azure.com/$org/$escapedProj/_apis/git/repositories/$repoId/pullrequests?searchCriteria.status=active&api-version=7.1-preview.1"
-
+                            $results = @()
+                            
+                            # Add small random delay to avoid overwhelming the API
+                            Start-Sleep -Milliseconds (Get-Random -Minimum 100 -Maximum 500)
+                            
                             try {
-                                $prsResponse = Invoke-RestMethod -Uri $prsUri -Headers $authHeaders -Method Get -ErrorAction Stop
+                                $escapedProject = [uri]::EscapeDataString($projName)
+                                $prsUri = "https://dev.azure.com/$org/$escapedProject/_apis/git/repositories/$repoId/pullrequests?searchCriteria.status=active&api-version=7.1-preview.1"
+                                $prsResponse = Invoke-RestMethod -Uri $prsUri -Headers $localHeaders -Method Get -ErrorAction Stop
+
                                 foreach ($pr in $prsResponse.value) {
-                                    $result += [PSCustomObject]@{
+                                    $results += [PSCustomObject]@{
                                         OrganizationName = $org
                                         ProjectName      = $projName
                                         RepositoryName   = $repoName
@@ -108,58 +213,169 @@ function Get-PSUADOPullRequestInventory {
                                         SourceBranch     = ($pr.sourceRefName -replace '^refs/heads/', '')
                                         TargetBranch     = ($pr.targetRefName -replace '^refs/heads/', '')
                                         CreatedBy        = $pr.createdBy.displayName
-                                        CreatedDate      = if ($pr.creationDate) { [datetime]$pr.creationDate } else { $null }
+                                        CreatedDate      = [datetime]$pr.creationDate
                                         Reviewers        = if ($pr.reviewers) { ($pr.reviewers | ForEach-Object { $_.displayName }) -join ', ' } else { '' }
                                         Status           = $pr.status
                                         WebLink          = $pr._links.web.href
+                                        IsError          = $false
+                                        ErrorMessage     = $null
+                                        PSTypeName       = 'PSU.ADO.PullRequestInventory'
+                                    }
+                                }
+                                
+                                # If no PRs found, still return a record for tracking
+                                if ($prsResponse.value.Count -eq 0) {
+                                    $results += [PSCustomObject]@{
+                                        OrganizationName = $org
+                                        ProjectName      = $projName
+                                        RepositoryName   = $repoName
+                                        PullRequestId    = $null
+                                        Title            = "No active pull requests"
+                                        SourceBranch     = $null
+                                        TargetBranch     = $null
+                                        CreatedBy        = $null
+                                        CreatedDate      = $null
+                                        Reviewers        = $null
+                                        Status           = "None"
+                                        WebLink          = $null
+                                        IsError          = $false
+                                        ErrorMessage     = $null
                                         PSTypeName       = 'PSU.ADO.PullRequestInventory'
                                     }
                                 }
                             }
                             catch {
-                                Write-Warning "[$repoName] in [$projName] failed: $($_.Exception.Message)"
+                                $results += [PSCustomObject]@{
+                                    OrganizationName = $org
+                                    ProjectName      = $projName
+                                    RepositoryName   = $repoName
+                                    PullRequestId    = $null
+                                    Title            = "ERROR"
+                                    SourceBranch     = $null
+                                    TargetBranch     = $null
+                                    CreatedBy        = $null
+                                    CreatedDate      = $null
+                                    Reviewers        = $null
+                                    Status           = "Error"
+                                    WebLink          = $null
+                                    IsError          = $true
+                                    ErrorMessage     = $_.Exception.Message
+                                    PSTypeName       = 'PSU.ADO.PullRequestInventory.Error'
+                                }
                             }
 
-                            return $result
-                        } -ArgumentList $Organization, $project.name, $escapedProject, $repo.id, $repo.name, $headers
+                            return $results
+                        } -ArgumentList $Organization, $project.name, $repo.id, $repo.name, $authToken
 
                         $jobList += $job
+                    } else {
+                        Write-Host "  WhatIf: Would process repository '$($repo.name)' [$processedRepos/$totalRepos]" -ForegroundColor Gray
                     }
                 }
+            }
 
-                # Wait for all jobs to complete
-                Write-Verbose "Waiting for all jobs to finish..."
-                $null = Wait-Job -Job $jobList
+            if ($jobList.Count -eq 0) {
+                Write-Warning "No jobs were created. Check your parameters and permissions."
+                return @()
+            }
 
-                foreach ($job in $jobList) {
-                    try {
+            # Wait for jobs to complete with timeout
+            Write-Verbose "Waiting for $($jobList.Count) jobs to complete (timeout: $TimeoutMinutes minutes)..."
+            Write-Progress -Activity "Processing Azure DevOps Repositories" -Status "Waiting for jobs to complete..." -PercentComplete 100
+            
+            try {
+                $timeoutSeconds = $TimeoutMinutes * 60
+                $waitResult = Wait-Job -Job $jobList -Timeout $timeoutSeconds
+                
+                # Check for jobs that didn't complete
+                $runningJobs = $jobList | Where-Object { $_.State -eq 'Running' }
+                if ($runningJobs) {
+                    Write-Warning "Stopping $($runningJobs.Count) jobs that didn't complete within $TimeoutMinutes minutes"
+                    $runningJobs | Stop-Job -ErrorAction SilentlyContinue
+                }
+                
+                $completedJobs = $jobList | Where-Object { $_.State -eq 'Completed' }
+                $failedJobs = $jobList | Where-Object { $_.State -eq 'Failed' }
+                
+                Write-Host "Job Summary: $($completedJobs.Count) completed, $($failedJobs.Count) failed, $($runningJobs.Count) timed out" -ForegroundColor Yellow
+            }
+            finally {
+                Write-Progress -Activity "Processing Azure DevOps Repositories" -Completed
+            }
+
+            # Gather results from completed jobs
+            $successCount = 0
+            $errorCount = 0
+            
+            foreach ($job in $jobList) {
+                try {
+                    if ($job.State -eq 'Completed') {
                         $results = Receive-Job -Job $job -ErrorAction Stop
-                        $results | ForEach-Object { $pullRequests.Add($_) }
-                    }
-                    catch {
-                        Write-Warning "Job failed: $($_.Exception.Message)"
-                    }
-                    finally {
-                        Remove-Job -Job $job -Force
+                        foreach ($item in $results) {
+                            $pullRequests.Add($item)
+                            if ($item.IsError) {
+                                $errorCount++
+                            } else {
+                                $successCount++
+                            }
+                        }
+                    } elseif ($job.State -eq 'Failed') {
+                        $errorInfo = Receive-Job -Job $job -ErrorAction SilentlyContinue
+                        Write-Warning "Job failed: $($job.Name) - $($errorInfo -join '; ')"
+                        $errorCount++
                     }
                 }
+                catch {
+                    Write-Warning "Failed to receive job results: $($_.Exception.Message)"
+                    $errorCount++
+                }
+                finally {
+                    Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
+                }
+            }
 
-                if ($OutputFilePath) {
-                    $ext = [IO.Path]::GetExtension($OutputFilePath).ToLower()
-                    Write-Verbose "Exporting results to $OutputFilePath"
+            $finalResults = $pullRequests.ToArray()
+            Write-Host "Processing complete: $successCount successful, $errorCount errors" -ForegroundColor Green
 
+            # Export results if requested
+            if ($OutputFilePath -and $finalResults.Count -gt 0) {
+                $ext = [IO.Path]::GetExtension($OutputFilePath).ToLower()
+                Write-Verbose "Exporting $($finalResults.Count) results to $OutputFilePath"
+
+                # Ensure output directory exists
+                $outputDir = [IO.Path]::GetDirectoryName($OutputFilePath)
+                if ($outputDir -and -not (Test-Path $outputDir)) {
+                    New-Item -Path $outputDir -ItemType Directory -Force | Out-Null
+                }
+
+                try {
                     switch ($ext) {
-                        '.csv' { $pullRequests | Export-Csv -Path $OutputFilePath -NoTypeInformation -Encoding UTF8 }
-                        '.json' { $pullRequests | ConvertTo-Json -Depth 10 | Out-File -FilePath $OutputFilePath -Encoding UTF8 }
-                        '.xml' { $pullRequests | Export-Clixml -Path $OutputFilePath -Encoding UTF8 }
+                        '.csv'  { 
+                            $finalResults | Export-Csv -Path $OutputFilePath -NoTypeInformation -Encoding UTF8 
+                        }
+                        '.json' { 
+                            $finalResults | ConvertTo-Json -Depth 10 | Out-File -FilePath $OutputFilePath -Encoding UTF8 
+                        }
+                        '.xml'  { 
+                            $finalResults | Export-Clixml -Path $OutputFilePath -Encoding UTF8 
+                        }
                     }
-
-                    Write-Output "Exported results to: $OutputFilePath"
+                    Write-Host "Exported $($finalResults.Count) results to: $OutputFilePath" -ForegroundColor Green
                 }
+                catch {
+                    Write-Error "Failed to export results: $($_.Exception.Message)"
+                }
+            }
 
-                return $pullRequests.ToArray()
+            return $finalResults
         }
         catch {
+            # Clean up any remaining jobs on error
+            if ($jobList) {
+                Write-Verbose "Cleaning up $($jobList.Count) jobs due to error..."
+                $jobList | Remove-Job -Force -ErrorAction SilentlyContinue
+            }
+            
             Write-Error "Fatal error during processing: $($_.Exception.Message)"
             $PSCmdlet.ThrowTerminatingError($_)
         }
