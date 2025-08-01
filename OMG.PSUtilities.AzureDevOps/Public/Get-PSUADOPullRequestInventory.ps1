@@ -107,7 +107,9 @@ function Get-PSUADOPullRequestInventory {
             Write-Verbose "Filtering projects with patterns: $($Project -join ', ')"
             $matchedProjects = @()
             foreach ($pattern in $Project) {
-                $matchedProjects += $projectsResponse.value | Where-Object { $_.name -like $pattern }
+                $matchedProjects += $projectsResponse.value | Where-Object { 
+                    $_.name -and $_.name.Trim() -ne '' -and $_.name -like $pattern 
+                }
             }
             
             $filteredProjects = $matchedProjects | Sort-Object id -Unique
@@ -125,24 +127,34 @@ function Get-PSUADOPullRequestInventory {
             $projectRepoData = @{}
             
             foreach ($project in $filteredProjects) {
-                $escapedProject = [uri]::EscapeDataString($project.name)
+                # Skip projects with empty or null names
+                if (-not $project.name -or $project.name.Trim() -eq '') {
+                    Write-Warning "Skipping project with empty name (ID: $($project.id))"
+                    continue
+                }
+
+                $projectName = $project.name.Trim()
+                $escapedProject = [uri]::EscapeDataString($projectName)
                 $reposUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
                 
                 try {
                     $reposResponse = Invoke-RestMethod -Uri $reposUri -Headers $headers -Method Get -ErrorAction Stop
-                    $repoCount = $reposResponse.value.Count
-                    $projectRepoData[$project.name] = @{
+                    $repoCount = if ($reposResponse.value) { $reposResponse.value.Count } else { 0 }
+                    
+                    $projectRepoData[$projectName] = @{
                         Count = $repoCount
-                        Repositories = $reposResponse.value
+                        Repositories = if ($reposResponse.value) { $reposResponse.value } else { @() }
+                        ProjectObject = $project
                     }
                     $totalRepos += $repoCount
-                    Write-Verbose "Project '$($project.name)': $repoCount repositories"
+                    Write-Verbose "Project '$projectName': $repoCount repositories"
                 }
                 catch {
-                    Write-Warning "Failed to get repositories for project '$($project.name)': $($_.Exception.Message)"
-                    $projectRepoData[$project.name] = @{
+                    Write-Warning "Failed to get repositories for project '$projectName': $($_.Exception.Message)"
+                    $projectRepoData[$projectName] = @{
                         Count = 0
                         Repositories = @()
+                        ProjectObject = $project
                     }
                 }
             }
@@ -156,16 +168,24 @@ function Get-PSUADOPullRequestInventory {
 
             # Process each project and repository
             $processedRepos = 0
-            foreach ($project in $filteredProjects) {
-                $projectRepos = $projectRepoData[$project.name].Repositories
+            foreach ($projectName in $projectRepoData.Keys) {
+                $projectData = $projectRepoData[$projectName]
+                $projectRepos = $projectData.Repositories
+                
                 if ($projectRepos.Count -eq 0) {
-                    Write-Verbose "Skipping project '$($project.name)' - no repositories found"
+                    Write-Verbose "Skipping project '$projectName' - no repositories found"
                     continue
                 }
 
-                Write-Host "`nProcessing project: '$($project.name)' ($($projectRepos.Count) repositories)" -ForegroundColor Yellow
+                Write-Host "`nProcessing project: '$projectName' ($($projectRepos.Count) repositories)" -ForegroundColor Yellow
 
                 foreach ($repo in $projectRepos) {
+                    # Skip repositories with empty names
+                    if (-not $repo.name -or $repo.name.Trim() -eq '') {
+                        Write-Warning "Skipping repository with empty name in project '$projectName'"
+                        continue
+                    }
+
                     # Throttle jobs
                     while ((Get-Job -State Running).Count -ge $ThrottleLimit) {
                         Start-Sleep -Milliseconds 500
@@ -175,12 +195,12 @@ function Get-PSUADOPullRequestInventory {
                     $processedRepos++
                     $progressParams = @{
                         Activity        = "Processing Azure DevOps Repositories"
-                        Status          = "Repository '$($repo.name)' in project '$($project.name)' ($processedRepos of $totalRepos)"
+                        Status          = "Repository '$($repo.name)' in project '$projectName' ($processedRepos of $totalRepos)"
                         PercentComplete = if ($totalRepos -gt 0) { [math]::Min(100, ($processedRepos / $totalRepos) * 100) } else { 0 }
                     }
                     Write-Progress @progressParams
 
-                    if ($PSCmdlet.ShouldProcess("$($project.name)/$($repo.name)", "Fetch pull requests")) {
+                    if ($PSCmdlet.ShouldProcess("$projectName/$($repo.name)", "Fetch pull requests")) {
                         Write-Host "  Processing repository '$($repo.name)' [$processedRepos/$totalRepos]" -ForegroundColor Cyan
 
                         $job = Start-ThreadJob -ScriptBlock {
@@ -265,7 +285,7 @@ function Get-PSUADOPullRequestInventory {
                             }
 
                             return $results
-                        } -ArgumentList $Organization, $project.name, $repo.id, $repo.name, $authToken
+                        } -ArgumentList $Organization, $projectName, $repo.id, $repo.name, $authToken
 
                         $jobList += $job
                     } else {
