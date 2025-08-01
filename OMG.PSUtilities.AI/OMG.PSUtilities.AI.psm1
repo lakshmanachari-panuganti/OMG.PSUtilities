@@ -19,6 +19,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
 # Export public functions
 $PublicFunctions = @(
     'Get-PSUAiPoweredGitChangeSummary'
+    'Invoke-PSUPromptOnAzureOpenAi'
     'Invoke-PSUPromptOnGeminiAi'
     'Invoke-PSUPromptOnPerplexityAi'
     'New-PSUAiPoweredPullRequest'

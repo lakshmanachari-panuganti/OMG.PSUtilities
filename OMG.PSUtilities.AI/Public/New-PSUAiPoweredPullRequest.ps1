@@ -1,4 +1,4 @@
-#function New-PSUAiPoweredPullRequest {
+function New-PSUAiPoweredPullRequest {
     <#
     .SYNOPSIS
         Uses Gemini AI to generate a professional Pull Request (PR) title and description from Git change summaries.
@@ -111,4 +111,4 @@ $PRTemplateStatement
         }
     }
     
-#}
+}
