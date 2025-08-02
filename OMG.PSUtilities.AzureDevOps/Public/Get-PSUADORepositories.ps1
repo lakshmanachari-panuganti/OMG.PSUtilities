@@ -17,6 +17,7 @@ function Get-PSUADORepositories {
 
     process {
         try {
+            Write-Host "Fetching the Repositories in Project [$Project]"
             $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.0"
             $headers = @{
                 Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))

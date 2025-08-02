@@ -2,97 +2,94 @@ function Get-PSUADOPullRequestInventory {
     [CmdletBinding()]
     param (
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT,
 
         [Parameter()]
-        [string[]]$Project,
+        [string[]]$Project = @('Technical Services'),
 
         [Parameter()]
         [string]$OutputFilePath,
 
         [Parameter()]
         [ValidateRange(1, 50)]
-        [int]$ThrottleLimit = 20,
+        [int]$ThrottleLimit = 10,
 
         [Parameter()]
         [ValidateRange(1, 60)]
         [int]$TimeoutMinutes = 10
     )
 
-    begin {
-        Write-Host "Fetching projects for organization '$Organization'..." -ForegroundColor Cyan
+    Write-Host "📢 Fetching projects for organization '$Organization'..."
+    Write-Host "🧵 Starting parallel collection with Start-ThreadJob (ThrottleLimit = $ThrottleLimit)"
 
-        if (-not $Project) {
-            $Project = (Get-PSUADOProjectList -Organization $Organization -PAT $PAT).Name
+    $results = [System.Collections.Generic.List[PSCustomObject]]::new()
+    $allJobs = @()
+
+    foreach ($proj in $Project) {
+        $repos = Get-PSUADORepositories -Project $proj -Organization $Organization -PAT $PAT
+
+        foreach ($repo in $repos) {
+            $job = Start-ThreadJob -ScriptBlock {
+                param ($projectName, $repoName, $org, $pat)
+
+                Import-Module OMG.PSUtilities.AzureDevOps -Force
+
+                $prs = Get-PSUADOPullRequests -Project $projectName -Repository $repoName -Organization $org -PAT $pat
+                return $prs
+            } -ArgumentList $proj, $repo.name, $Organization, $PAT
+
+            $allJobs += $job
+
+            # Throttle if needed
+            while (@($allJobs | Where-Object { $_.State -eq 'Running' }).Count -ge $ThrottleLimit) {
+                Start-Sleep -Seconds 1
+            }
         }
-
-        Write-Host "Processing repositories across $($Project.Count) projects..." -ForegroundColor Yellow
-
-        $results = [System.Collections.Generic.List[PSCustomObject]]::new()
     }
 
-    process {
-        $allParallelResults = $Project | ForEach-Object -Parallel {
-            param (
-                [string]$ProjectName,
-                [string]$Organization,
-                [string]$PAT
-            )
+    # Wait for all jobs to complete or timeout
+    $jobTimeout = [datetime]::Now.AddMinutes($TimeoutMinutes)
+    while (($allJobs | Where-Object { $_.State -eq 'Running' }).Count -gt 0) {
+        if ([datetime]::Now -gt $jobTimeout) {
+            Write-Warning "⚠️ Timeout reached. Stopping remaining jobs."
+            $allJobs | Where-Object { $_.State -eq 'Running' } | ForEach-Object { Stop-Job $_ }
+            break
+        }
+        Start-Sleep -Seconds 2
+    }
 
-            $repoResults = @()
-            try {
-                $repos = Get-PSUADORepositories -Project $ProjectName -Organization $Organization -PAT $PAT
-                foreach ($repo in $repos) {
-                    try {
-                        $prs = Get-PSUADOPullRequests -Project $ProjectName -RepositoryId $repo.Id -Organization $Organization -PAT $PAT
-                        foreach ($pr in $prs) {
-                            $repoResults += [PSCustomObject]@{
-                                Project       = $ProjectName
-                                Repository    = $repo.Name
-                                PullRequestId = $pr.PullRequestId
-                                Title         = $pr.Title
-                                CreatedBy     = $pr.CreatedBy.displayName
-                                CreatedDate   = $pr.CreationDate
-                                SourceBranch  = $pr.SourceRefName
-                                TargetBranch  = $pr.TargetRefName
-                                Status        = $pr.Status
-                                Url           = $pr.Url
-                            }
-                        }
-                    }
-                    catch {
-                        Write-Error "❌ Failed to get PRs for repo '$($repo.Name)' in project '$ProjectName': $_"
-                    }
+    # Collect results
+    foreach ($job in $allJobs) {
+        try {
+            $output = Receive-Job -Job $job -ErrorAction Stop
+            if ($output) {
+                foreach ($pr in $output) {
+                    $results.Add($pr)
                 }
             }
-            catch {
-                Write-Error "❌ Failed to get repositories for project '$ProjectName': $_"
-            }
-
-            return $repoResults
-        } -ArgumentList { $_ }, $Organization, $PAT -ThrottleLimit $ThrottleLimit
-
-        foreach ($item in $allParallelResults) {
-            $results.Add($item)
+        }
+        catch {
+            Write-Warning "⚠️ Job [$($job.Id)] failed: $_"
+        }
+        finally {
+            Remove-Job -Job $job -Force
         }
     }
 
-    end {
-        if ($OutputFilePath) {
-            try {
-                $results | Export-Csv -Path $OutputFilePath -NoTypeInformation -Encoding UTF8
-                Write-Host "✅ Pull request inventory exported to: $OutputFilePath" -ForegroundColor Green
-            }
-            catch {
-                Write-Error "❌ Failed to export results to CSV: $_"
-            }
-        }
+    Write-Host "✅ Collected $($results.Count) pull requests."
 
-        return $results
+    if ($OutputFilePath) {
+        try {
+            $results | Export-Csv -Path $OutputFilePath -NoTypeInformation -Encoding UTF8
+            Write-Host "💾 Saved to: $OutputFilePath"
+        }
+        catch {
+            Write-Warning "❌ Failed to export results to $OutputFilePath : $_"
+        }
     }
+
+    return $results
 }
