@@ -94,9 +94,10 @@ $PRTemplateStatement
         #    Title       = $parsed.title
         #    Description = $parsed.description
         #}
-
+        ($parsed.title) + ($parsed.description) | Set-Clipboard
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
         
+        Read-Host "Would you like me to submit the pull request with the current title and description, or retry generating new ones? (Y/N/R)"
         #TODO: write the code to submit PR:
         #Logic to get the Base branch -like refs/heads/main
         #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
