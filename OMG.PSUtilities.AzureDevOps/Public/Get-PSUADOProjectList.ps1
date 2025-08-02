@@ -13,6 +13,7 @@ function Get-PSUADOProjectList {
 
     process {
         try {
+            Write-Host "Fetching the Projects in the organization [$Organization]"
             $uri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.0"
             $headers = @{
                 Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))

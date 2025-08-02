@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AzureDevOps.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.2'
+ModuleVersion = '1.0.3'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -33,7 +33,7 @@ Copyright = '(c) Lakshmanachari Panuganti. All rights reserved.'
 Description = 'Interact with Azure DevOps APIs, pipelines, repos, and work items.'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '5.1'
+PowerShellVersion = '7.1'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
