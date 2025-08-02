@@ -43,6 +43,6 @@ Test-PSUCommentBasedHelp -ModulePath $env:BASE_MODULE_PATH | Where-Object{$_.Has
 }
 
 # Reset-OMGModuleManifests
-Get-OMGModules | Reset-OMGModuleManifests -Verbose
-
+Get-OMGModules | Reset-OMGModuleManifests
+Get-OMGModules | Build-OMGModuleLocally
 # NOTE: Increment of the module version is required when it is publishing to PSGallery!

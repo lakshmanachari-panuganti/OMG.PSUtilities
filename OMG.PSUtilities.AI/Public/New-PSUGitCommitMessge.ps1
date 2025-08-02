@@ -1,26 +1,29 @@
 function New-PSUGitCommitMessge {
     <#
     .SYNOPSIS
-        Generates a conventional Git commit message based on uncommitted changes.
+        Generates and commits a conventional Git commit message using Gemini AI, then syncs with remote.
 
     .DESCRIPTION
-        This function leverages `git status --porcelain` to identify changed files (added, modified, deleted, renamed, copied, unmerged, or new). 
-        It then constructs a prompt using these changes and sends it to the Gemini AI to generate a concise, conventional commit message. 
-        The generated message is automatically copied to the clipboard and also returned as output.
+        Analyzes uncommitted changes in a Git repository, generates a conventional commit message using Gemini AI,
+        commits those changes, pulls latest from remote with rebase, and pushes your new commit.
 
     .PARAMETER RootPath
-        (Optional) Specifies the root directory of the Git repository to analyze.
-        Deffault is the current working directory.
+        Optional. Git repository root path. Defaults to current directory.
 
-    .EXAMPLE 
+    .EXAMPLE
         New-PSUGitCommitMessge
-        
-    .OUTPUTS
-        [string]
+
+    .EXAMPLE
+        New-PSUGitCommitMessge -RootPath "c:\repo"
 
     .NOTES
-        Author: Lakshmanachari Panuganti
-        Date  : 2025-07-16
+        Author : Lakshmanachari Panuganti
+        Date   : 2025-07-31
+        Requires:
+            - Git CLI
+            - $env:API_KEY_GEMINI
+            - Invoke-PSUPromptOnGeminiAi
+
     #>
     [CmdletBinding()]
     param (
@@ -31,16 +34,15 @@ function New-PSUGitCommitMessge {
     try {
         $gitOutput = git status --porcelain
 
-        if ($null -eq $gitOutput) {
-            Write-Host "No uncommited changes found" -ForegroundColor Green
-            Continue
+        if (-not $gitOutput.Count) {
+            Write-Host "No uncommitted changes found." -ForegroundColor Green
+            return
         }
-        
+
         $changedItems = foreach ($line in $gitOutput) {
             $line = $line.Trim()
-
             $changeCode = $line.Split(' ')[0].Trim()
-            $path = $line.Split(' ', 2)[1].Trim() -replace '"'
+            $path = $line.Split(' ', 2)[1].Trim().Trim('"')
             $fullPath = Join-Path -Path $RootPath -ChildPath $path
 
             $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
@@ -66,7 +68,7 @@ function New-PSUGitCommitMessge {
                     'A' { 'Added' }
                     'D' { 'Deleted' }
                     'R' { 'Renamed' }
-                    'C' { 'Copied ' }
+                    'C' { 'Copied' }
                     'U' { 'Unmerged' }
                     '??' { 'New' }
                     default { "Other: $changeCode" }
@@ -75,19 +77,20 @@ function New-PSUGitCommitMessge {
             }
         }
 
-        $FileChanges = $changedItems | ForEach-Object {
+        $fileChanges = $changedItems | ForEach-Object {
             $item = $_
             $status = $item.ChangeType
-            $Path = $item.Path
+            $path = $item.Path
             $itemType = $item.ItemType
+
             $diff = switch ($status) {
-                'Modified' { git diff -- "$Path" }
-                'New' { if ($itemType -eq 'File') { Get-Content -Path $Path } }
+                'Modified' { git diff -- "$path" }
+                'New' { if ($itemType -eq 'File') { Get-Content -Path $path } }
                 default { "" }
             }
 
             [PSCustomObject]@{
-                Path     = $Path
+                Path     = $path
                 ItemType = $itemType
                 Status   = $status
                 Diff     = $diff -join "`n"
@@ -95,64 +98,49 @@ function New-PSUGitCommitMessge {
         }
 
         $prompt = @"
-You are a commit message generator with expertise in Git and DevOps.
+You are a Git commit message generator with expertise in software development.
 
-Based on the following list of file changes (from `git status --porcelain`),
-generate a concise, conventional commit message that follows this format:
+Generate a clear, conventional commit message based on the following file changes.
+The message must start with one of: feat, fix, chore, docs, refactor, style, test.
+Limit to 1-2 lines.
 
-Type: Short summary
-
-Example types:
-- Feature Example
----------------
-feat: Implement user profile page! 
-Adds a new user profile section where users can view and edit their personal information, including name, email, and password. 
-Includes client-side validation for all input fields.
-
-- Bug Fix Example
----------------
-fix: Resolve infinite loop in data fetching! 
-Corrects an issue where the data fetching mechanism would enter aninfinite loop under specific error conditions, causing the application to freeze. 
-Ensures proper error handling and retry logic.
-
-- Refactoring Example
--------------------
-refactor: Extract API calls into dedicated service! Moves all data fetching logic from component files into a new `apiService.js`. 
-This centralizes API interactions, improves code reusability, and makescomponents cleaner and easier to test.
-
-- Documentation Example
-----------------------
-docs: Update README with setup instructions! 
-Adds a detailed section to the README.md file explaining how to set up the development environment, install dependencies, and run the project locally.
-
-- Chore/Maintenance Example
---------------------------
-chore: Upgrade dependencies to latest versions! Updates all project dependencies to their most recent stable versions. 
-Includes updates to React, Webpack, and various development tools to improve performance and security.
-
---> should be very short in two or three lines
-
-Here are the changes:
+Changes:
 "@
-        
 
         foreach ($item in $fileChanges) {
             $prompt += @"
-### File: $($item.File)
+### File: $($item.Path)
 Change Type: $($item.Status)
-Full Path: $($item.Path)
 ```diff
 $($item.Diff)
 "@
         }
+        $commitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
+        $commitMessage = $commitMessage.Trim() | where-object { $_ }
 
-        $CommitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
-        $CommitMessage | Set-Clipboard
-        Return $CommitMessage
+        Write-Host "Following is the Commit message!" -ForegroundColor Cyan
+        Write-Host $CommitMessage -ForegroundColor DarkYellow
+        $CustomCommitMsg = Read-Host "Press enter to commit with this message or provide your own commit message"
+        
+        if ($CustomCommitMsg) {
+            $commitMessage = $CustomCommitMsg
+        }
+        # Stage and commit
+        git add . *> $null
+        git commit -m "$commitMessage" *> $null
+        # Sync with remote
+        Write-Host "`⇅ Syncing with remote..." -ForegroundColor Cyan
+        git pull --rebase *> $null
+        git push *> $null
+
+        Write-Host "Sync complete." -ForegroundColor Green
         
     }
-    Catch {
+    catch {
+        Write-Error "Error: $_"
+        throw
+    }
+    finally {
         Pop-Location
-        $PSCmdlet.ThrowTerminatingError($_)
     }
 }

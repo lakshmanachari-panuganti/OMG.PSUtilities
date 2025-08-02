@@ -42,9 +42,7 @@ function Invoke-SafeGitCheckout {
         $choice = Read-Host "Choose an action: (C)ommit, (S)tash, or (A)bort"
         switch ($choice.ToUpper()) {
             'C' {
-                git add . *> $null
-                $msg = Read-Host "Enter commit message"
-                git commit -m "$msg"
+                New-PSUGitCommitMessge  
             }
             'S' {
                 git stash push -m "Auto-stash before switching to $TargetBranch"
