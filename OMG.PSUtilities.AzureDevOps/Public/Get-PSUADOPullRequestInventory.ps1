@@ -162,20 +162,30 @@ function Get-PSUADOPullRequestInventory {
             $totalRepos = 0
             $projectRepoData = @{}
             $processedProjectCount = 0
+            $successfulProjects = 0
+            $failedProjects = 0
             
             foreach ($project in $filteredProjects) {
                 $processedProjectCount++
                 
-                # This should never happen now, but let's be extra safe
-                if (-not $project -or -not $project.name -or $project.name.Trim() -eq '') {
-                    Write-Warning "Somehow an invalid project got through filtering - Index: $processedProjectCount"
-                    continue
-                }
-
-                $projectName = $project.name.Trim()
-                Write-Verbose "[$processedProjectCount/$($filteredProjects.Count)] Processing project: '$projectName' (ID: $($project.id))"
+                # Get project name safely
+                $projectName = "Unknown"
+                $projectId = "Unknown"
                 
                 try {
+                    if ($project -and $project.name) {
+                        $projectName = $project.name.ToString().Trim()
+                        $projectId = if ($project.id) { $project.id.ToString() } else { "NoID" }
+                    }
+                    
+                    if ($projectName -eq "Unknown" -or $projectName -eq "" -or [string]::IsNullOrWhiteSpace($projectName)) {
+                        Write-Warning "[$processedProjectCount/$($filteredProjects.Count)] Project has invalid name - ID: $projectId, Name: '$projectName'"
+                        $failedProjects++
+                        continue
+                    }
+
+                    Write-Verbose "[$processedProjectCount/$($filteredProjects.Count)] Processing project: '$projectName' (ID: $projectId)"
+                    
                     $escapedProject = [uri]::EscapeDataString($projectName)
                     $reposUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
                     
@@ -184,23 +194,32 @@ function Get-PSUADOPullRequestInventory {
                     
                     $projectRepoData[$projectName] = @{
                         Count = $repoCount
-                        Repositories = if ($reposResponse.value) { $reposResponse.value } else { @() }
+                        Repositories = if ($reposResponse.value) { @($reposResponse.value) } else { @() }
                         ProjectObject = $project
                         ProjectName = $projectName
+                        ProjectId = $projectId
                     }
                     $totalRepos += $repoCount
-                    Write-Verbose "  → $repoCount repositories found"
+                    $successfulProjects++
+                    Write-Host "  ✓ Project '$projectName': $repoCount repositories" -ForegroundColor Green
                 }
                 catch {
-                    Write-Warning "Failed to get repositories for project '$projectName': $($_.Exception.Message)"
-                    $projectRepoData[$projectName] = @{
+                    Write-Warning "[$processedProjectCount/$($filteredProjects.Count)] Failed to process project '$projectName' (ID: $projectId): $($_.Exception.Message)"
+                    $failedProjects++
+                    
+                    # Still add to data structure to avoid key errors later
+                    $safeProjectName = if ($projectName -ne "Unknown") { $projectName } else { "FailedProject_$projectId" }
+                    $projectRepoData[$safeProjectName] = @{
                         Count = 0
                         Repositories = @()
                         ProjectObject = $project
-                        ProjectName = $projectName
+                        ProjectName = $safeProjectName
+                        ProjectId = $projectId
                     }
                 }
             }
+            
+            Write-Host "Project processing summary: $successfulProjects successful, $failedProjects failed" -ForegroundColor Yellow
             
             Write-Host "Total repositories to process: $totalRepos across $($filteredProjects.Count) projects" -ForegroundColor Green
 
