@@ -22,8 +22,8 @@ function Get-PSUADOPullRequestInventory {
         [int]$TimeoutMinutes = 10
     )
 
-    Write-Host "📢 Fetching projects for organization '$Organization'..."
-    Write-Host "🧵 Starting parallel collection with Start-ThreadJob (ThrottleLimit = $ThrottleLimit)"
+    Write-Host "Fetching projects for organization '$Organization'..." -ForegroundColor Cyan
+    Write-Host "Starting parallel collection with Start-ThreadJob (ThrottleLimit = $ThrottleLimit)" -ForegroundColor Cyan
 
     $results = [System.Collections.Generic.List[PSCustomObject]]::new()
     $allJobs = @()
@@ -54,7 +54,7 @@ function Get-PSUADOPullRequestInventory {
     $jobTimeout = [datetime]::Now.AddMinutes($TimeoutMinutes)
     while (($allJobs | Where-Object { $_.State -eq 'Running' }).Count -gt 0) {
         if ([datetime]::Now -gt $jobTimeout) {
-            Write-Warning "⚠️ Timeout reached. Stopping remaining jobs."
+            Write-Warning "Timeout reached. Stopping remaining jobs."
             $allJobs | Where-Object { $_.State -eq 'Running' } | ForEach-Object { Stop-Job $_ }
             break
         }
@@ -72,24 +72,33 @@ function Get-PSUADOPullRequestInventory {
             }
         }
         catch {
-            Write-Warning "⚠️ Job [$($job.Id)] failed: $_"
+            Write-Warning "Job [$($job.Id)] failed: $_"
         }
         finally {
             Remove-Job -Job $job -Force
         }
     }
 
-    Write-Host "✅ Collected $($results.Count) pull requests."
+    Write-Host "Collected $($results.Count) pull requests."
 
     if ($OutputFilePath) {
         try {
             $results | Export-Csv -Path $OutputFilePath -NoTypeInformation -Encoding UTF8
-            Write-Host "💾 Saved to: $OutputFilePath"
+            Write-Host "Saved to: $OutputFilePath"
         }
         catch {
-            Write-Warning "❌ Failed to export results to $OutputFilePath : $_"
+            Write-Warning "Failed to export results to $OutputFilePath : $_"
         }
     }
 
-    return $results
+    $results | ForEach-Object {
+        [pscustomobject] @{
+            Title        = $_.Title
+            CreatedBy    = $_.Createdby.displayname
+            CreationDate = $_.Creationdate
+            BanchName    = $_.Sourcerefname
+            Repository   = $_.Repository.Name
+            Desription   = $_.Description
+        }
+    }
 }

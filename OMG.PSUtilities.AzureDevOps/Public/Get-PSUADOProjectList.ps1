@@ -13,13 +13,13 @@ function Get-PSUADOProjectList {
 
     process {
         try {
-            Write-Host "Fetching the Projects in the organization [$Organization]"
+            Write-Verbose "Fetching the Projects in the organization [$Organization]"
             $uri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.0"
             $headers = @{
                 Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
             }
 
-            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get 
+            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
             $formattedResults = @()
             if ($response.value) {
                 foreach ($item in $response.value) {
