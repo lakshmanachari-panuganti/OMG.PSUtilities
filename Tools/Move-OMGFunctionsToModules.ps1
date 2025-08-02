@@ -34,7 +34,7 @@ foreach ($func in $functionMap.Keys) {
 
     # Ensure destination exists
     if (-not (Test-Path $targetPublic)) {
-        Write-Warning "❌ Missing target: $targetPublic — skipping $func"
+        Write-Warning "Missing target: $targetPublic — skipping $func"
         continue
     }
 
@@ -43,8 +43,8 @@ foreach ($func in $functionMap.Keys) {
 
     if (Test-Path $sourceFile) {
         Move-Item -Path $sourceFile -Destination $destFile -Force
-        Write-Host "✅ Moved $func.ps1 to $targetPublic" -ForegroundColor Green
+        Write-Host "Moved $func.ps1 to $targetPublic" -ForegroundColor Green
     } else {
-        Write-Warning "⚠️ File not found: $sourceFile"
+        Write-Warning "File not found: $sourceFile"
     }
 }

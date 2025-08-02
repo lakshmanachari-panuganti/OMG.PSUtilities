@@ -20,7 +20,7 @@ function Get-PSUADOPullRequests {
 
     process {
         try {
-            Write-Host "Fetching the Pull Requests in [$Project] for the repo [$RepositoryId]"
+            Write-Verbose "Fetching the Pull Requests in [$Project] for the repo [$RepositoryId]"
             $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepositoryId/pullrequests?searchCriteria.status=active&api-version=7.0"
             $headers = @{
                 Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
