@@ -1,4 +1,4 @@
-function New-PSUGitCommitMessge {
+function Invoke-PSUGitCommit {
     <#
     .SYNOPSIS
         Generates and commits a conventional Git commit message using Gemini AI, then syncs with remote.
@@ -11,10 +11,10 @@ function New-PSUGitCommitMessge {
         Optional. Git repository root path. Defaults to current directory.
 
     .EXAMPLE
-        New-PSUGitCommitMessge
+        Invoke-PSUGitCommit
 
     .EXAMPLE
-        New-PSUGitCommitMessge -RootPath "c:\repo"
+        Invoke-PSUGitCommit -RootPath "c:\repo"
 
     .NOTES
         Author : Lakshmanachari Panuganti
