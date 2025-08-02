@@ -98,6 +98,25 @@ function Get-PSUADOPullRequestInventory {
             
             if ($PSCmdlet.ShouldProcess("$Organization", "Fetch project list")) {
                 $projectsResponse = Invoke-RestMethod -Uri $projectsUri -Headers $headers -Method Get -ErrorAction Stop
+                
+                # DEBUG: Let's see what we actually got
+                Write-Host "=== API RESPONSE DEBUG ===" -ForegroundColor Magenta
+                Write-Host "Response type: $($projectsResponse.GetType().Name)" -ForegroundColor Yellow
+                Write-Host "Response keys: $($projectsResponse | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name)" -ForegroundColor Yellow
+                
+                if ($projectsResponse.value) {
+                    Write-Host "Value array count: $($projectsResponse.value.Count)" -ForegroundColor Yellow
+                    if ($projectsResponse.value.Count -gt 0) {
+                        $firstProject = $projectsResponse.value[0]
+                        Write-Host "First project type: $($firstProject.GetType().Name)" -ForegroundColor Yellow
+                        Write-Host "First project properties: $($firstProject | Get-Member -MemberType Properties | Select-Object -ExpandProperty Name)" -ForegroundColor Yellow
+                        Write-Host "First project content: $($firstProject | ConvertTo-Json -Depth 2)" -ForegroundColor Yellow
+                    }
+                } else {
+                    Write-Host "No 'value' property found in response!" -ForegroundColor Red
+                    Write-Host "Full response: $($projectsResponse | ConvertTo-Json -Depth 3)" -ForegroundColor Red
+                }
+                Write-Host "=== END DEBUG ===" -ForegroundColor Magenta
             } else {
                 Write-Host "WhatIf: Would fetch projects from $projectsUri"
                 return
