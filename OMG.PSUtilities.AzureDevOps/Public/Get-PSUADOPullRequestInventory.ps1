@@ -105,29 +105,50 @@ function Get-PSUADOPullRequestInventory {
 
             # Match project patterns and deduplicate
             Write-Verbose "Filtering projects with patterns: $($Project -join ', ')"
+            Write-Host "Raw project count from API: $($projectsResponse.value.Count)" -ForegroundColor Magenta
+            
+            # Debug: Show first few projects to understand structure
+            Write-Host "Sample projects (first 3):" -ForegroundColor Magenta
+            for ($i = 0; $i -lt [Math]::Min(3, $projectsResponse.value.Count); $i++) {
+                $proj = $projectsResponse.value[$i]
+                Write-Host "  Project $i - Name: '$($proj.name)' | ID: '$($proj.id)' | State: '$($proj.state)' | Type: $($proj.GetType().Name)" -ForegroundColor Yellow
+            }
+            
+            # Let's be very explicit about what we consider valid
+            $allProjects = @($projectsResponse.value)  # Ensure it's an array
+            Write-Host "Array conversion: $($allProjects.Count) projects" -ForegroundColor Magenta
+            
             $matchedProjects = @()
-            
-            # Debug: Check for projects with null/empty names
-            $emptyNameProjects = $projectsResponse.value | Where-Object { -not $_.name -or $_.name.Trim() -eq '' }
-            if ($emptyNameProjects) {
-                Write-Warning "Found $($emptyNameProjects.Count) projects with empty names. These will be skipped."
-                foreach ($emptyProj in $emptyNameProjects) {
-                    Write-Verbose "Skipping project with empty name - ID: $($emptyProj.id), State: $($emptyProj.state)"
-                }
-            }
-            
             foreach ($pattern in $Project) {
-                $matchedProjects += $projectsResponse.value | Where-Object { 
-                    $_.name -and 
-                    $_.name.Trim() -ne '' -and 
-                    $_.name -like $pattern -and
-                    $_.state -eq 'wellFormed'
+                $patternMatches = @()
+                
+                foreach ($proj in $allProjects) {
+                    # Very explicit checks
+                    $hasObject = $null -ne $proj
+                    $hasName = $null -ne $proj.name
+                    $nameNotEmpty = if ($hasName) { $proj.name.ToString().Trim().Length -gt 0 } else { $false }
+                    $matchesPattern = if ($nameNotEmpty) { $proj.name -like $pattern } else { $false }
+                    
+                    if ($hasObject -and $hasName -and $nameNotEmpty -and $matchesPattern) {
+                        $patternMatches += $proj
+                    }
+                }
+                
+                $matchedProjects += $patternMatches
+                Write-Host "Pattern '$pattern' matched $($patternMatches.Count) projects" -ForegroundColor Cyan
+            }
+            
+            # Remove duplicates based on ID
+            $filteredProjects = @()
+            $seenIds = @{}
+            foreach ($proj in $matchedProjects) {
+                if (-not $seenIds.ContainsKey($proj.id)) {
+                    $filteredProjects += $proj
+                    $seenIds[$proj.id] = $true
                 }
             }
             
-            $filteredProjects = $matchedProjects | Sort-Object id -Unique
-            
-            Write-Verbose "After filtering: $($filteredProjects.Count) projects remain"
+            Write-Host "After deduplication: $($filteredProjects.Count) unique projects will be processed" -ForegroundColor Green
 
             if (-not $filteredProjects) {
                 Write-Warning "No matching projects found for patterns: $($Project -join ', ')"
@@ -140,16 +161,19 @@ function Get-PSUADOPullRequestInventory {
             Write-Verbose "Calculating total repositories across $($filteredProjects.Count) projects..."
             $totalRepos = 0
             $projectRepoData = @{}
+            $processedProjectCount = 0
             
             foreach ($project in $filteredProjects) {
-                # Double-check project name safety
+                $processedProjectCount++
+                
+                # This should never happen now, but let's be extra safe
                 if (-not $project -or -not $project.name -or $project.name.Trim() -eq '') {
-                    Write-Warning "Skipping invalid project object during repository counting"
+                    Write-Warning "Somehow an invalid project got through filtering - Index: $processedProjectCount"
                     continue
                 }
 
                 $projectName = $project.name.Trim()
-                Write-Verbose "Processing project: '$projectName' (ID: $($project.id))"
+                Write-Verbose "[$processedProjectCount/$($filteredProjects.Count)] Processing project: '$projectName' (ID: $($project.id))"
                 
                 try {
                     $escapedProject = [uri]::EscapeDataString($projectName)
@@ -158,23 +182,18 @@ function Get-PSUADOPullRequestInventory {
                     $reposResponse = Invoke-RestMethod -Uri $reposUri -Headers $headers -Method Get -ErrorAction Stop
                     $repoCount = if ($reposResponse.value) { $reposResponse.value.Count } else { 0 }
                     
-                    # Use a safe key for the hashtable
-                    $safeKey = if ($projectName) { $projectName } else { "Unknown_$($project.id)" }
-                    
-                    $projectRepoData[$safeKey] = @{
+                    $projectRepoData[$projectName] = @{
                         Count = $repoCount
                         Repositories = if ($reposResponse.value) { $reposResponse.value } else { @() }
                         ProjectObject = $project
                         ProjectName = $projectName
                     }
                     $totalRepos += $repoCount
-                    Write-Verbose "Project '$projectName': $repoCount repositories"
+                    Write-Verbose "  → $repoCount repositories found"
                 }
                 catch {
                     Write-Warning "Failed to get repositories for project '$projectName': $($_.Exception.Message)"
-                    $safeKey = if ($projectName) { $projectName } else { "Error_$($project.id)" }
-                    
-                    $projectRepoData[$safeKey] = @{
+                    $projectRepoData[$projectName] = @{
                         Count = 0
                         Repositories = @()
                         ProjectObject = $project
