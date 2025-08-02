@@ -39,8 +39,9 @@ function Get-PSUADOProjectList {
     )
 
     begin {
-        if (-not $PSBoundParameters.ContainsKey('Organization') -and [string]::IsNullOrWhiteSpace($env:ORGANIZATION)) {
-            Write-Warning "The environment variable 'ORGANIZATION' is not set and no -Organization parameter was passed. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<Your organization name>'"
+        if ([string]::IsNullOrWhiteSpace($Organization)) {
+            Write-Warning '$env:ORGANIZATION environment variable is null or empty, please create the environment variable by running:' 
+            Write-Host "Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<Your organization value>'" -ForegroundColor Cyan
             return
         }
 
