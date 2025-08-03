@@ -52,7 +52,7 @@ function Reset-OMGModuleManifests {
         $modulePath = Join-Path $env:BASE_MODULE_PATH $ModuleName
 
         if (-not (Test-Path $modulePath)) {
-            Write-Warning "Module path not found: $modulePath"
+            Write-Warning "[Reset-OMGModuleManifests] Module path not found: $modulePath"
             return
         }
         Write-Verbose "Processing module: $ModuleName at $modulePath"
@@ -61,7 +61,7 @@ function Reset-OMGModuleManifests {
         $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
 
         if (-not (Test-Path $publicPath)) {
-            Write-Warning "Missing Public folder in $ModuleName"
+            Write-Warning "[Reset-OMGModuleManifests] Missing Public folder in $ModuleName"
             return
         }
 
@@ -70,22 +70,28 @@ function Reset-OMGModuleManifests {
         Select-Object -ExpandProperty BaseName
 
         if (-not $publicFunctions) {
-            Write-Warning "No functions found in $publicPath"
+            Write-Warning "[Reset-OMGModuleManifests] No functions found in $publicPath"
             return
         }
 
         # --- Extract aliases from each public function -----
         $aliasList = @()
-        Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | ForEach-Object -Process {
+        Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | ForEach-Object {
+            $content = $null
+            try{
+            $content = Get-Content $_.FullName -Raw -ErrorAction Stop
+            
+            if($content){
+                $aliasMatches = [regex]::Matches($content, '\[Alias\((.*?)\)\]', 'IgnoreCase')
 
-            $content = Get-Content $_.FullName -Raw 
-
-            $aliasMatches = [regex]::Matches($content, '\[Alias\((.*?)\)\]', 'IgnoreCase')
-
-            foreach ($match in $aliasMatches) {
-                $raw = $match.Groups[1].Value
-                $cleaned = $raw -replace '[\'']', '' -split '\s*,\s*' -replace '"','' 
-                $aliasList += $cleaned
+                foreach ($match in $aliasMatches) {
+                    $raw = $match.Groups[1].Value
+                    $cleaned = $raw -replace '[\'']', '' -split '\s*,\s*' -replace '"','' 
+                    $aliasList += $cleaned
+                }
+            }
+            } catch{
+                Write-Warning "[Reset-OMGModuleManifests] Failed to read file: $($_.FullName)"
             }
         }
 
@@ -157,7 +163,7 @@ Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
             Write-Host "PATCHED: $ModuleName.psd1" -ForegroundColor Green
         }
         else {
-            Write-Warning "$ModuleName.psd1 not found"
+            Write-Warning "[Reset-OMGModuleManifests] $ModuleName.psd1 not found"
         }
     }
 }

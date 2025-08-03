@@ -21,4 +21,8 @@ $PublicFunctions = @(
     'New-OMGPSUtilitiesServiceNow'
 )
 
-Export-ModuleMember -Function $PublicFunctions
+$AliasesToExport = @(
+
+)
+
+Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport
