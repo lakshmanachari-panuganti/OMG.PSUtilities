@@ -52,21 +52,20 @@ function Get-PSUADORepositories {
     )
 
 begin {
-    $script:ShouldExit = $false
-
-    if ([string]::IsNullOrWhiteSpace($Organization)) {
-        Write-Warning '$env:ORGANIZATION environment variable is null or empty, please create the environment variable by running:'
-        Write-Host "`n`Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<Your organization value>'`n" -ForegroundColor Cyan
-        $script:ShouldExit = $true
-        return
-    }
-
-    try {
+        if (-not [string]::IsNullOrWhiteSpace($Organization)) {
+            return $Organization
+        }
+        else {
+            Write-Warning 'A valid Azure DevOps organization is not provided.'
+            Write-Host "`nTo fix this, either:"
+            Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
+            Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
+            Write-Host "     Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<YOUR ADO ORGANIZATION NAME>'`n" -ForegroundColor Cyan
+            $script:ShouldExit = $true
+            return
+        }
+    
         $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
-    } catch {
-        $PSCmdlet.ThrowTerminatingError($_)
-        $script:ShouldExit = $true
-    }
 }
 
 process {
