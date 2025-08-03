@@ -84,7 +84,7 @@ function Reset-OMGModuleManifests {
 
             foreach ($match in $aliasMatches) {
                 $raw = $match.Groups[1].Value
-                $cleaned = $raw -replace '[\'']', '' -split '\s*,\s*'
+                $cleaned = $raw -replace '[\'']', '' -split '\s*,\s*' -replace '"','' 
                 $aliasList += $cleaned
             }
         }

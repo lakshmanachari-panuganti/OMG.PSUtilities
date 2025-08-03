@@ -28,8 +28,8 @@ $PublicFunctions = @(
 )
 
 $AliasesToExport = @(
-    "aigitcommit"
-    "Ask-Ai"
+    'aigitcommit'
+    'Ask-Ai'
 )
 
 Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport
