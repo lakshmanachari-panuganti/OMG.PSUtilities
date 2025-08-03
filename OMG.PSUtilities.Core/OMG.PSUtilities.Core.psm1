@@ -36,4 +36,10 @@ $PublicFunctions = @(
     'Uninstall-PSUInstalledSoftware'
 )
 
-Export-ModuleMember -Function $PublicFunctions
+$AliasesToExport = @(
+    Get-WifiInfo
+    Remove-PSUInstalledSoftware
+    Uninstall-Software
+)
+
+Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport

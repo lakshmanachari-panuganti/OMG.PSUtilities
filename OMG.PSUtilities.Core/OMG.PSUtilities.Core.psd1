@@ -132,3 +132,5 @@ PrivateData = @{
 
 }
 
+
+AliasesToExport = @(Get-WifiInfo, Remove-PSUInstalledSoftware, Uninstall-Software)
