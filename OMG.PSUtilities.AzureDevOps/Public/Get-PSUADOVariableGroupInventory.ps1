@@ -123,17 +123,14 @@ function Get-PSUADOVariableGroupInventory {
     param (
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [Alias('OrganizationName', 'Org')]
         [string]$Organization,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [Alias('PersonalAccessToken', 'Token')]
         [string]$PAT,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [Alias('Projects')]
         [string[]]$Project = '*',
 
         [Parameter()]
@@ -143,7 +140,7 @@ function Get-PSUADOVariableGroupInventory {
                     throw "Directory does not exist: $directory"
                 }
                 $extension = [System.IO.Path]::GetExtension($_)
-                if ($extension -notin @('.csv', '.json', '.xml')) {
+                if ($extension -notin @('.csv', '.json', '.xml', 'xlsx')) {
                     throw "Output file must have .csv, .json, or .xml extension"
                 }
                 return $true

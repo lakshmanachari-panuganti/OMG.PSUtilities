@@ -43,5 +43,5 @@ Test-PSUCommentBasedHelp -ModulePath $env:BASE_MODULE_PATH | Where-Object{$_.Has
 }
 
 # Build Module locally with Reset-OMGModuleManifests (Reset-OMGModuleManifests is built in Build-OMGModuleLocally)
-Get-OMGModules | Build-OMGModuleLocally
+Get-OMGModules | Build-OMGModuleLocally -SkipScriptAnalyzer
 # NOTE: Increment of the module version is required when it is publishing to PSGallery!

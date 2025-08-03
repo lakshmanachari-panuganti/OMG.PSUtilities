@@ -78,7 +78,7 @@ function Reset-OMGModuleManifests {
         $aliasList = @()
         Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | ForEach-Object -Process {
 
-            $content = Get-Content $_.FullName -Raw
+            $content = Get-Content $_.FullName -Raw 
 
             $aliasMatches = [regex]::Matches($content, '\[Alias\((.*?)\)\]', 'IgnoreCase')
 
@@ -116,7 +116,7 @@ $(@($publicFunctions | ForEach-Object { "    '$_'" }) -join "`n")
 )
 
 `$AliasesToExport = @(
-$(@($aliasList | ForEach-Object { "    '$_'" }) -join "`n")
+$(@($aliasList | ForEach-Object { "    $_" }) -join "`n")
 )
 
 Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
@@ -131,7 +131,7 @@ Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
             $psd1 = Get-Content $psd1Path
 
             $functionsLine = "FunctionsToExport = @(" + (
-                $publicFunctions | ForEach-Object { "$_" } | Join-String -Separator ", "
+                $publicFunctions | ForEach-Object { "'$_'" } | Join-String -Separator ", "
             ) + ")"
 
             $aliasesLine = "AliasesToExport = @(" + (

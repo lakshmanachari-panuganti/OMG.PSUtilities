@@ -12,7 +12,10 @@
         [string]$ModuleName,  # Example: OMG.PSUtilities.Core
 
         [Parameter()]
-        [Switch]$SkipUpdateManifests
+        [Switch]$SkipUpdateManifests,
+
+        [Parameter()]
+        [Switch]$SkipScriptAnalyzer
     )
     process {
         try {
@@ -27,41 +30,41 @@
                 Write-Error "Module manifest not found: $psd1Path"
                 return
             }
+            if (-not $SkipScriptAnalyzer) {
+                # Run PS Analyzer to Analyse the module
+                $Rules = @(
+                    'PSAvoidUsingWriteHost',
+                    'PSAvoidTrailingWhitespace',
+                    'PSUseConsistentIndentation',
+                    'PSPlaceOpenBrace',
+                    'PSPlaceCloseBrace',
+                    'PSSpaceAroundOperators',
+                    'PSAvoidGlobalVars',
+                    'PSAvoidUsingCmdletAliases',
+                    'PSAvoidUsingPositionalParameters',
+                    'PSUseCorrectCasingForCmdlets',
+                    'PSUseCorrectCasingForCommonCmdlets',
+                    'PSUseCorrectCasingForCommonParameters',
+                    'PSUseShouldProcessForStateChangingFunctions',
+                    'PSAvoidLongLines'
+                )
 
-            # Run PS Analyzer to Analyse the module
-            $Rules = @(
-                'PSAvoidUsingWriteHost',
-                'PSAvoidTrailingWhitespace',
-                'PSUseConsistentIndentation',
-                'PSPlaceOpenBrace',
-                'PSPlaceCloseBrace',
-                'PSSpaceAroundOperators',
-                'PSAvoidGlobalVars',
-                'PSAvoidUsingCmdletAliases',
-                'PSAvoidUsingPositionalParameters',
-                'PSUseCorrectCasingForCmdlets',
-                'PSUseCorrectCasingForCommonCmdlets',
-                'PSUseCorrectCasingForCommonParameters',
-                'PSUseShouldProcessForStateChangingFunctions',
-                'PSAvoidLongLines'
-            )
+                $Settings = @{
+                    ExcludeRules = @('PSUseBOMForUnicodeEncodedFile')
+                }
 
-            $Settings = @{
-                ExcludeRules = @('PSUseBOMForUnicodeEncodedFile')
+                $ScriptAnalyzerParams = @{
+                    Path          = $modulePath
+                    Recurse       = $true
+                    IncludeRule   = $Rules
+                    Settings      = $Settings
+                    Fix           = $true
+                    Severity      = @('Warning', 'Error')
+                    ReportSummary = $true
+                }
+
+                Invoke-ScriptAnalyzer @ScriptAnalyzerParams
             }
-
-            $ScriptAnalyzerParams = @{
-                Path          = $modulePath
-                Recurse       = $true
-                IncludeRule   = $Rules
-                Settings      = $Settings
-                Fix           = $true
-                Severity      = @('Warning', 'Error')
-                ReportSummary = $true
-            }
-
-            Invoke-ScriptAnalyzer @ScriptAnalyzerParams
-
             if (-not $SkipUpdateManifests) {
                 Reset-OMGModuleManifests -ModuleName $ModuleName
             }
