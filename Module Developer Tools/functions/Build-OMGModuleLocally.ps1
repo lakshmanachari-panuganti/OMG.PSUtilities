@@ -1,5 +1,10 @@
-function Build-OMGModuleLocally {
-    [CmdletBinding()]
+﻿function Build-OMGModuleLocally {
+    [CmdletBinding(SupportsShouldProcess = $true)]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function'
+    )]
     param (
         [Parameter(Mandatory,
             ValueFromPipeline,
@@ -25,7 +30,17 @@ function Build-OMGModuleLocally {
             }
 
             # Run PS Analyzer to Analyse the module
-            Invoke-ScriptAnalyzer -Path $modulePath -Recurse #-Fix
+            $Rules = @('PSAvoidTrailingWhitespace',
+                'PSUseConsistentIndentation',
+                'PSPlaceOpenBrace',
+                'PSPlaceCloseBrace',
+                'PSSpaceAroundOperators',
+                'PSUseCorrectCasingForCommonCmdlets',
+                'PSUseCorrectCasingForCommonParameters'
+            )
+
+            Invoke-ScriptAnalyzer -Path $modulePath -Recurse -Fix -IncludeRule $Rules
+
             if (-not $SkipUpdateManifests) {
                 Reset-OMGModuleManifests -ModuleName $ModuleName
             }
