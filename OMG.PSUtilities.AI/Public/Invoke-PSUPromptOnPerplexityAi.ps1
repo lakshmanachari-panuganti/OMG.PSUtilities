@@ -57,6 +57,11 @@ function Invoke-PSUPromptOnPerplexityAi {
         Date: 22 July 2025
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param(
         [Parameter(Mandatory)]
         [string]$Prompt,
@@ -101,7 +106,7 @@ function Invoke-PSUPromptOnPerplexityAi {
     try {
         Write-Host "🧠 Thinking..." -ForegroundColor Cyan
         $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers `
-                     -Body ($body | ConvertTo-Json -Depth 100) -ContentType 'application/json'
+            -Body ($body | ConvertTo-Json -Depth 100) -ContentType 'application/json'
 
         if ($ReturnJsonResponse.IsPresent) {
             return ($response | ConvertTo-Json -Depth 10)

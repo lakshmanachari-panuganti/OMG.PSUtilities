@@ -1,9 +1,8 @@
 ﻿function Build-OMGModuleLocally {
-    [CmdletBinding(SupportsShouldProcess = $true)]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',
-        Justification = 'This is intended for this function'
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
     param (
         [Parameter(Mandatory,

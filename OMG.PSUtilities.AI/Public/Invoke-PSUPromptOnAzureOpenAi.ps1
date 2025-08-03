@@ -1,5 +1,5 @@
 function Invoke-PSUPromptOnAzureOpenAi {
-<#
+    <#
 .SYNOPSIS
     Sends a prompt to Azure OpenAI (Chat Completions API) and returns the generated response.
 
@@ -46,6 +46,11 @@ function Invoke-PSUPromptOnAzureOpenAi {
 #>
 
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param(
         [Parameter(Mandatory)]
         [string]$Prompt,
@@ -70,7 +75,8 @@ function Invoke-PSUPromptOnAzureOpenAi {
 
     $ModifiedPrompt = if ($ReturnJsonResponse.IsPresent) {
         $Prompt + "`nRespond ONLY with valid JSON. No explanations. No markdown. Just raw JSON."
-    } else {
+    }
+    else {
         $Prompt
     }
 
@@ -79,11 +85,11 @@ function Invoke-PSUPromptOnAzureOpenAi {
     $Headers = @{ "api-key" = $ApiKey }
 
     $Body = @{
-        messages = @(
+        messages    = @(
             @{ role = "system"; content = "You are a helpful assistant." },
             @{ role = "user"; content = $ModifiedPrompt }
         )
-        max_tokens = 1000
+        max_tokens  = 1000
         temperature = 0.7
     } | ConvertTo-Json -Depth 10
 
@@ -103,11 +109,13 @@ function Invoke-PSUPromptOnAzureOpenAi {
                 Write-Warning "No JSON object found in response."
                 return $Text
             }
-        } else {
+        }
+        else {
             return $Text
         }
 
-    } catch {
+    }
+    catch {
         Write-Error "Failed to get response from Azure OpenAI:`n$($_.Exception.Message)"
     }
 }

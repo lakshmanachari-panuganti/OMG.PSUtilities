@@ -1,5 +1,5 @@
 function Invoke-PSUPromptOnGeminiAi {
-<#
+    <#
 .SYNOPSIS
     Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response.
 
@@ -36,6 +36,11 @@ function Invoke-PSUPromptOnGeminiAi {
     Model: Gemini 2.0 Flash (Generative Language API)
 #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param(
         [Parameter(Mandatory)]
         [string]$Prompt,
@@ -87,7 +92,8 @@ function Invoke-PSUPromptOnGeminiAi {
                 Write-Warning "Could not find a JSON object in the response."
                 return $rawText
             }
-        } else {
+        }
+        else {
             return $rawText
         }
 

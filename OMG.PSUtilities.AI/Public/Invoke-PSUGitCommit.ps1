@@ -26,6 +26,11 @@ function Invoke-PSUGitCommit {
 
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param (
         [string]$RootPath = (Get-Location).Path
     )

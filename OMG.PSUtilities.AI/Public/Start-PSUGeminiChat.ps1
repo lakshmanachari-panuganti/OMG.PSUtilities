@@ -1,5 +1,5 @@
 function Start-PSUGeminiChat {
-<#
+    <#
 .SYNOPSIS
     Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API.
 
@@ -30,6 +30,11 @@ function Start-PSUGeminiChat {
 #>
 
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     [Alias("Ask-Ai")]
     param (
         [string]$ApiKey = $env:API_KEY_GEMINI

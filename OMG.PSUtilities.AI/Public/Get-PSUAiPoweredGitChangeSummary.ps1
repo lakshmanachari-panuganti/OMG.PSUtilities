@@ -27,6 +27,11 @@ function Get-PSUAiPoweredGitChangeSummary {
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param(
         [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
         [string]$FeatureBranch = $(git branch --show-current),
@@ -78,15 +83,17 @@ Here are the file-level diffs:
     foreach ($item in $gitChanges) {
         $diff = if ($item.Type -eq "Delete") {
             "[Deleted File]"
-        } elseif ($item.Type -eq "New") {
+        }
+        elseif ($item.Type -eq "New") {
             git show "$($FeatureBranch):$($item.File)" 2>$null
-        } else {
+        }
+        else {
             git diff $BaseBranch $FeatureBranch -- "$($item.File)"
         }
 
         $prompt += "\n### File: $($item.File) [$($item.Type)]\n"
-        if($item.Comment){
-            $prompt +=  $item.Comment
+        if ($item.Comment) {
+            $prompt += $item.Comment
         }
         $prompt += $diff
         $prompt += "\n"
@@ -104,7 +111,8 @@ Here are the file-level diffs:
                 Summary      = $_.Summary
             }
         }
-    } catch {
+    }
+    catch {
         Write-Warning "Failed to parse Gemini response as JSON. Raw response:`n$json"
         return @()
     }

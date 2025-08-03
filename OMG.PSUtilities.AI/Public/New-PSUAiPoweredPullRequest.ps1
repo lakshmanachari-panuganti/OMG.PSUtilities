@@ -25,6 +25,11 @@ function New-PSUAiPoweredPullRequest {
     #>
 
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param (
         [Parameter()]
         [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
@@ -94,7 +99,7 @@ $PRTemplateStatement
         #    Title       = $parsed.title
         #    Description = $parsed.description
         #}
-        ($parsed.title) + '`n '+($parsed.description) | Set-Clipboard
+        ($parsed.title) + '`n ' + ($parsed.description) | Set-Clipboard
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
 
         Read-Host "Would you like me to submit the pull request with the current title and description, or retry generating new ones? (Y/N/R)"

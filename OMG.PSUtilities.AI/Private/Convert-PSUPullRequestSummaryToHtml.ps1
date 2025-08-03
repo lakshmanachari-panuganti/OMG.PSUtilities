@@ -1,11 +1,11 @@
-function Convert-PSUPullRequestSummaryToHtml {
+﻿function Convert-PSUPullRequestSummaryToHtml {
     <#
     .SYNOPSIS
     Converts a pull request title and markdown-based description into a styled HTML summary file.
 
     .DESCRIPTION
-    This function takes a pull request title and a markdown-formatted description, converts the description into HTML, 
-    and generates a visually styled HTML file. The output supports light/dark mode toggling in the browser and includes 
+    This function takes a pull request title and a markdown-formatted description, converts the description into HTML,
+    and generates a visually styled HTML file. The output supports light/dark mode toggling in the browser and includes
     formatting for readability. Optionally, the HTML can be opened automatically in the default browser.
 
     .PARAMETER Title
@@ -42,6 +42,11 @@ function Convert-PSUPullRequestSummaryToHtml {
     #>
 
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param (
         [Parameter(Mandatory)]
         [string]$Title,
