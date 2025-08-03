@@ -35,25 +35,21 @@ function Get-PSUADOAuthorizationHeader {
         [Parameter()]
         [string] $PAT = $env:PAT
     )
-
-    begin {
-        if ([string]::IsNullOrWhiteSpace($PAT)) {
-            Write-Warning "The environment variable 'PAT' is not set and no value was provided. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'PAT' -Value '<Your PAT value>'"
-            return
-        }
-
+        
+    if ([string]::IsNullOrWhiteSpace($PAT)) {
+        Write-Warning 'A valid Azure DevOps PAT is not provided.'
+        Write-Host "`nTo fix this, either:"
+        Write-Host "  1. Pass the -PAT parameter explicitly, OR" -ForegroundColor Yellow
+        Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
+        Write-Host "     Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<YOUR ADO PAT NAME>'`n" -ForegroundColor Cyan
+        $script:ShouldExit = $true
     }
-
-    process {
-        try {
-            $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
-            @{
-                Authorization  = "Basic $encodedPAT"
-                'Content-Type' = 'application/json'
-            }
-        }
-        catch {
-            $PSCmdlet.ThrowTerminatingError($_)
+    else {
+        $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
+        @{
+            Authorization  = "Basic $encodedPAT"
+            'Content-Type' = 'application/json'
         }
     }
+    
 }
