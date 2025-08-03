@@ -116,7 +116,7 @@ $(@($publicFunctions | ForEach-Object { "    '$_'" }) -join "`n")
 )
 
 `$AliasesToExport = @(
-$(@($aliasList | ForEach-Object { "    $_" }) -join "`n")
+$(@($aliasList | ForEach-Object { "    '$_'" }) -join "`n")
 )
 
 Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
@@ -146,15 +146,13 @@ Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
                 $psd1 += "`n$functionsLine"
             }
 
-            if ($aliasList.Count -gt 0) {
-                if ($psd1 -match 'AliasesToExport\s*=\s*@\([^\)]*\)') {
-                    $psd1 = $psd1 -replace 'AliasesToExport\s*=\s*@\([^\)]*\)', $aliasesLine
-                }
-                else {
-                    $psd1 += "`n$aliasesLine"
-                }
+            if ($psd1 -match 'AliasesToExport\s*=\s*@\([^\)]*\)') {
+                $psd1 = $psd1 -replace 'AliasesToExport\s*=\s*@\([^\)]*\)', $aliasesLine
             }
-
+            else {
+                $psd1 += "`n$aliasesLine"
+            }
+            
             $psd1 | Set-Content -Path $psd1Path -Encoding UTF8
             Write-Host "PATCHED: $ModuleName.psd1" -ForegroundColor Green
         }
