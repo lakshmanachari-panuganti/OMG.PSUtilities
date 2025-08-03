@@ -135,7 +135,7 @@ Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
             ) + ")"
 
             $aliasesLine = "AliasesToExport = @(" + (
-                $aliasList | ForEach-Object { "$_" } | Join-String -Separator ", "
+                $aliasList | ForEach-Object { "'$_'" } | Join-String -Separator ", "
             ) + ")"
 
 
