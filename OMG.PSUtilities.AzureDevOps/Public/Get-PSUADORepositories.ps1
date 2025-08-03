@@ -52,6 +52,7 @@ function Get-PSUADORepositories {
     )
 
 begin {
+        $script:ShouldExit = $false
         if (-not [string]::IsNullOrWhiteSpace($Organization)) {
             return $Organization
         }

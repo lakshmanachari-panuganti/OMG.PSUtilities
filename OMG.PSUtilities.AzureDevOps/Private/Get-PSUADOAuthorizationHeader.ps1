@@ -35,8 +35,6 @@ function Get-PSUADOAuthorizationHeader {
         [Parameter()]
         [string] $PAT = $env:PAT
     )
-
-    $script:ShouldExit = $false
         
     if ([string]::IsNullOrWhiteSpace($PAT)) {
         Write-Warning 'A valid Azure DevOps PAT is not provided.'
