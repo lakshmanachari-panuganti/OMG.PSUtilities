@@ -131,5 +131,3 @@ PrivateData = @{
 # DefaultCommandPrefix = ''
 
 }
-
-AliasesToExport = @('Get-WifiInfo', 'Remove-PSUInstalledSoftware', 'Uninstall-Software')

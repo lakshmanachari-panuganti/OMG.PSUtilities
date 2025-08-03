@@ -129,6 +129,3 @@ PrivateData = @{
 # DefaultCommandPrefix = ''
 
 }
-
-
-AliasesToExport = @()
