@@ -22,6 +22,11 @@ function Invoke-SafeGitCheckout {
         Created: 2025-07-28
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param (
         [Parameter(Mandatory)]
         [string]$TargetBranch,
@@ -42,7 +47,7 @@ function Invoke-SafeGitCheckout {
         $choice = Read-Host "Choose an action: (C)ommit, (S)tash, or (A)bort"
         switch ($choice.ToUpper()) {
             'C' {
-                Invoke-PSUGitCommit  
+                Invoke-PSUGitCommit
             }
             'S' {
                 git stash push -m "Auto-stash before switching to $TargetBranch"

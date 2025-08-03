@@ -26,6 +26,12 @@ function Invoke-PSUGitCommit {
 
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
+    [Alias("aigitcommit")]
     param (
         [string]$RootPath = (Get-Location).Path
     )
@@ -102,7 +108,51 @@ You are a Git commit message generator with expertise in software development.
 
 Generate a clear, conventional commit message based on the following file changes.
 The message must start with one of: feat, fix, chore, docs, refactor, style, test.
-Limit to 1-2 lines.
+Limit to 1-5 lines, based on the number of files changes and based on scenario.
+
+Example: 
+
+fix: typo in function name in utils.ps1
+Corrected a spelling error in the `Get-ConfigData` function which was causing a runtime failure in some environments.
+
+#----------------------------------------------------------------
+chore: update logging logic and error handling in backup script
+- Improved log verbosity in Backup-Logs.ps1
+- Added fallback error message in ErrorHandler.ps1 for better diagnostics
+
+#----------------------------------------------------------------
+refactor: clean up deployment scripts for clarity and reuse
+- Modularized common functions in Deploy-Common.ps1
+- Updated AzureDeploy.ps1 to use shared logic
+- Removed redundant code from PreDeploy.ps1
+
+#----------------------------------------------------------------
+feat: add environment variable for staging to appsettings.json
+Introduced `STAGE_API_URL` to support separate staging endpoints for CI pipelines.
+
+#----------------------------------------------------------------
+feat: implement retry logic in API integration scripts
+- Added `Invoke-WithRetry` to helper module
+- Refactored UploadArtifacts.ps1 and SyncMetadata.ps1 to use retry logic
+- Updated config schema to include retry parameters
+- Improved test coverage for retry scenarios
+
+#----------------------------------------------------------------
+chore: enhance secret management for automation scripts
+- Integrated Azure Key Vault access in AuthHelper.ps1
+- Masked sensitive values in CI/CD output logs
+
+#----------------------------------------------------------------
+docs: update README with new usage instructions for cleanup script
+Clarified the usage examples and added a note on required permissions for `Cleanup-TempFiles.ps1`.
+
+#----------------------------------------------------------------
+test: add unit tests for Invoke-AzBackup and improve validation logic
+- Added Pester tests for core scenarios
+- Enhanced input validation inside Invoke-AzBackup.ps1
+- Minor formatting fixes in Test-Helpers.ps1
+
+#----------------------------------------------------------------
 
 Changes:
 "@
@@ -121,7 +171,7 @@ $($item.Diff)
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan
         Write-Host $CommitMessage -ForegroundColor DarkYellow
         $CustomCommitMsg = Read-Host "Press enter to commit with this message or provide your own commit message"
-        
+
         if ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }
@@ -134,7 +184,7 @@ $($item.Diff)
         git push *> $null
 
         Write-Host "Sync complete." -ForegroundColor Green
-        
+
     }
     catch {
         Write-Error "Error: $_"

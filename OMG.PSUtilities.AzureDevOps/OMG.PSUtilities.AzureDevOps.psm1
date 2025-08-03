@@ -28,4 +28,8 @@ $PublicFunctions = @(
     'Get-PSUADOVariableGroupInventory'
 )
 
-Export-ModuleMember -Function $PublicFunctions
+$AliasesToExport = @(
+
+)
+
+Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport

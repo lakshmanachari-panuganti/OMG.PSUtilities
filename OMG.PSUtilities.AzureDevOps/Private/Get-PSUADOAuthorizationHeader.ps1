@@ -5,7 +5,7 @@ function Get-PSUADOAuthorizationHeader {
 
     .DESCRIPTION
         This private helper function returns a hashtable containing the 'Authorization' and 'Content-Type' headers
-        required to communicate with the Azure DevOps REST API. It prioritizes values from the environment variable 
+        required to communicate with the Azure DevOps REST API. It prioritizes values from the environment variable
         $env:PAT but allows override via parameters.
 
     .PARAMETER PAT
@@ -35,7 +35,7 @@ function Get-PSUADOAuthorizationHeader {
         [Parameter()]
         [string] $PAT = $env:PAT
     )
-        
+
     if ([string]::IsNullOrWhiteSpace($PAT)) {
         Write-Warning 'A valid Azure DevOps PAT is not provided.'
         Write-Host "`nTo fix this, either:"
@@ -51,5 +51,5 @@ function Get-PSUADOAuthorizationHeader {
             'Content-Type' = 'application/json'
         }
     }
-    
+
 }

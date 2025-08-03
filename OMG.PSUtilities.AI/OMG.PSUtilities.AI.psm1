@@ -27,4 +27,9 @@ $PublicFunctions = @(
     'Start-PSUGeminiChat'
 )
 
-Export-ModuleMember -Function $PublicFunctions
+$AliasesToExport = @(
+    'aigitcommit'
+    'Ask-Ai'
+)
+
+Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport

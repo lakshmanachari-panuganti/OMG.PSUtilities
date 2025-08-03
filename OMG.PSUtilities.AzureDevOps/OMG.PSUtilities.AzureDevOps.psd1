@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AzureDevOps.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.3'
+ModuleVersion = '1.0.4'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -51,7 +51,7 @@ PowerShellVersion = '7.1'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @('OMG.PSUtilities.Core')
+RequiredModules = @('OMG.PSUtilities.Core', 'OMG.PSUtilities.Ai')
 
 # Assemblies that must be loaded prior to importing this module
 # RequiredAssemblies = @()
@@ -72,13 +72,13 @@ RequiredModules = @('OMG.PSUtilities.Core')
 FunctionsToExport = @('Get-PSUADOPipelineBuildDetails', 'Get-PSUADOPipelineLatestRun', 'Get-PSUADOProjectList', 'Get-PSUADOPullRequestInventory', 'Get-PSUADOPullRequests', 'Get-PSUADORepoBranchList', 'Get-PSUADORepositories', 'Get-PSUADOVariableGroupInventory')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = '*'
+CmdletsToExport = @()
 
 # Variables to export from this module
-VariablesToExport = '*'
+VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = '*'
+AliasesToExport = @()
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -129,4 +129,3 @@ PrivateData = @{
 # DefaultCommandPrefix = ''
 
 }
-

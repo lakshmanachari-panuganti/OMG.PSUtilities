@@ -45,6 +45,11 @@ function Invoke-PSUPullRequestCreation {
     Date: 2025-07-30
     #>
     [CmdletBinding()]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'This is intended for this function to display formatted output to the user on the console'
+    )]
     param (
         [Parameter(Mandatory)]
         [string]$Org,

@@ -1,5 +1,5 @@
 function Reset-OMGModuleManifests {
-<#
+    <#
 .SYNOPSIS
     Updates a PowerShell module's manifest and module files by exporting all public functions.
 
@@ -52,7 +52,7 @@ function Reset-OMGModuleManifests {
         $modulePath = Join-Path $env:BASE_MODULE_PATH $ModuleName
 
         if (-not (Test-Path $modulePath)) {
-            Write-Warning "Module path not found: $modulePath"
+            Write-Warning "[Reset-OMGModuleManifests] Module path not found: $modulePath"
             return
         }
         Write-Verbose "Processing module: $ModuleName at $modulePath"
@@ -61,7 +61,7 @@ function Reset-OMGModuleManifests {
         $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
 
         if (-not (Test-Path $publicPath)) {
-            Write-Warning "Missing Public folder in $ModuleName"
+            Write-Warning "[Reset-OMGModuleManifests] Missing Public folder in $ModuleName"
             return
         }
 
@@ -70,11 +70,33 @@ function Reset-OMGModuleManifests {
         Select-Object -ExpandProperty BaseName
 
         if (-not $publicFunctions) {
-            Write-Warning "No functions found in $publicPath"
+            Write-Warning "[Reset-OMGModuleManifests] No functions found in $publicPath"
             return
         }
 
-        # Generate .psm1 content
+        # --- Extract aliases from each public function -----
+        $aliasList = @()
+        Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | ForEach-Object {
+            $content = $null
+            try{
+            $content = Get-Content $_.FullName -Raw -ErrorAction Stop
+            
+            if($content){
+                $aliasMatches = [regex]::Matches($content, '\[Alias\((.*?)\)\]', 'IgnoreCase')
+
+                foreach ($match in $aliasMatches) {
+                    $raw = $match.Groups[1].Value
+                    $cleaned = $raw -replace '[\'']', '' -split '\s*,\s*' -replace '"','' 
+                    $aliasList += $cleaned
+                }
+            }
+            } catch{
+                Write-Warning "[Reset-OMGModuleManifests] Failed to read file: $($_.FullName)"
+            }
+        }
+
+
+        # --------- [Generate .psm1 content] --------------
         $psm1Content = @"
 # Load private functions
 Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | ForEach-Object {
@@ -99,29 +121,49 @@ Get-ChildItem -Path "`$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
 $(@($publicFunctions | ForEach-Object { "    '$_'" }) -join "`n")
 )
 
-Export-ModuleMember -Function `$PublicFunctions
+`$AliasesToExport = @(
+$(@($aliasList | ForEach-Object { "    '$_'" }) -join "`n")
+)
+
+Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
 "@
 
         $psm1Content | Set-Content -Path $psm1Path -Encoding UTF8
         Write-Host "UPDATED: $ModuleName.psm1" -ForegroundColor Green
 
-        # Patch .psd1 → FunctionsToExport
+        # ------------------- [Patch .psd1 → FunctionsToExport] --------------------
+        # --- Patch .psd1
         if (Test-Path $psd1Path) {
             $psd1 = Get-Content $psd1Path
-            $newExport = "FunctionsToExport = @(" + (($publicFunctions | ForEach-Object { "'$_'" } ) -join ", ") + ")"
+
+            $functionsLine = "FunctionsToExport = @(" + (
+                $publicFunctions | ForEach-Object { "'$_'" } | Join-String -Separator ", "
+            ) + ")"
+
+            $aliasesLine = "AliasesToExport = @(" + (
+                $aliasList | ForEach-Object { "'$_'" } | Join-String -Separator ", "
+            ) + ")"
+
 
             if ($psd1 -match 'FunctionsToExport\s*=\s*@\([^\)]*\)') {
-                $psd1 = $psd1 -replace 'FunctionsToExport\s*=\s*@\([^\)]*\)', $newExport
+                $psd1 = $psd1 -replace 'FunctionsToExport\s*=\s*@\([^\)]*\)', $functionsLine
             }
             else {
-                $psd1 += "`n$newExport"
+                $psd1 += "`n$functionsLine"
             }
 
+            if ($psd1 -match 'AliasesToExport\s*=\s*@\([^\)]*\)') {
+                $psd1 = $psd1 -replace 'AliasesToExport\s*=\s*@\([^\)]*\)', $aliasesLine
+            }
+            else {
+                $psd1 += "`n$aliasesLine"
+            }
+            
             $psd1 | Set-Content -Path $psd1Path -Encoding UTF8
             Write-Host "PATCHED: $ModuleName.psd1" -ForegroundColor Green
         }
         else {
-            Write-Warning "$ModuleName.psd1 not found"
+            Write-Warning "[Reset-OMGModuleManifests] $ModuleName.psd1 not found"
         }
     }
 }

@@ -31,14 +31,14 @@ function Get-PSUADOPullRequests {
             if ($response.value) {
                 foreach ($item in $response.value) {
                     $formattedObject = [PSCustomObject]@{}
-    
+
                     foreach ($property in $item.PSObject.Properties) {
                         $originalName = $property.Name
                         $originalValue = $property.Value
 
                         # Capitalize the first letter of the property name
                         $capitalizedName = ($originalName[0].ToString().ToUpper()) + ($originalName.Substring(1).ToLower())
-        
+
                         $formattedObject | Add-Member -MemberType NoteProperty -Name $capitalizedName -Value $originalValue
                     }
 
@@ -53,3 +53,4 @@ function Get-PSUADOPullRequests {
         }
     }
 }
+

@@ -23,28 +23,28 @@ function Get-PSUAksWorkloadIdentityInventory {
     .EXAMPLE
         az login --use-device-code
         Get-PSUAksWorkloadIdentityInventory
-        
+
         Scans all accessible subscriptions and clusters for workload identity usage.
 
     .EXAMPLE
         az login --use-device-code
         Get-PSUAksWorkloadIdentityInventory
         Get-PSUAksWorkloadIdentityInventory -SubscriptionId "12345678-1234-1234-1234-123456789012"
-        
+
         Scans only the specified subscription.
 
     .EXAMPLE
         az login --use-device-code
         Get-PSUAksWorkloadIdentityInventory
         Get-PSUAksWorkloadIdentityInventory -SubscriptionId "12345678-1234-1234-1234-123456789012" -ClusterName "prod-aks-*"
-        
+
         Scans clusters matching the pattern in the specified subscription.
 
     .EXAMPLE
         az login --use-device-code
         Get-PSUAksWorkloadIdentityInventory
         Get-PSUAksWorkloadIdentityInventory -ClusterName "dev-aks-01", "staging-aks-01" -Export
-        
+
         Scans specific clusters and exports results to Excel.
     #>
 
