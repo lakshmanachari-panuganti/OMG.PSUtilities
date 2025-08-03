@@ -1,5 +1,5 @@
 function Reset-OMGModuleManifests {
-<#
+    <#
 .SYNOPSIS
     Updates a PowerShell module's manifest and module files by exporting all public functions.
 
@@ -74,7 +74,23 @@ function Reset-OMGModuleManifests {
             return
         }
 
-        # Generate .psm1 content
+        # --- Extract aliases from each public function -----
+        $aliasList = @()
+        Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | ForEach-Object -Process {
+
+            $content = Get-Content $_.FullName -Raw
+
+            $aliasMatches = [regex]::Matches($content, '\[Alias\((.*?)\)\]', 'IgnoreCase')
+
+            foreach ($match in $aliasMatches) {
+                $raw = $match.Groups[1].Value
+                $cleaned = $raw -replace '[\'']', '' -split '\s*,\s*'
+                $aliasList += $cleaned
+            }
+        }
+
+
+        # --------- [Generate .psm1 content] --------------
         $psm1Content = @"
 # Load private functions
 Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | ForEach-Object {
@@ -99,22 +115,44 @@ Get-ChildItem -Path "`$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
 $(@($publicFunctions | ForEach-Object { "    '$_'" }) -join "`n")
 )
 
-Export-ModuleMember -Function `$PublicFunctions
+`$AliasesToExport = @(
+$(@($aliasList | ForEach-Object { "    '$_'" }) -join "`n")
+)
+
+Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
 "@
 
         $psm1Content | Set-Content -Path $psm1Path -Encoding UTF8
         Write-Host "UPDATED: $ModuleName.psm1" -ForegroundColor Green
 
-        # Patch .psd1 → FunctionsToExport
+        # ------------------- [Patch .psd1 → FunctionsToExport] --------------------
+        # --- Patch .psd1
         if (Test-Path $psd1Path) {
             $psd1 = Get-Content $psd1Path
-            $newExport = "FunctionsToExport = @(" + (($publicFunctions | ForEach-Object { "'$_'" } ) -join ", ") + ")"
+
+            $functionsLine = "FunctionsToExport = @(" + (
+                $publicFunctions | ForEach-Object { "$_" } | Join-String -Separator ", "
+            ) + ")"
+
+            $aliasesLine = "AliasesToExport = @(" + (
+                $aliasList | ForEach-Object { "$_" } | Join-String -Separator ", "
+            ) + ")"
+
 
             if ($psd1 -match 'FunctionsToExport\s*=\s*@\([^\)]*\)') {
-                $psd1 = $psd1 -replace 'FunctionsToExport\s*=\s*@\([^\)]*\)', $newExport
+                $psd1 = $psd1 -replace 'FunctionsToExport\s*=\s*@\([^\)]*\)', $functionsLine
             }
             else {
-                $psd1 += "`n$newExport"
+                $psd1 += "`n$functionsLine"
+            }
+
+            if ($aliasList.Count -gt 0) {
+                if ($psd1 -match 'AliasesToExport\s*=\s*@\([^\)]*\)') {
+                    $psd1 = $psd1 -replace 'AliasesToExport\s*=\s*@\([^\)]*\)', $aliasesLine
+                }
+                else {
+                    $psd1 += "`n$aliasesLine"
+                }
             }
 
             $psd1 | Set-Content -Path $psd1Path -Encoding UTF8
