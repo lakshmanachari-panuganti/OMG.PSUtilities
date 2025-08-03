@@ -52,14 +52,32 @@ function Invoke-PSUPromptOnGeminiAi {
         [switch]$ReturnJsonResponse
     )
 
-    if (-not $ApiKey) {
-        Write-Error "Gemini API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_GEMINI' -Value '<your-api-key>'"
+    #----------[Validating the 'ApiKey' inside the function body (instead of in the parameter block) is for clearer error messaging and better formatting]----------
+
+    if ([string]::IsNullOrWhiteSpace($ApiKey)) {
+        Write-Host "    Please provide a valid Google Gemini API Key" -ForegroundColor Red
+        Write-Host "" -ForegroundColor Red
+        Write-Host "    If you are using it first time:" -ForegroundColor Yellow
+        Write-Host "    -------------------------------" -ForegroundColor Yellow
+        Write-Host @"
+   1. Visit: https://makersuite.google.com/app/apikey
+   2. Sign in with your Google account
+   3. Click **"Create API Key"**
+   4. Copy the key and save it using:
+
+    ✅  Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "YOUR_API_KEY_VALUE"
+
+"@ -ForegroundColor Cyan
         return
     }
-    if ($ReturnJsonResponse.IsPresent) {
-        $Prompt += "`nRespond ONLY with a valid JSON object. Do NOT include any explanations, text. DO NOT include any Markdown Fencing formatting like triple backticks. Return raw JSON only with suitable properties."
-    }
 
+    if ($ReturnJsonResponse.IsPresent) {
+        $Prompt += "`nReturn only a valid JSON object. Exclude any additional text, explanations, or formatting such as triple backticks. The output must be raw JSON with appropriate properties."
+        $Prompt += "`nExample 1: { ""scriptName"": ""Backup-Logs.ps1"", ""author"": ""adminUser"", ""lastModified"": ""2025-07-15T10:45:00Z"", ""parameters"": [""sourcePath"", ""destinationPath""] }"
+        $Prompt += "`nExample 2: { ""planet"": ""Mars"", ""distanceFromSun_km"": 227943824, ""hasAtmosphere"": true, ""moons"": 2 }"
+        $Prompt += "`nExample 3: { ""fullName"": ""Asha Verma"", ""age"": 34, ""city"": ""Pune"", ""interests"": [""traveling"", ""reading"", ""music""] }"
+    }
+    
     $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"
     $body = @{ contents = @(@{ parts = @(@{ text = $Prompt }) }) } | ConvertTo-Json -Depth 10
 
@@ -100,5 +118,5 @@ function Invoke-PSUPromptOnGeminiAi {
     }
     catch {
         Write-Error "Failed to get response from Gemini:`n$($_.Exception.Message)"
-    }
+    }  
 }

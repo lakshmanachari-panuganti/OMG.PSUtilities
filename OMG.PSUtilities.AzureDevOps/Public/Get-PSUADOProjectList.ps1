@@ -31,7 +31,7 @@ function Get-PSUADOProjectList {
 
     [CmdletBinding()]
     param (
-        [Parameter(ValueFromPipelineByPropertyName)]
+        [Parameter()]
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
@@ -39,10 +39,8 @@ function Get-PSUADOProjectList {
     )
 
     begin {
-        if (-not [string]::IsNullOrWhiteSpace($Organization)) {
-            return $Organization
-        }
-        else {
+        $script:ShouldExit = $false
+        if ([string]::IsNullOrWhiteSpace($Organization)) {
             Write-Warning 'A valid Azure DevOps organization is not provided.'
             Write-Host "`nTo fix this, either:"
             Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
@@ -51,7 +49,6 @@ function Get-PSUADOProjectList {
             $script:ShouldExit = $true
             return
         }
-
         $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
     }
 
