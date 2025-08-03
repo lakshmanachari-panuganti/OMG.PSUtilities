@@ -22,7 +22,7 @@ function Get-PSUAiPoweredGitChangeSummary {
     .NOTES
         Author: Lakshmanachari Panuganti
         Created: 2025-07-27
-    
+
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
     #>
@@ -86,15 +86,15 @@ Here are the file-level diffs:
 
         $prompt += "\n### File: $($item.File) [$($item.Type)]\n"
         if($item.Comment){
-            $prompt +=  $item.Comment   
+            $prompt +=  $item.Comment
         }
         $prompt += $diff
         $prompt += "\n"
     }
 
     # Call Gemini for summarization
-    $json = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ApiKey $ApiKeyGemini -ReturnJsonResponse 
-    
+    $json = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ApiKey $ApiKeyGemini -ReturnJsonResponse
+
     try {
         $results = $json | ConvertFrom-Json -ErrorAction Stop
         return $results | ForEach-Object {

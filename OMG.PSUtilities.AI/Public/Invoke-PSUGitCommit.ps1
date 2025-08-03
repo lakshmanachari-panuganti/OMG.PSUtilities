@@ -121,7 +121,7 @@ $($item.Diff)
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan
         Write-Host $CommitMessage -ForegroundColor DarkYellow
         $CustomCommitMsg = Read-Host "Press enter to commit with this message or provide your own commit message"
-        
+
         if ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }
@@ -134,7 +134,7 @@ $($item.Diff)
         git push *> $null
 
         Write-Host "Sync complete." -ForegroundColor Green
-        
+
     }
     catch {
         Write-Error "Error: $_"

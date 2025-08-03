@@ -13,9 +13,9 @@ function Start-PSUGeminiChat {
 
     How to get started:
     ----------------------
-    1. Visit: https://makersuite.google.com/app/apikey  
-    2. Sign in with your Google account  
-    3. Click **"Create API Key"**  
+    1. Visit: https://makersuite.google.com/app/apikey
+    2. Sign in with your Google account
+    3. Click **"Create API Key"**
     4. Copy the key and save it using:
 
     Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "<your-api-key>"

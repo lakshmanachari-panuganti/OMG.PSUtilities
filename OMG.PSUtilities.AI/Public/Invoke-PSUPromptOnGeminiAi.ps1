@@ -9,9 +9,9 @@ function Invoke-PSUPromptOnGeminiAi {
 
     How to get started:
     ----------------------
-    1. Visit: https://makersuite.google.com/app/apikey  
-    2. Sign in with your Google account  
-    3. Click **"Create API Key"**  
+    1. Visit: https://makersuite.google.com/app/apikey
+    2. Sign in with your Google account
+    3. Click **"Create API Key"**
     4. Copy the key and save it using:
 
         Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "<your-api-key>"
@@ -67,10 +67,10 @@ function Invoke-PSUPromptOnGeminiAi {
         }
 
         $rawText = $response.candidates[0].content.parts[0].text
-        
+
         if ($ReturnJsonResponse.IsPresent) {
             $jsonBlock = ''
-                
+
             # Match fenced JSON block
             if ($rawText -match '(?s)```json\s*(\[.*?\]|\{.*?\})\s*```') {
                 $jsonBlock = $matches[1]
@@ -90,7 +90,7 @@ function Invoke-PSUPromptOnGeminiAi {
         } else {
             return $rawText
         }
-        
+
     }
     catch {
         Write-Error "Failed to get response from Gemini:`n$($_.Exception.Message)"

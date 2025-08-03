@@ -9,7 +9,7 @@ function Get-PSUADOPipelineBuildDetails {
     .PARAMETER BuildId
         The build ID of the pipeline run.
 
-    .PARAMETER Pat
+    .PARAMETER PAT
         Your Personal Access Token for Azure DevOps REST API authentication.
 
     .PARAMETER Organization
@@ -19,7 +19,7 @@ function Get-PSUADOPipelineBuildDetails {
         The name of your Azure DevOps project.
 
     .EXAMPLE
-        Get-PSUADOPipelineBuildDetails -BuildId 12345 -Pat 'xxxxxxxxxx' -Organization 'Organizationxyz' -Project 'ProjectZ'
+        Get-PSUADOPipelineBuildDetails -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'Organizationxyz' -Project 'ProjectZ'
 
         This example gets details for build ID 12345 in the given organization and project.
 
@@ -39,34 +39,40 @@ function Get-PSUADOPipelineBuildDetails {
         [ValidateRange(1, [int]::MaxValue)]
         [int]$BuildId,
 
-        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Pat,
+        [string]$PAT = $env:PAT,
 
-        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization,
+        [string]$Organization = $env:ORGANIZATION,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Project
     )
-    
+    begin {
+        if ([string]::IsNullOrWhiteSpace($Organization)) {
+            Write-Warning 'A valid Azure DevOps organization is not provided.'
+            Write-Host "`nTo fix this, either:"
+            Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
+            Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
+            Write-Host "     Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<YOUR ADO ORGANIZATION NAME>'`n" -ForegroundColor Cyan
+            $script:ShouldExit = $true
+            return
+        }
+
+        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+    }
     process {
         try {
+            if ($script:ShouldExit) {
+                return
+            }
             Write-Verbose "Processing build ID: $BuildId"
             Write-Verbose "Escaping project name for the URL..."
             $escapedProject = [uri]::EscapeDataString($Project)
 
-            Write-Verbose "Setting up authentication header..."
-            $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$Pat"))
-            $headers = @{ 
-                Authorization = "Basic $base64AuthInfo"
-                'Content-Type' = 'application/json'
-            }
-
-            $buildUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/build/builds/$BuildId" + 
-                       "?api-version=7.1-preview.7"
+            $buildUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/build/builds/$BuildId" +
+            "?api-version=7.1-preview.7"
             Write-Verbose "Calling Azure DevOps API at: $buildUrl"
 
             $build = Invoke-RestMethod -Uri $buildUrl -Headers $headers -Method Get -ErrorAction Stop
