@@ -35,6 +35,7 @@ function Start-PSUGeminiChat {
         '',
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseBOMForUnicodeEncodedFile", "", Justification = "This script is intentionally saved without BOM.")]
     [Alias("Ask-Ai")]
     param (
         [string]$ApiKey = $env:API_KEY_GEMINI

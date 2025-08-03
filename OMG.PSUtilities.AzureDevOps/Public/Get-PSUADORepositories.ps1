@@ -65,7 +65,7 @@ begin {
             $script:ShouldExit = $true
             return
         }
-    
+
         $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
 }
 

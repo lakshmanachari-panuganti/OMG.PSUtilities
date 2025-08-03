@@ -4,9 +4,9 @@ function Get-PSUADOVariableGroupInventory {
         Retrieves an inventory of Azure DevOps variable groups across projects.
 
     .DESCRIPTION
-        This function connects to Azure DevOps using a Personal Access Token (PAT) and retrieves 
-        comprehensive metadata for variable groups across matching projects. It provides detailed 
-        inventory information including creation/modification metadata, variable counts, and 
+        This function connects to Azure DevOps using a Personal Access Token (PAT) and retrieves
+        comprehensive metadata for variable groups across matching projects. It provides detailed
+        inventory information including creation/modification metadata, variable counts, and
         optional export capabilities.
 
         Features:
@@ -40,8 +40,8 @@ function Get-PSUADOVariableGroupInventory {
         (e.g., 'omg' in https://dev.azure.com/omg).
 
     .PARAMETER PAT
-        Azure DevOps Personal Access Token with appropriate permissions. If not provided, the function 
-        will attempt to use the $env:ADO_PAT or $env:PAT environment variable. The PAT must have at least 
+        Azure DevOps Personal Access Token with appropriate permissions. If not provided, the function
+        will attempt to use the $env:ADO_PAT or $env:PAT environment variable. The PAT must have at least
         'Variable Groups (read)' and 'Project and Team (read)' permissions.
 
     .PARAMETER $project
@@ -50,7 +50,7 @@ function Get-PSUADOVariableGroupInventory {
         Default: '*' (all projects)
 
     .PARAMETER OutputFilePath
-        Optional path to export the inventory as a CSV file. If specified, the results will be 
+        Optional path to export the inventory as a CSV file. If specified, the results will be
         exported to this location in addition to being returned as objects.
 
     .PARAMETER IncludeVariableDetails
@@ -58,7 +58,7 @@ function Get-PSUADOVariableGroupInventory {
         provides information about variable types and counts by category.
 
     .PARAMETER ThrottleLimit
-        Maximum number of concurrent threads when processing multiple projects using ThreadJobs. 
+        Maximum number of concurrent threads when processing multiple projects using ThreadJobs.
         Default: 10 (recommended to balance performance with API throttling)
         Range: 1-20
 
@@ -96,19 +96,19 @@ function Get-PSUADOVariableGroupInventory {
         None
 
     .OUTPUTS
-        [PSCustomObject[]] 
+        [PSCustomObject[]]
 
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 2025-06-16
         Updated: 2025-07-24 - Added ThreadJobs for parallel processing
-        
+
         Requirements:
         - PowerShell 5.1 or later
         - ThreadJob module (Install-Module ThreadJob) for parallel processing
         - Network access to dev.azure.com
         - Valid Azure DevOps PAT with appropriate permissions
-        
+
         Performance Considerations:
         - Uses Microsoft ThreadJobs for parallel processing of projects
         - Configurable throttle limit to balance speed with API rate limits
@@ -160,7 +160,7 @@ function Get-PSUADOVariableGroupInventory {
 
     begin {
         Write-Verbose "Starting Azure DevOps Variable Group inventory process"
-        
+
         # Initialize PAT from environment if not provided
         if (-not $PAT) {
             $PAT = $env:ADO_PAT ?? $env:PAT
@@ -180,7 +180,7 @@ function Get-PSUADOVariableGroupInventory {
 
         # Initialize results collection
         $variableGroupInventory = [System.Collections.Generic.List[PSCustomObject]]::new()
-        
+
         Write-Verbose "Authentication configured for organization: $Organization"
         Write-Verbose "Project filter: $Project"
         Write-Verbose "Include variable details: $IncludeVariableDetails"
@@ -211,9 +211,9 @@ function Get-PSUADOVariableGroupInventory {
             Write-Verbose "Retrieving projects from Azure DevOps..."
             $projectsApiUrl = "https://dev.azure.com/$Organization/_apis/projects" +
             "?api-version=7.1-preview.4&`$top=1000&includeCapabilities=false"
-            
+
             Write-Progress -Activity "Azure DevOps Variable Group Inventory" -Status "Retrieving projects..." -PercentComplete 10
-            
+
             $projectsResponse = Invoke-RestMethod -Uri $projectsApiUrl -Method Get -Headers $authHeaders -ErrorAction Stop
 
             # Filter projects based on Project parameter
@@ -244,44 +244,44 @@ function Get-PSUADOVariableGroupInventory {
             if ($useThreadJobs -and $filteredProjects.Count -gt 1) {
                 # Parallel processing
                 Write-Verbose "Starting parallel processing with ThreadJobs"
-                
+
                 # Create scriptblock for processing each project
                 $scriptBlock = {
                     param($projectObj, $Organization, $AuthHeaders, $IncludeVariableDetails)
-                    
+
                     $results = [System.Collections.Generic.List[PSCustomObject]]::new()
-                    
+
                     try {
                         # Get variable groups for current project
                         $variableGroupsApiUrl = "https://dev.azure.com/$Organization/$($projectObj.name)/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
-                        
+
                         $variableGroupsResponse = Invoke-RestMethod -Uri $variableGroupsApiUrl -Method Get -Headers $AuthHeaders -ErrorAction Stop
-                        
-                        if ($variableGroupsResponse.value -and $variableGroupsResponse.value.Count -gt 0) {                            
+
+                        if ($variableGroupsResponse.value -and $variableGroupsResponse.value.Count -gt 0) {
                             foreach ($variableGroup in $variableGroupsResponse.value) {
                                 # Calculate variable counts - ensure single integer values
                                 $totalVariables = 0
                                 $secretVariables = 0
-                                
+
                                 if ($variableGroup.variables -and $variableGroup.variables.PSObject.Properties) {
                                     # Get all variable properties and count them properly
                                     $variableProperties = @($variableGroup.variables.PSObject.Properties)
                                     $totalVariables = [int]$variableProperties.Count
-                                    $secretProps = @($variableProperties | Where-Object { 
-                                            $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true 
+                                    $secretProps = @($variableProperties | Where-Object {
+                                            $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true
                                         })
-                                    $secretVariables = [int]$secretProps.Count                                    
+                                    $secretVariables = [int]$secretProps.Count
 
                                 }
-                                $KeyVaultName = if ($variableGroup.providerData -and $variableGroup.providerData.vault) { 
-                                    $variableGroup.providerData.vault 
+                                $KeyVaultName = if ($variableGroup.providerData -and $variableGroup.providerData.vault) {
+                                    $variableGroup.providerData.vault
                                 }
                                 elseif ($variableGroup.providerData -and $variableGroup.providerData.serviceEndpointId) {
                                     # Sometimes Key Vault name is in serviceEndpointId or requires additional API call
                                     "ServiceEndpoint:$($variableGroup.providerData.serviceEndpointId)"
                                 }
-                                else { 
-                                    $null 
+                                else {
+                                    $null
                                 }
                                 # Create inventory object
                                 $inventoryItem = [PSCustomObject]@{
@@ -328,7 +328,7 @@ function Get-PSUADOVariableGroupInventory {
                                 $results.Add($inventoryItem)
                             }
                         }
-                        
+
                         return @{
                             Success            = $true
                             ProjectName        = $projectObj.name
@@ -351,7 +351,7 @@ function Get-PSUADOVariableGroupInventory {
                 # Start ThreadJobs for all projects
                 Write-Verbose "Starting $($filteredProjects.Count) ThreadJobs with throttle limit $ThrottleLimit"
                 $jobs = @()
-                
+
                 foreach ($projectObj in $filteredProjects) {
                     $job = Start-ThreadJob -ScriptBlock $scriptBlock -ArgumentList $projectObj, $Organization, $authHeaders, $IncludeVariableDetails -ThrottleLimit $ThrottleLimit
                     $jobs += $job
@@ -360,22 +360,22 @@ function Get-PSUADOVariableGroupInventory {
                 # Monitor job progress and collect results
                 $completedJobs = 0
                 $totalJobs = $jobs.Count
-                
+
                 Write-Verbose "Monitoring $totalJobs ThreadJobs for completion..."
-                
+
                 while ($completedJobs -lt $totalJobs) {
                     Start-Sleep -Milliseconds 1000
                     $finishedJobs = $jobs | Where-Object { $_.State -in @('Completed', 'Failed', 'Stopped') }
                     $currentCompleted = $finishedJobs.Count
-                    
+
                     if ($currentCompleted -ne $completedJobs) {
                         $completedJobs = $currentCompleted
                         $percentComplete = [math]::Round(($completedJobs / $totalJobs) * 70) + 20
-                        
+
                         Write-Progress -Activity "Azure DevOps Variable Group Inventory" `
                             -Status "Processing projects in parallel: $completedJobs of $totalJobs completed" `
                             -PercentComplete $percentComplete
-                        
+
                         Write-Verbose "Progress: $completedJobs/$totalJobs jobs completed"
                     }
                 }
@@ -384,11 +384,11 @@ function Get-PSUADOVariableGroupInventory {
                 Write-Verbose "Collecting results from completed ThreadJobs"
                 $successfulProjects = 0
                 $failedProjects = 0
-                
+
                 foreach ($job in $jobs) {
                     try {
                         $jobResult = Receive-Job -Job $job -Wait -ErrorAction Stop
-                        
+
                         if ($jobResult.Success) {
                             Write-Verbose "Successfully processed project '$($jobResult.ProjectName)' - found $($jobResult.VariableGroupCount) variable groups"
                             if ($jobResult.Results -and $jobResult.Results.Count -gt 0) {
@@ -409,20 +409,20 @@ function Get-PSUADOVariableGroupInventory {
                         Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
                     }
                 }
-                
+
                 Write-Verbose "ThreadJob processing completed. Successful: $successfulProjects, Failed: $failedProjects"
             }
             else {
                 # Sequential processing
                 Write-Verbose "Using sequential processing (ThreadJobs not available or single project)"
-                
+
                 $projectIndex = 0
                 $totalProjects = $filteredProjects.Count
 
                 foreach ($projectObj in $filteredProjects) {
                     $projectIndex++
                     $percentComplete = [math]::Round(($projectIndex / $totalProjects) * 70) + 20
-                    
+
                     Write-Progress -Activity "Azure DevOps Variable Group Inventory" `
                         -Status "Processing project: $($projectObj.name) ($projectIndex of $totalProjects)" `
                         -PercentComplete $percentComplete
@@ -432,27 +432,27 @@ function Get-PSUADOVariableGroupInventory {
                     try {
                         # Get variable groups for current project
                         $variableGroupsApiUrl = "https://dev.azure.com/$Organization/$($projectObj.name)/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
-                        
+
                         $variableGroupsResponse = Invoke-RestMethod -Uri $variableGroupsApiUrl -Method Get -Headers $authHeaders -ErrorAction Stop
-                        
+
                         if ($variableGroupsResponse.value -and $variableGroupsResponse.value.Count -gt 0) {
                             Write-Verbose "Found $($variableGroupsResponse.value.Count) variable groups in project '$($projectObj.name)'"
-                            
+
                             foreach ($variableGroup in $variableGroupsResponse.value) {
                                 # Calculate variable counts - ensure single integer values
                                 $totalVariables = 0
                                 $secretVariables = 0
-                                
+
                                 if ($variableGroup.variables -and $variableGroup.variables.PSObject.Properties) {
                                     # Get all variable properties and count them properly
                                     $variableProperties = @($variableGroup.variables.PSObject.Properties)
                                     $totalVariables = [int]$variableProperties.Count
 
-                                    $secretProps = @($variableProperties | Where-Object { 
-                                            $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true 
+                                    $secretProps = @($variableProperties | Where-Object {
+                                            $_.Value -and $_.Value.PSObject.Properties['isSecret'] -and $_.Value.isSecret -eq $true
                                         })
                                     $secretVariables = [int]$secretProps.Count
-                                    
+
                                 }
 
                                 # Create inventory object
@@ -525,18 +525,18 @@ function Get-PSUADOVariableGroupInventory {
             else {
                 # Apply Filter if specified (similar to Get-ADUser -Filter)
                 $finalResults = $variableGroupInventory
-                
+
                 # TODO: Integrate $Filter parameter to enable custom filter expressions
-                
+
                 # Calculate summary with proper error handling
                 $totalVariables = 0
                 foreach ($item in $finalResults) {
                     $count = $item.VariableCount
-                    if ($count -is [array]) { 
-                        $totalVariables += [int]$count[0] 
-                    } 
-                    else { 
-                        $totalVariables += [int]$count 
+                    if ($count -is [array]) {
+                        $totalVariables += [int]$count[0]
+                    }
+                    else {
+                        $totalVariables += [int]$count
                     }
                 }
 
@@ -556,9 +556,9 @@ function Get-PSUADOVariableGroupInventory {
                 # Export to file if specified
                 if ($OutputFilePath) {
                     Write-Progress -Activity "Azure DevOps Variable Group Inventory" -Status "Exporting results..." -PercentComplete 98
-                    
+
                     $extension = [System.IO.Path]::GetExtension($OutputFilePath).ToLower()
-                    
+
                     try {
                         switch ($extension) {
                             '.csv' {
@@ -579,7 +579,7 @@ function Get-PSUADOVariableGroupInventory {
                 }
 
                 Write-Progress -Activity "Azure DevOps Variable Group Inventory" -Status "Complete" -PercentComplete 100 -Completed
-                
+
                 # Return the inventory
                 return $finalResults.ToArray()
             }

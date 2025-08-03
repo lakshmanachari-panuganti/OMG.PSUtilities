@@ -51,7 +51,7 @@ function Get-PSUADOProjectList {
             $script:ShouldExit = $true
             return
         }
-    
+
         $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
     }
 
@@ -70,7 +70,8 @@ function Get-PSUADOProjectList {
 
         }
         catch {
-            $PSCmdlet.ThrowTerminatingError("Failed to retrieve project list from ADO: $_") 
+            $PSCmdlet.ThrowTerminatingError("Failed to retrieve project list from ADO: $_")
         }
     }
 }
+

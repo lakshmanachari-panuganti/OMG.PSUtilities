@@ -31,6 +31,7 @@ function Invoke-PSUGitCommit {
         '',
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
+    [Alias("aigitcommit")]
     param (
         [string]$RootPath = (Get-Location).Path
     )

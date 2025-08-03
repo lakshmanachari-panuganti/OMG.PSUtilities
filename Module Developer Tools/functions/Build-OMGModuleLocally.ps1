@@ -29,16 +29,38 @@
             }
 
             # Run PS Analyzer to Analyse the module
-            $Rules = @('PSAvoidTrailingWhitespace',
+            $Rules = @(
+                'PSAvoidUsingWriteHost',
+                'PSAvoidTrailingWhitespace',
                 'PSUseConsistentIndentation',
                 'PSPlaceOpenBrace',
                 'PSPlaceCloseBrace',
                 'PSSpaceAroundOperators',
+                'PSAvoidGlobalVars',
+                'PSAvoidUsingCmdletAliases',
+                'PSAvoidUsingPositionalParameters',
+                'PSUseCorrectCasingForCmdlets',
                 'PSUseCorrectCasingForCommonCmdlets',
-                'PSUseCorrectCasingForCommonParameters'
+                'PSUseCorrectCasingForCommonParameters',
+                'PSUseShouldProcessForStateChangingFunctions',
+                'PSAvoidLongLines'
             )
 
-            Invoke-ScriptAnalyzer -Path $modulePath -Recurse -Fix -IncludeRule $Rules
+            $Settings = @{
+                ExcludeRules = @('PSUseBOMForUnicodeEncodedFile')
+            }
+
+            $ScriptAnalyzerParams = @{
+                Path          = $modulePath
+                Recurse       = $true
+                IncludeRule   = $Rules
+                Settings      = $Settings
+                Fix           = $true
+                Severity      = @('Warning', 'Error')
+                ReportSummary = $true
+            }
+
+            Invoke-ScriptAnalyzer @ScriptAnalyzerParams
 
             if (-not $SkipUpdateManifests) {
                 Reset-OMGModuleManifests -ModuleName $ModuleName
