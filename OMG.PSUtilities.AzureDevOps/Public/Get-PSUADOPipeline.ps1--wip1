@@ -1,0 +1,133 @@
+function Get-PSUADOPipeline {
+    <#
+    .SYNOPSIS
+        Retrieves all Azure DevOps Pipelines across projects or within a specific project.
+
+    .DESCRIPTION
+        This function fetches detailed information about Azure DevOps build pipelines across all accessible projects,
+        or for a specified project. It supports organization-wide retrieval, uses environment variables for defaults,
+        and handles permission errors gracefully.
+
+    .PARAMETER Organization
+        The name of the Azure DevOps organization. Defaults to $env:ORGANIZATION if not supplied.
+
+    .PARAMETER PAT
+        The Personal Access Token (PAT) to authenticate against Azure DevOps REST API.
+        Defaults to $env:PAT if not supplied.
+
+    .PARAMETER Project
+        The name of a specific Azure DevOps project. If not supplied, the function retrieves pipelines for all accessible projects.
+
+    .EXAMPLE
+        Get-PSUADOPipeline
+
+        Retrieves all pipelines for all accessible projects using environment variables for authentication.
+
+    .EXAMPLE
+        Get-PSUADOPipeline -Project 'AppPlatform'
+
+        Retrieves all pipelines from the 'AppPlatform' project.
+
+    .OUTPUTS
+        [PSCustomObject]
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Date: 2 August 2025 - Initial Development
+
+    .LINK
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+        https://github.com/lakshmanachari-panuganti
+        https://www.linkedin.com/in/lakshmanachari-panuganti
+    #>
+
+    [CmdletBinding()]
+    param (
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$Project,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$Organization = $env:ORGANIZATION,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$PAT = $env:PAT
+    )
+
+    
+
+    $PipelineList = [System.Collections.Generic.List[PSCustomObject]]::new()
+    $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+    if ($Project) {
+        Write-Host "Fetching pipelines for project: $Project" -ForegroundColor Cyan
+        $uri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines?api-version=7.2-preview.1"
+        $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+        foreach ($pipeline in $response.value) {
+            $PipelineList.Add([PSCustomObject]@{
+                    Project               = $Project
+                    Id                    = $pipeline.id
+                    Name                  = $pipeline.name
+                    Folder                = $pipeline.folder
+                    URL                   = $pipeline.url
+                    Revision              = $pipeline.revision
+                    CreatedDate           = $pipeline.createdDate
+                    CreatedBy             = $pipeline.createdBy.displayName
+                    CreatedByEmail        = $pipeline.createdBy.uniqueName
+                    RepositoryId          = $pipeline.configuration.repository.id
+                    RepositoryName        = $pipeline.configuration.repository.name
+                    RepositoryType        = $pipeline.configuration.repository.type
+                    RepositoryURL         = $pipeline.configuration.repository.url
+                    DefaultBranch         = $pipeline.configuration.repository.defaultBranch
+                    PipelineType          = $pipeline.configuration.type
+                    YamlPath              = $pipeline.configuration.path
+                    RepositoryCleanOption = $pipeline.configuration.repository.properties.clean
+                    RepositoryFetchDepth  = $pipeline.configuration.repository.properties.fetchDepth
+                    CheckoutSubmodules    = $pipeline.configuration.repository.properties.checkoutSubmodules
+                })
+        }
+    }
+    else {
+        Write-Host "No project specified. Fetching all pipelines across accessible projects..." -ForegroundColor Yellow
+        $Projects = Get-PSUADOProjectList -Organization $Organization -PAT $PAT
+        foreach ($proj in $Projects) {
+            try {
+                Write-Host "→ Project: $($proj.name)" -ForegroundColor Cyan
+                $uri = "https://dev.azure.com/$Organization/$($proj.name)/_apis/pipelines?api-version=7.2-preview.1"
+                $response = Invoke-RestMethod -Uri $uri -Headers $Header -Method Get
+                foreach ($pipeline in $response.value) {
+                    $PipelineList.Add([PSCustomObject]@{
+                            Project               = $Project
+                            Id                    = $pipeline.id
+                            Name                  = $pipeline.name
+                            Folder                = $pipeline.folder
+                            URL                   = $pipeline.url
+                            Revision              = $pipeline.revision
+                            CreatedDate           = $pipeline.createdDate
+                            CreatedBy             = $pipeline.createdBy.displayName
+                            CreatedByEmail        = $pipeline.createdBy.uniqueName
+                            RepositoryId          = $pipeline.configuration.repository.id
+                            RepositoryName        = $pipeline.configuration.repository.name
+                            RepositoryType        = $pipeline.configuration.repository.type
+                            RepositoryURL         = $pipeline.configuration.repository.url
+                            DefaultBranch         = $pipeline.configuration.repository.defaultBranch
+                            PipelineType          = $pipeline.configuration.type
+                            YamlPath              = $pipeline.configuration.path
+                            RepositoryCleanOption = $pipeline.configuration.repository.properties.clean
+                            RepositoryFetchDepth  = $pipeline.configuration.repository.properties.fetchDepth
+                            CheckoutSubmodules    = $pipeline.configuration.repository.properties.checkoutSubmodules
+                        })
+
+                }
+            }
+            catch {
+                $message = $_.Exception.Message
+                if ($message -notlike "*you do not have permissions*") {
+                    $PSCmdlet.ThrowTerminatingError($_)
+                }
+            }
+        }
+    }
+    return $PipelineList
+}

@@ -76,7 +76,6 @@ function Get-PSUADORepositories {
             }
         }
         catch {
-            Write-Verbose "[Get-PSUADORepositories] failed to retrive the repositories for $Project"
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

@@ -63,6 +63,7 @@ function Get-PSUADOPipelineBuild {
         try {
             Write-Verbose "Processing build ID: $BuildId"
             Write-Verbose "Escaping project name for the URL..."
+            
             $escapedProject = [uri]::EscapeDataString($Project)
 
             $buildUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/build/builds/$($BuildId)?api-version=7.1-preview.7"
@@ -95,8 +96,7 @@ function Get-PSUADOPipelineBuild {
             }
         }
         catch {
-            $errorMessage = "[Get-PSUADOPipelineBuild] Failed to get build details for Build ID $BuildId`: $($_.Exception.Message)"
-            $PSCmdlet.ThrowTerminatingError($errorMessage)
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }

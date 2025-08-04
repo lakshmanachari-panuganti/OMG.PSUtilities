@@ -72,7 +72,7 @@ RequiredModules = @(
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Get-PSUADOPipelineBuild', 'Get-PSUADOPipelineLatestRun', 'Get-PSUADOProjectList', 'Get-PSUADOPullRequestInventory', 'Get-PSUADOPullRequest', 'Get-PSUADORepoBranchList', 'Get-PSUADORepositories', 'Get-PSUADOVariableGroupInventory')
+FunctionsToExport = @('Get-PSUADOPipelineBuild', 'Get-PSUADOPipelineLatestRun', 'Get-PSUADOProjectList', 'Get-PSUADOPullRequest', 'Get-PSUADOPullRequestInventory', 'Get-PSUADORepoBranchList', 'Get-PSUADORepositories', 'Get-PSUADOVariableGroupInventory')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()

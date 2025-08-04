@@ -52,8 +52,8 @@ function Get-PSUADOPipelineLatestRun {
         Updated: 2025-07-22 - Refactored for better URL parsing, error handling, and variable consistency
 
     .LINK
-        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
         https://github.com/lakshmanachari-panuganti
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
         https://www.linkedin.com/in/lakshmanachari-panuganti/
     #>
     [CmdletBinding(DefaultParameterSetName = 'ById')]
@@ -70,9 +70,11 @@ function Get-PSUADOPipelineLatestRun {
         [ValidateNotNullOrEmpty()]
         [string]$Project,
 
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT,
 
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION
     )
@@ -178,8 +180,7 @@ function Get-PSUADOPipelineLatestRun {
             }
         }
         catch {
-            $errorMessage = "[Get-PSUADOPipelineLatestRun] Failed to get pipeline run details for Pipeline ID $PipelineId`: $($_.Exception.Message)"
-            $PSCmdlet.ThrowTerminatingError($errorMessage)
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 
