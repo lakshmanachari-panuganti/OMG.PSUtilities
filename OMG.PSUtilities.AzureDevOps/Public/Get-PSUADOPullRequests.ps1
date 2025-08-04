@@ -1,4 +1,45 @@
 function Get-PSUADOPullRequests {
+    <#
+.SYNOPSIS
+    Retrieves all active pull requests from all accessible Azure DevOps projects and repositories.
+
+.DESCRIPTION
+    This function iterates through all projects and repositories within an Azure DevOps organization 
+    and gathers pull requests that are in an active state. It requires a valid Personal Access Token (PAT) 
+    and organization name either via parameters or environment variables.
+
+.PARAMETER Organization
+    The name of the Azure DevOps organization. Defaults to the environment variable ORGANIZATION if not specified.
+
+.PARAMETER PAT
+    The Personal Access Token used for authentication. Defaults to the environment variable PAT if not specified.
+
+.PARAMETER State
+    The state of pull requests to retrieve. Default is 'active'. Other valid values: 'completed', 'abandoned', 'all'.
+
+.EXAMPLE
+    Get-PSUADOPullRequests -Organization "omgitsolutions" -PAT $env:PAT
+
+    Retrieves all active pull requests across the organization 'omgitsolutions'.
+
+.EXAMPLE
+    Get-PSUADOPullRequests -State Completed
+
+    Retrieves all completed pull requests using environment variables $env:ORGANIZATION and $env:PAT.
+
+.OUTPUTS
+    [PSCustomObject]
+
+.NOTES
+    Author: Lakshmanachari Panuganti  
+    Date: 2 August 2025 - Initial Development
+
+.LINK
+    https://www.linkedin.com/in/lakshmanachari-panuganti
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
+#>
+
     [CmdletBinding(DefaultParameterSetName = 'ById')]
     param (
         [Parameter(Mandatory, ParameterSetName = 'ById')]
@@ -25,24 +66,9 @@ function Get-PSUADOPullRequests {
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-    begin {
-        if ([string]::IsNullOrWhiteSpace($Organization)) {
-            Write-Warning 'A valid Azure DevOps organization is not provided.'
-            Write-Host "`nTo fix this, either:"
-            Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
-            Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
-            Write-Host "     Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<YOUR ADO ORGANIZATION NAME>'`n" -ForegroundColor Cyan
-            $script:ShouldExit = $true
-        }
-
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
-    }
     process {
         try {
-            if ($script:ShouldExit) {
-                return
-            }
-
+            $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
             # Resolve RepositoryId if RepositoryName is provided
             if ($PSCmdlet.ParameterSetName -eq 'ByName') {
                 Write-Verbose "Resolving repository name '$RepositoryName' to ID..."
@@ -63,10 +89,28 @@ function Get-PSUADOPullRequests {
             $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepositoryId/pullrequests?searchCriteria.status=$stateParam&api-version=7.0"
 
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
-            $response.value | ConvertTo-CapitalizedObject
+            $response.value | ForEach-Object {
+                [pscustomobject]@{
+                    Id             = $_.pullRequestId
+                    Title          = $_.title
+                    Description    = $_.description
+                    Status         = $_.status
+                    IsDraft        = $_.isDraft
+                    SourceBranch   = $_.sourceRefName
+                    TargetBranch   = $_.targetRefName
+                    CreatedBy      = $_.createdBy.displayName
+                    CreatorEmail   = $_.createdBy.uniqueName
+                    CreationDate   = $_.creationDate
+                    MergeStatus    = $_.mergeStatus
+                    WebUrl         = $_.url
+                    RepositoryId   = $_.repository.id
+                    RepositoryName = $_.repository.name
+                    ProjectName    = $_.repository.project.name
+                }
+            }
         }
         catch {
-            Write-Error "Failed to fetch pull requests: $_"
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }

@@ -32,31 +32,16 @@ function Get-PSUADOProjectList {
     [CmdletBinding()]
     param (
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 
-    begin {
-        $script:ShouldExit = $false
-        if ([string]::IsNullOrWhiteSpace($Organization)) {
-            Write-Warning 'A valid Azure DevOps organization is not provided.'
-            Write-Host "`nTo fix this, either:"
-            Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
-            Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
-            Write-Host "     Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<YOUR ADO ORGANIZATION NAME>'`n" -ForegroundColor Cyan
-            $script:ShouldExit = $true
-            return
-        }
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
-    }
-
     process {
-        if ($script:ShouldExit) {
-            return
-        }
-
+        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
         $uri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
 
         try {
@@ -71,4 +56,3 @@ function Get-PSUADOProjectList {
         }
     }
 }
-

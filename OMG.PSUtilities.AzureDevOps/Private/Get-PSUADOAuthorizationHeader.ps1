@@ -42,7 +42,6 @@ function Get-PSUADOAuthorizationHeader {
         Write-Host "  1. Pass the -PAT parameter explicitly, OR" -ForegroundColor Yellow
         Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
         Write-Host "     Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<YOUR ADO PAT NAME>'`n" -ForegroundColor Cyan
-        $script:ShouldExit = $true
     }
     else {
         $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))

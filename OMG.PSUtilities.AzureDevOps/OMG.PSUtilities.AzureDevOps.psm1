@@ -21,7 +21,6 @@ $PublicFunctions = @(
     'Get-PSUADOPipelineBuildDetails'
     'Get-PSUADOPipelineLatestRun'
     'Get-PSUADOProjectList'
-    'Get-PSUADOPullRequestInventory'
     'Get-PSUADOPullRequests'
     'Get-PSUADORepoBranchList'
     'Get-PSUADORepositories'
