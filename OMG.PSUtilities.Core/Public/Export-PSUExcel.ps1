@@ -29,6 +29,23 @@ function Export-PSUExcel {
     .PARAMETER KeepBackup
         If specified, keeps a backup of the existing Excel file (if any) in a timestamped folder.
 
+    .PARAMETER WorksheetName
+        Specifies the name of the worksheet within the Excel file where the data will be exported.
+
+        If this parameter is provided:
+        - The data will be written to that named worksheet.
+        - If the Excel file already exists, the worksheet will be added or replaced.
+        - The file will not be deleted before writing.
+
+        If this parameter is NOT provided:
+        - A default worksheet name is used.
+        - The Excel file (if exists) will be removed before writing, unless overridden.
+
+    .PARAMETER Clear
+        When specified and when -WorksheetName is not used, the existing Excel file at the specified path will be deleted before writing the new data.
+        This parameter has no effect if -WorksheetName is used, because multiple worksheet exports to the same file are expected in that scenario.
+        Use this when exporting to a single worksheet and you want to ensure the Excel file starts fresh.
+
     .EXAMPLE
         Export-PSUExcel -DataObject $data -ExcelPath 'C:\Reports\report.xlsx'
 
@@ -72,7 +89,13 @@ function Export-PSUExcel {
         [switch]$AutoOpen,
 
         [Parameter()]
-        [switch]$AutoFilter
+        [switch]$AutoFilter,
+
+        [Parameter()]
+        [string]$WorksheetName = "Sheet1",
+
+        [Parameter()]
+        [switch]$Clear
     )
 
     begin {
@@ -107,24 +130,28 @@ function Export-PSUExcel {
  
             }
             else {
-                if (Test-Path -Path $ExcelPath) {
+                if (-not $PSBoundParameters.ContainsKey('WorksheetName') -and (Test-Path -Path $ExcelPath)) {
                     Remove-Item -Path $ExcelPath -Force
                 }
-                
             }
 
-            # Export data and return Excel package object
-            $excelPackage = $allData | Export-Excel -Path $ExcelPath -WorksheetName Sheet1 -PassThru -AutoSize -ErrorAction Stop
+            # === Export to Excel ===
+            $excelPackage = $allData | Export-Excel `
+                -Path $ExcelPath `
+                -WorksheetName $WorksheetName `
+                -ClearSheet:$Clear `
+                -PassThru `
+                -AutoSize `
+                -ErrorAction Stop
 
-            # Get worksheet
-            $ws = $excelPackage.Workbook.Worksheets['Sheet1']
+            $ws = $excelPackage.Workbook.Worksheets[$WorksheetName]
 
-            # Style entire data range
             $usedRange = $ws.Dimension.Address
 
             if ($AutoFilter) {
                 $ws.Cells[$usedRange].AutoFilter = $true
             }
+
             $rangeStyle = @{
                 Worksheet       = $ws
                 Range           = $usedRange
@@ -140,15 +167,11 @@ function Export-PSUExcel {
             }
             Set-ExcelRange @rangeStyle
 
-            # Header formatting (row 1)
             Set-ExcelRange -Worksheet $ws -Range "1:1" -Bold -BackgroundColor Black -FontColor White
 
-            # Freeze top row
             $ws.View.FreezePanes(2, 1)
 
-            # Save the Excel file
             Close-ExcelPackage $excelPackage -Show:$AutoOpen
-
         }
         catch {
             $PSCmdlet.ThrowTerminatingError($_)
