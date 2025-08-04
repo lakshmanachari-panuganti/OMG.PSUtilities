@@ -62,7 +62,7 @@ function Get-PSUADOProjectList {
         try {
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -ErrorAction Stop
             if ($response.value) {
-                ConvertTo-PSCustomWithCapitalizedKeys -InputObject $response.value
+                ConvertTo-CapitalizedObject -InputObject $response.value
             }
 
         }
