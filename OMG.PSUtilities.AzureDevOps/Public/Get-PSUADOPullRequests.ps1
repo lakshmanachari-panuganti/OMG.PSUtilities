@@ -1,13 +1,17 @@
 function Get-PSUADOPullRequests {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ById')]
     param (
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName = 'ById')]
         [ValidateNotNullOrEmpty()]
-        [string]$Project,
+        [string]$RepositoryId,
+
+        [Parameter(Mandatory, ParameterSetName = 'ByName')]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepositoryName,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$RepositoryId,
+        [string]$Project,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -20,37 +24,33 @@ function Get-PSUADOPullRequests {
 
     process {
         try {
-            Write-Verbose "Fetching the Pull Requests in [$Project] for the repo [$RepositoryId]"
+            # Resolve RepositoryId if RepositoryName is provided
+            if ($PSCmdlet.ParameterSetName -eq 'ByName') {
+                Write-Verbose "Resolving repository name '$RepositoryName' to ID..."
+                $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+                $repoUri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.1-preview.1"
+                $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get
+
+                $matchedRepo = $repoResponse.value | Where-Object { $_.name -eq $RepositoryName }
+                if (-not $matchedRepo) {
+                    throw "Repository '$RepositoryName' not found in project '$Project'."
+                }
+
+                $RepositoryId = $matchedRepo.id
+                Write-Verbose "Resolved repository ID: $RepositoryId"
+            }
+
+            Write-Verbose "Fetching pull requests for repository ID '$RepositoryId' in project '$Project'..."
             $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepositoryId/pullrequests?searchCriteria.status=active&api-version=7.0"
             $headers = @{
                 Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
             }
 
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
-            $formattedResults = @()
-            if ($response.value) {
-                foreach ($item in $response.value) {
-                    $formattedObject = [PSCustomObject]@{}
-
-                    foreach ($property in $item.PSObject.Properties) {
-                        $originalName = $property.Name
-                        $originalValue = $property.Value
-
-                        # Capitalize the first letter of the property name
-                        $capitalizedName = ($originalName[0].ToString().ToUpper()) + ($originalName.Substring(1).ToLower())
-
-                        $formattedObject | Add-Member -MemberType NoteProperty -Name $capitalizedName -Value $originalValue
-                    }
-
-                    $formattedResults += $formattedObject
-                }
-            }
-
-            return $formattedResults
+            $response.value | ConvertTo-CapitalizedObject
         }
         catch {
-            Write-Error "Failed to fetch pull requests for repository '$RepositoryId' in project '$Project': $_"
+            Write-Error "Failed to fetch pull requests: $_"
         }
     }
 }
-

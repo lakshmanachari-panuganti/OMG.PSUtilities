@@ -1,4 +1,4 @@
-function ConvertTo-PSCustomWithCapitalizedKeys {
+function ConvertTo-CapitalizedObject {
     <#
     .SYNOPSIS
         Converts a collection of hashtables or objects into [PSCustomObject]s with capitalized property names.
@@ -11,7 +11,7 @@ function ConvertTo-PSCustomWithCapitalizedKeys {
         The collection of hashtables or objects to transform.
 
     .EXAMPLE
-        ConvertTo-PSCustomWithCapitalizedKeys -InputObject $response.value
+        ConvertTo-CapitalizedObject -InputObject $response.value
 
     .OUTPUTS
         [PSCustomObject[]] with capitalized property names

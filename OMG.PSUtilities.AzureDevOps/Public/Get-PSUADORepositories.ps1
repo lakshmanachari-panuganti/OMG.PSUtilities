@@ -80,7 +80,7 @@ process {
         $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
         if ($response.value) {
             $response.value | ForEach-Object {
-                ConvertTo-PSCustomWithCapitalizedKeys -InputObject $_
+                ConvertTo-CapitalizedObject -InputObject $_
             }
         }
     }
