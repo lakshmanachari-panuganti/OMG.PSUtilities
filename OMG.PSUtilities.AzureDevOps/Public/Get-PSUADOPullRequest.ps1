@@ -1,4 +1,4 @@
-function Get-PSUADOPullRequests {
+function Get-PSUADOPullRequest {
     <#
 .SYNOPSIS
     Retrieves all active pull requests from all accessible Azure DevOps projects and repositories.
@@ -18,12 +18,12 @@ function Get-PSUADOPullRequests {
     The state of pull requests to retrieve. Default is 'active'. Other valid values: 'completed', 'abandoned', 'all'.
 
 .EXAMPLE
-    Get-PSUADOPullRequests -Organization "omgitsolutions" -PAT $env:PAT
+    Get-PSUADOPullRequest -Organization "omgitsolutions" -PAT $env:PAT
 
     Retrieves all active pull requests across the organization 'omgitsolutions'.
 
 .EXAMPLE
-    Get-PSUADOPullRequests -State Completed
+    Get-PSUADOPullRequest -State Completed
 
     Retrieves all completed pull requests using environment variables $env:ORGANIZATION and $env:PAT.
 

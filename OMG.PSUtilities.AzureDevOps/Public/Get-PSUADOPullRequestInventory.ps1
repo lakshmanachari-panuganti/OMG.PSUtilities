@@ -66,7 +66,7 @@ function Get-PSUADOPullRequestInventory {
                 $repoIndex++
                 Write-Progress -Activity $progressActivity -Status "Fetching PRs from repo [$($Repository.name)] ($repoIndex of $repoCount)" -PercentComplete (($repoIndex / $repoCount) * 100)
 
-                $prs = Get-PSUADOPullRequests -RepositoryId $Repository.id -Project $project.Name -Organization $Organization -PAT $PAT   
+                $prs = Get-PSUADOPullRequest -RepositoryId $Repository.id -Project $project.Name -Organization $Organization -PAT $PAT   
                 foreach ($pr in $prs) {
                     $PullRequests.Add($pr)
                 }

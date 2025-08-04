@@ -19,7 +19,7 @@ function Get-PSUADOPipelineLatestRun {
         The full URL of the Azure DevOps pipeline. Use this if you don't know the ID but have the URL.
         The function will extract the pipeline ID automatically.
 
-    .PARAMETER Pat
+    .PARAMETER PAT
         Your Azure DevOps Personal Access Token. This is used for authentication to make API calls.
 
     .PARAMETER Organization
@@ -156,7 +156,7 @@ function Get-PSUADOPipelineLatestRun {
             }
 
             try {
-                $Build = Get-PSUADOPipelineBuildDetails @buildParams
+                $Build = Get-PSUADOPipelineBuild @buildParams
             }
             catch {
                 Write-Warning "Could not retrieve detailed build information: $($_.Exception.Message)"

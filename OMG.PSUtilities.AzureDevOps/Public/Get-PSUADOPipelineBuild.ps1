@@ -1,4 +1,4 @@
-function Get-PSUADOPipelineBuildDetails {
+function Get-PSUADOPipelineBuild {
     <#
     .SYNOPSIS
         Get details about a specific Azure DevOps pipeline build.
@@ -19,7 +19,7 @@ function Get-PSUADOPipelineBuildDetails {
         The name of your Azure DevOps project.
 
     .EXAMPLE
-        Get-PSUADOPipelineBuildDetails -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'OmgItSolutions' -Project 'PSUtilities'
+        Get-PSUADOPipelineBuild -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'OmgItSolutions' -Project 'PSUtilities'
 
         This example gets details for build ID 12345 in the given organization and project.
 
@@ -95,7 +95,7 @@ function Get-PSUADOPipelineBuildDetails {
             }
         }
         catch {
-            $errorMessage = "[Get-PSUADOPipelineBuildDetails] Failed to get build details for Build ID $BuildId`: $($_.Exception.Message)"
+            $errorMessage = "[Get-PSUADOPipelineBuild] Failed to get build details for Build ID $BuildId`: $($_.Exception.Message)"
             $PSCmdlet.ThrowTerminatingError($errorMessage)
         }
     }
