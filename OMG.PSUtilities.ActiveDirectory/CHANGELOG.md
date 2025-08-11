@@ -1,6 +1,10 @@
 ## Changelog
-- Initial scaffolding for OMG.PSUtilities.ActiveDirectory
+
+## [1.0.1] - 2025-07-27
+### Added
+- Find-PSUADServiceAccountMisuse (Public): Finds potential misuse of service accounts in AD.
 
 ## [1.0.0] - 2025-07-16
+- Initial scaffolding for OMG.PSUtilities.ActiveDirectory.
 - OMG.PSUtilities.ActiveDirectory.psd1 : Exported a dummy function for testing.
-- OMG.PSUtilities.ActiveDirectory.psm1 : Added the code to load the private and public functions into the session, and further export public functions.
+- OMG.PSUtilities.ActiveDirectory.psm1 : Added the code to load the private and public functions into the session, and further
