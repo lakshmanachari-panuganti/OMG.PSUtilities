@@ -183,8 +183,4 @@ function Get-PSUADOPipelineLatestRun {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }
-
-    end {
-        Write-Verbose "Pipeline run retrieval process completed."
-    }
 }

@@ -52,7 +52,7 @@ function Get-PSUADOProjectList {
 
         }
         catch {
-            $PSCmdlet.ThrowTerminatingError("Failed to retrieve project list from ADO: $_")
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }
