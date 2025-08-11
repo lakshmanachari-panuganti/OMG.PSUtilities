@@ -54,7 +54,7 @@ function Get-PSUADOPipeline {
     }
 
     $PipelineList = [System.Collections.Generic.List[PSCustomObject]]::new()
-    $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+    $headers = Get-PSUAdoAuthHeader -PAT $PAT
 
     $projectsToQuery = if ($Project) { @([PSCustomObject]@{ name = $Project }) } else {
         Write-Host "No project specified. Fetching pipelines across all accessible projects..." -ForegroundColor Yellow

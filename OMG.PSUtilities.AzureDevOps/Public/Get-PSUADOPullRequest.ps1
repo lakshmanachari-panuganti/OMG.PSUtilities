@@ -68,7 +68,7 @@ function Get-PSUADOPullRequest {
     )
     process {
         try {
-            $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT
             # Resolve RepositoryId if RepositoryName is provided
             if ($PSCmdlet.ParameterSetName -eq 'ByName') {
                 Write-Verbose "Resolving repository name '$RepositoryName' to ID..."

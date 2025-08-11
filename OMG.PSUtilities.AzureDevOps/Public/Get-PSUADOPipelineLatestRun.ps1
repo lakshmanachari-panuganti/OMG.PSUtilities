@@ -81,7 +81,7 @@ function Get-PSUADOPipelineLatestRun {
 
     process {
         try {
-            $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT
             # Handle PipelineId extraction from URL if that is the input set
             if ($PSCmdlet.ParameterSetName -eq 'ByUrl') {
                 Write-Verbose "Extracting Pipeline ID from URL: $PipelineUrl"

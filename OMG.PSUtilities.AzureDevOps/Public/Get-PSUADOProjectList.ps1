@@ -41,7 +41,7 @@ function Get-PSUADOProjectList {
     )
 
     process {
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
         $uri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
 
         try {

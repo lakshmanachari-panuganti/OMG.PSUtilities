@@ -1,13 +1,70 @@
+<#
+.SYNOPSIS
+    Retrieves a list of branches for a specified Azure DevOps repository.
+
+.DESCRIPTION
+    Connects to the Azure DevOps REST API and fetches all branches (refs/heads) for a given repository within a project.
+    Returns an array of custom objects with branch properties, where each property name is capitalized for readability.
+    Supports lookup by RepositoryId (GUID) or Repository (name).
+
+.PARAMETER Project
+    The name of the Azure DevOps project containing the repository.
+
+.PARAMETER RepositoryId
+    The unique identifier (GUID) of the repository to retrieve branches from.
+
+.PARAMETER Repository
+    The name of the repository to retrieve branches from.
+
+.PARAMETER Organization
+    The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable if not specified.
+
+.PARAMETER PAT
+    Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable if not specified.
+    The PAT must have read permissions for Code (Git repositories).
+
+.EXAMPLE
+    Get-PSUADORepoBranchList -Project "PSUtilities" -RepositoryId "12345678-1234-1234-1234-123456789abc"
+    Retrieves all branches for the specified repository using RepositoryId.
+
+.EXAMPLE
+    Get-PSUADORepoBranchList -Project "PSUtilities" -Repository "MyRepo"
+    Retrieves all branches for the specified repository using Repository name.
+
+.EXAMPLE
+    $branches = Get-PSUADORepoBranchList -Project "PSUtilities" -Repository "WebRepo"
+    $branches | Where-Object { $_.Name -like "*feature*" }
+    Retrieves all branches and filters for feature branches.
+
+.OUTPUTS
+    [PSCustomObject]
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    Created: August 2025
+
+.LINK
+    https://github.com/lakshmanachari-panuganti
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+    https://learn.microsoft.com/en-us/rest/api/azure/devops/git/refs/list
+    https://learn.microsoft.com/en-us/azure/devops/repos/git/branches
+#>
 function Get-PSUADORepoBranchList {
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ByRepositoryId')]
     param (
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName = 'ByRepositoryId')]
+        [Parameter(Mandatory, ParameterSetName = 'ByRepositoryName')]
         [ValidateNotNullOrEmpty()]
         [string]$Project,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName = 'ByRepositoryId')]
         [ValidateNotNullOrEmpty()]
         [string]$RepositoryId,
+
+        [Parameter(Mandatory, ParameterSetName = 'ByRepositoryName')]
+        [ValidateNotNullOrEmpty()]
+        [string]$Repository,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -20,10 +77,20 @@ function Get-PSUADORepoBranchList {
 
     process {
         try {
-            $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepositoryId/refs?filter=heads/&api-version=7.0"
-            $headers = @{
-                Authorization = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
+            if ($PSCmdlet.ParameterSetName -eq 'ByRepositoryName') {
+                # Get repository ID from repository name
+                $repoUri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$Repository?api-version=7.0"
+                $headers = Get-PSUAdoAuthHeader -PAT $PAT
+                $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get
+                if (-not $repoResponse.id) {
+                    Write-Error "Repository '$Repository' not found in project '$Project'."
+                    return
+                }
+                $RepositoryId = $repoResponse.id
             }
+
+            $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepositoryId/refs?filter=heads/&api-version=7.0"
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT
 
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
             $formattedResults = @()
@@ -48,7 +115,7 @@ function Get-PSUADORepoBranchList {
             return $formattedResults
         }
         catch {
-            Write-Error "Failed to fetch branches for repository '$RepositoryId' in project '$Project': $_"
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }

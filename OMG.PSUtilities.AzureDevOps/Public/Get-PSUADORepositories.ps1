@@ -53,7 +53,7 @@ function Get-PSUADORepositories {
         [string]$PAT = $env:PAT
     )
     process {
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
         $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.1-preview.1"
 
         try {

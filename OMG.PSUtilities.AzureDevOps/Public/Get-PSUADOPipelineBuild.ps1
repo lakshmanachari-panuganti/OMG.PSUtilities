@@ -57,7 +57,7 @@ function Get-PSUADOPipelineBuild {
 
     )
     begin{
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
     }
     process {
         try {

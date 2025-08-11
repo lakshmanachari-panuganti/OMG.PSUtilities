@@ -1,4 +1,4 @@
-function Get-PSUADOAuthorizationHeader {
+function Get-PSUAdoAuthHeader {
     <#
     .SYNOPSIS
         Constructs the Authorization header for Azure DevOps REST API requests.
@@ -15,10 +15,10 @@ function Get-PSUADOAuthorizationHeader {
         [Hashtable]
 
     .EXAMPLE
-        $headers = Get-PSUADOAuthorizationHeader
+        $headers = Get-PSUAdoAuthHeader
 
     .EXAMPLE
-        $headers = Get-PSUADOAuthorizationHeader -PAT "YourPATvalue"
+        $headers = Get-PSUAdoAuthHeader -PAT "YourPATvalue"
 
     .NOTES
         Author: Lakshmanachari Panuganti
