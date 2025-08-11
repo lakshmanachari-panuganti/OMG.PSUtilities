@@ -45,48 +45,38 @@ function Get-PSUADORepositories {
         [string]$Project,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
+    process {
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+        $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.1-preview.1"
 
-begin {
-        $script:ShouldExit = $false
-        if (-not [string]::IsNullOrWhiteSpace($Organization)) {
-            return $Organization
-        }
-        else {
-            Write-Warning 'A valid Azure DevOps organization is not provided.'
-            Write-Host "`nTo fix this, either:"
-            Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
-            Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
-            Write-Host "     Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<YOUR ADO ORGANIZATION NAME>'`n" -ForegroundColor Cyan
-            $script:ShouldExit = $true
-            return
-        }
-
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
-}
-
-process {
-    if ($script:ShouldExit) {
-        return
-    }
-
-    $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.1-preview.1"
-
-    try {
-        $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
-        if ($response.value) {
+        try {
+            $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
             $response.value | ForEach-Object {
-                ConvertTo-CapitalizedObject -InputObject $_
+                [PSCustomObject]@{
+                    Id              = $_.id
+                    Name            = $_.name
+                    DefaultBranch   = $_.defaultBranch
+                    IsDisabled      = $_.isDisabled
+                    IsInMaintenance = $_.isInMaintenance
+                    Size            = $_.size
+                    SshUrl          = $_.sshUrl
+                    RemoteUrl       = $_.remoteUrl
+                    WebUrl          = $_.webUrl
+                    ProjectName     = $_.project.name
+                    ProjectId       = $_.project.id
+                    PSTypeName      = 'PSU.ADO.Repository'
+                }
             }
         }
+        catch {
+            $PSCmdlet.ThrowTerminatingError($_)
+        }
     }
-    catch {
-        $PSCmdlet.ThrowTerminatingError($_)
-    }
-}
-
 }

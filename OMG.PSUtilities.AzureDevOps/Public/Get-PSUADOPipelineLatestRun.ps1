@@ -19,7 +19,7 @@ function Get-PSUADOPipelineLatestRun {
         The full URL of the Azure DevOps pipeline. Use this if you don't know the ID but have the URL.
         The function will extract the pipeline ID automatically.
 
-    .PARAMETER Pat
+    .PARAMETER PAT
         Your Azure DevOps Personal Access Token. This is used for authentication to make API calls.
 
     .PARAMETER Organization
@@ -34,12 +34,12 @@ function Get-PSUADOPipelineLatestRun {
         This command fetches the latest run for pipeline ID 2323 in the mentioned project under the mentioned organization.
 
     .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build?definitionId=23" -Pat "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
+        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build?definitionId=23" -PAT "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
 
         This command extracts the pipeline ID from the given URL and fetches the latest run details.
 
     .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build/results?buildId=456&view=results" -Pat "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
+        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build/results?buildId=456&view=results" -PAT "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
 
         This command works with build results URLs that contain pipeline information.
 
@@ -50,6 +50,11 @@ function Get-PSUADOPipelineLatestRun {
         Author: Lakshmanachari Panuganti
         Date  : 2025-06-16
         Updated: 2025-07-22 - Refactored for better URL parsing, error handling, and variable consistency
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
     #>
     [CmdletBinding(DefaultParameterSetName = 'ById')]
     param (
@@ -65,31 +70,18 @@ function Get-PSUADOPipelineLatestRun {
         [ValidateNotNullOrEmpty()]
         [string]$Project,
 
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT,
 
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION
     )
 
-    begin {
-        if ([string]::IsNullOrWhiteSpace($Organization)) {
-            Write-Warning 'A valid Azure DevOps organization is not provided.'
-            Write-Host "`nTo fix this, either:"
-            Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
-            Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
-            Write-Host "     Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<YOUR ADO ORGANIZATION NAME>'`n" -ForegroundColor Cyan
-            $script:ShouldExit = $true
-            return
-        }
-
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
-    }
     process {
         try {
-            if ($script:ShouldExit) {
-                return
-            }
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT
             # Handle PipelineId extraction from URL if that is the input set
             if ($PSCmdlet.ParameterSetName -eq 'ByUrl') {
                 Write-Verbose "Extracting Pipeline ID from URL: $PipelineUrl"
@@ -166,7 +158,7 @@ function Get-PSUADOPipelineLatestRun {
             }
 
             try {
-                $Build = Get-PSUADOPipelineBuildDetails @buildParams
+                $Build = Get-PSUADOPipelineBuild @buildParams
             }
             catch {
                 Write-Warning "Could not retrieve detailed build information: $($_.Exception.Message)"
@@ -188,13 +180,7 @@ function Get-PSUADOPipelineLatestRun {
             }
         }
         catch {
-            $errorMessage = "Failed to get pipeline run details for Pipeline ID $PipelineId`: $($_.Exception.Message)"
-            Write-Error $errorMessage
             $PSCmdlet.ThrowTerminatingError($_)
         }
-    }
-
-    end {
-        Write-Verbose "Pipeline run retrieval process completed."
     }
 }

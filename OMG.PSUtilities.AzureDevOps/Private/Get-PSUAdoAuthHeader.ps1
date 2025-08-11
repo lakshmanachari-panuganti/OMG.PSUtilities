@@ -1,4 +1,4 @@
-function Get-PSUADOAuthorizationHeader {
+function Get-PSUAdoAuthHeader {
     <#
     .SYNOPSIS
         Constructs the Authorization header for Azure DevOps REST API requests.
@@ -15,10 +15,10 @@ function Get-PSUADOAuthorizationHeader {
         [Hashtable]
 
     .EXAMPLE
-        $headers = Get-PSUADOAuthorizationHeader
+        $headers = Get-PSUAdoAuthHeader
 
     .EXAMPLE
-        $headers = Get-PSUADOAuthorizationHeader -PAT "YourPATvalue"
+        $headers = Get-PSUAdoAuthHeader -PAT "YourPATvalue"
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -42,7 +42,6 @@ function Get-PSUADOAuthorizationHeader {
         Write-Host "  1. Pass the -PAT parameter explicitly, OR" -ForegroundColor Yellow
         Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
         Write-Host "     Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<YOUR ADO PAT NAME>'`n" -ForegroundColor Cyan
-        $script:ShouldExit = $true
     }
     else {
         $encodedPAT = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))

@@ -1,4 +1,4 @@
-function Get-PSUADOPipelineBuildDetails {
+function Get-PSUADOPipelineBuild {
     <#
     .SYNOPSIS
         Get details about a specific Azure DevOps pipeline build.
@@ -19,7 +19,7 @@ function Get-PSUADOPipelineBuildDetails {
         The name of your Azure DevOps project.
 
     .EXAMPLE
-        Get-PSUADOPipelineBuildDetails -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'Organizationxyz' -Project 'ProjectZ'
+        Get-PSUADOPipelineBuild -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'OmgItSolutions' -Project 'PSUtilities'
 
         This example gets details for build ID 12345 in the given organization and project.
 
@@ -28,8 +28,12 @@ function Get-PSUADOPipelineBuildDetails {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date  : 2025-06-16
-        Updated: 2025-07-22 - Refactored for better error handling and validation
+        Date  : 2025-06-16 : Initial development
+    
+    .LINK
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+        https://github.com/lakshmanachari-panuganti
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
     #>
     [CmdletBinding()]
     param (
@@ -39,40 +43,30 @@ function Get-PSUADOPipelineBuildDetails {
         [ValidateRange(1, [int]::MaxValue)]
         [int]$BuildId,
 
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$PAT = $env:PAT,
+        [string]$Project,
 
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
 
-        [Parameter(Mandatory)]
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Project
-    )
-    begin {
-        if ([string]::IsNullOrWhiteSpace($Organization)) {
-            Write-Warning 'A valid Azure DevOps organization is not provided.'
-            Write-Host "`nTo fix this, either:"
-            Write-Host "  1. Pass the -Organization parameter explicitly, OR" -ForegroundColor Yellow
-            Write-Host "  2. Create an environment variable using:" -ForegroundColor Yellow
-            Write-Host "     Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<YOUR ADO ORGANIZATION NAME>'`n" -ForegroundColor Cyan
-            $script:ShouldExit = $true
-            return
-        }
+        [string]$PAT = $env:PAT
 
-        $headers = Get-PSUADOAuthorizationHeader -PAT $PAT
+    )
+    begin{
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
     }
     process {
         try {
-            if ($script:ShouldExit) {
-                return
-            }
             Write-Verbose "Processing build ID: $BuildId"
             Write-Verbose "Escaping project name for the URL..."
+            
             $escapedProject = [uri]::EscapeDataString($Project)
 
-            $buildUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/build/builds/$BuildId" +
-            "?api-version=7.1-preview.7"
+            $buildUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/build/builds/$($BuildId)?api-version=7.1-preview.7"
             Write-Verbose "Calling Azure DevOps API at: $buildUrl"
 
             $build = Invoke-RestMethod -Uri $buildUrl -Headers $headers -Method Get -ErrorAction Stop
@@ -102,8 +96,6 @@ function Get-PSUADOPipelineBuildDetails {
             }
         }
         catch {
-            $errorMessage = "Failed to get build details for Build ID $BuildId`: $($_.Exception.Message)"
-            Write-Error $errorMessage
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }
