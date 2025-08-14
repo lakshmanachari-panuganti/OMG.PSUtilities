@@ -1,4 +1,4 @@
-function Get-PSUk8sPodLabels{
+function Get-PSUk8sPodLabel{
     <#
     .SYNOPSIS
     Gets pod labels from AKS clusters in parallel with minimal kubectl overhead.
@@ -16,7 +16,7 @@ function Get-PSUk8sPodLabels{
     Maximum number of jobs to run in parallel.
 
     .EXAMPLE
-    Get-PSUk8sPodLabels -ClusterFilter "*prod*" -ThrottleLimit 15
+    Get-PSUk8sPodLabel -ClusterFilter "*prod*" -ThrottleLimit 15
     #>
 
     [CmdletBinding()]
