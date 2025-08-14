@@ -106,7 +106,7 @@ $PRTemplateStatement
         #TODO: write the code to submit PR:
         #Logic to get the Base branch -like refs/heads/main
         #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
-        #Invoke-PSUPullRequestCreation
+        #New-PSUADOPullRequest (available in 'OMG.PSUtilities.AzureDevOps' Module)
 
     }
     catch {

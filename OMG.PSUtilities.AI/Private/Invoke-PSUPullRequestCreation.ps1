@@ -7,7 +7,7 @@ function Invoke-PSUPullRequestCreation {
     This function submits a pull request (PR) from a specified source branch to a target branch in a given Azure DevOps repository.
     It authenticates using a Personal Access Token (PAT) and allows you to provide custom title and description content.
 
-    .PARAMETER Org
+    .PARAMETER Organization
     The Azure DevOps organization name.
 
     .PARAMETER Project
@@ -32,7 +32,7 @@ function Invoke-PSUPullRequestCreation {
     The Azure DevOps Personal Access Token (PAT) used for authentication.
 
     .EXAMPLE
-    Invoke-PSUPullRequestCreation -Org "myorg" -Project "MyProject" -RepoId "myrepo" `
+    Invoke-PSUPullRequestCreation -Organization "myOrganization" -Project "MyProject" -RepoId "myrepo" `
         -SourceBranch "refs/heads/feature-x" -TargetBranch "refs/heads/main" `
         -Title "Feature X Implementation" -Description "This PR adds feature X." `
         -PersonalAccessToken $env:AZDO_PAT
@@ -52,7 +52,7 @@ function Invoke-PSUPullRequestCreation {
     )]
     param (
         [Parameter(Mandatory)]
-        [string]$Org,
+        [string]$Organization,
 
         [Parameter(Mandatory)]
         [string]$Project,
@@ -60,11 +60,11 @@ function Invoke-PSUPullRequestCreation {
         [Parameter(Mandatory)]
         [string]$RepoId,
 
-        [Parameter(Mandatory)]
-        [string]$SourceBranch,
+        [Parameter()]
+        [string]$SourceBranch = $(git branch --show-current),
 
-        [Parameter(Mandatory)]
-        [string]$TargetBranch,
+        [Parameter()]
+        [string]$TargetBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
 
         [Parameter(Mandatory)]
         [string]$Title,
@@ -86,7 +86,7 @@ function Invoke-PSUPullRequestCreation {
         description   = $Description | Out-String
     } | ConvertTo-Json -Depth 10
 
-    $url = "https://dev.azure.com/$Org/$Project/_apis/git/repositories/$RepoId/pullrequests?api-version=7.0"
+    $url = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepoId/pullrequests?api-version=7.0"
 
     try {
         $response = Invoke-RestMethod -Method Post -Uri $url -Headers $headers -Body $body -ContentType "application/json"
