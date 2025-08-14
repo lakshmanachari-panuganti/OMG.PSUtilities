@@ -131,7 +131,6 @@ function Get-PSUAzAccountAccessInSubscriptions {
     try {
         $rows | Select-Object SubscriptionId, SubscriptionName, MatchedAssignmentsCount, MatchedAssignmentsJson |
             Export-Csv -Path $OutputCsv -NoTypeInformation -Force -Encoding UTF8
-        Write-Output "CSV: $(Resolve-Path $OutputCsv)"
     } catch {
         Write-Warning "Export CSV failed: $_"
     }

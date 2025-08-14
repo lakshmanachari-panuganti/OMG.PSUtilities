@@ -90,10 +90,6 @@ function New-PSUADOBug {
 
         [Parameter()]
         [ValidateRange(1, 4)]
-        [int]$Severity = 3,
-
-        [Parameter()]
-        [ValidateRange(1, 4)]
         [int]$Priority = 2,
 
         [Parameter()]
@@ -140,11 +136,6 @@ function New-PSUADOBug {
                     op    = "add"
                     path  = "/fields/System.Description"
                     value = $Description
-                },
-                @{
-                    op    = "add"
-                    path  = "/fields/Microsoft.VSTS.Common.Severity"
-                    value = $Severity
                 },
                 @{
                     op    = "add"
