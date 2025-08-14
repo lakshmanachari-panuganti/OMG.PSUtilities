@@ -132,7 +132,7 @@ function New-PSUADOTask {
         try {
             $headers = Get-PSUAdoAuthHeader -PAT $PAT
             $headers['Content-Type'] = 'application/json-patch+json'
-
+            $escapedProject = [uri]::EscapeDataString($Project)
             # Build the work item fields
             $fields = @(
                 @{
@@ -208,13 +208,12 @@ function New-PSUADOTask {
                     path  = "/relations/-"
                     value = @{
                         rel = "System.LinkTypes.Hierarchy-Reverse"
-                        url = "https://dev.azure.com/$Organization/$Project/_apis/wit/workItems/$ParentWorkItemId"
+                        url = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workItems/$ParentWorkItemId"
                     }
                 }
             }
 
             $body = $fields | ConvertTo-Json -Depth 4
-            $escapedProject = [uri]::EscapeDataString($Project)
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$Task?api-version=7.1-preview.3"
 
             Write-Verbose "Creating task in project: $Project"
