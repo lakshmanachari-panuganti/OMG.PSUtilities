@@ -109,7 +109,11 @@ function Get-PSUAzAccountAccessInSubscriptions {
                 ResourceGroup        = if ($_.Scope -match '/resourceGroups/([^/]+)') { $matches[1] } else { '' }
                 ResourceType         = if ($_.Scope -match 'providers/([^/]+/[^/]+)$') { $matches[1] } else { '' }
                 ResourceName         = if ($_.Scope -match 'providers/[^/]+/[^/]+/(.+)$') { $matches[1] } else { '' }
-                AssignmentObjectId   = $_.Id
+                AssignmentObjectId   = if ($_.PSU_AssignmentId) { $_.PSU_AssignmentId } 
+                                        elseif ($_.RoleAssignmentId) { $_.RoleAssignmentId } 
+                                        elseif ($_.Id) { $_.Id } 
+                                        else { $null }
+
                 Condition            = $_.Condition
                 Description          = $_.Description
             }
