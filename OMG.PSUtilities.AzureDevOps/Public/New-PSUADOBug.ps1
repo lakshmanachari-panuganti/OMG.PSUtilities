@@ -1,33 +1,36 @@
-function New-PSUADOTask {
+function New-PSUADOBug {
     <#
     .SYNOPSIS
-        Creates a new task work item in Azure DevOps and optionally links it to a parent work item.
+        Creates a new bug work item in Azure DevOps.
 
     .DESCRIPTION
-        This function creates a new task work item in Azure DevOps using the REST API.
-        It can create standalone tasks or link them to parent work items (User Story, Bug, Spike, etc.) as child work items.
-        Returns the created task details including the work item ID and parent relationship.
+        This function creates a new bug work item in Azure DevOps using the REST API. 
+        It allows you to specify bug-specific fields like reproduction steps, system info, severity, and priority.
+        Returns the created work item details including the work item ID.
 
     .PARAMETER Title
-        The title of the task work item.
+        The title of the bug work item.
 
     .PARAMETER Description
-        The detailed description of the task.
+        The detailed description of the bug.
 
-    .PARAMETER ParentWorkItemId
-        The work item ID of the parent work item (User Story, Bug, Spike, etc.) to link this task to (optional).
+    .PARAMETER ReproductionSteps
+        The steps to reproduce the bug (optional).
 
-    .PARAMETER EstimatedHours
-        The estimated hours to complete the task (optional).
+    .PARAMETER SystemInfo
+        Information about the system where the bug was found (optional).
 
-    .PARAMETER RemainingHours
-        The remaining hours to complete the task (optional).
+    .PARAMETER Severity
+        The severity of the bug. Valid values: 1, 2, 3, 4. Default is 3 (optional).
 
     .PARAMETER Priority
-        The priority of the task. Valid values: 1, 2, 3, 4. Default is 2 (optional).
+        The priority of the bug. Valid values: 1, 2, 3, 4. Default is 2 (optional).
+
+    .PARAMETER FoundInBuild
+        The build version where the bug was found (optional).
 
     .PARAMETER AssignedTo
-        The email address of the person to assign the task to (optional).
+        The email address of the person to assign the bug to (optional).
 
     .PARAMETER AreaPath
         The area path for the work item. If not specified, uses the project default (optional).
@@ -48,22 +51,14 @@ function New-PSUADOTask {
         Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable (optional).
 
     .EXAMPLE
-        New-PSUADOTask -Title "Setup database schema" -Description "Create initial database tables" -Project "MyProject"
+        New-PSUADOBug -Title "Login button not working" -Description "Users cannot click the login button on Chrome" -Project "MyProject"
 
-        Creates a standalone task without linking to a parent work item.
-
-    .EXAMPLE
-        New-PSUADOTask -Title "Implement login API" -Description "Create REST API for user authentication" -ParentWorkItemId 1234 -EstimatedHours 8 -AssignedTo "dev@company.com" -Project "MyProject"
-
-        Creates a task and links it to work item ID 1234 (could be User Story, Bug, or Spike) with estimated hours and assignment.
+        Creates a basic bug report.
 
     .EXAMPLE
-        # Create a user story and then add tasks to it
-        $userStory = New-PSUADOUserStory -Title "User login feature" -Description "Implement secure login" -Project "MyProject"
-        New-PSUADOTask -Title "Create login form" -Description "Build HTML login form" -ParentWorkItemId $userStory.Id -Project "MyProject"
-        New-PSUADOTask -Title "Implement authentication" -Description "Add backend auth logic" -ParentWorkItemId $userStory.Id -Project "MyProject"
+        New-PSUADOBug -Title "Database connection timeout" -Description "Application crashes when database is slow" -ReproductionSteps "1. Start app 2. Wait 30 seconds 3. Click save" -SystemInfo "Windows 10, Chrome 91" -Severity 1 -Priority 1 -AssignedTo "dev@company.com" -Project "MyProject"
 
-        Creates a user story and adds two tasks as children.
+        Creates a detailed bug report with all fields specified.
 
     .OUTPUTS
         [PSCustomObject]
@@ -88,20 +83,21 @@ function New-PSUADOTask {
         [string]$Description,
 
         [Parameter()]
-        [ValidateRange(1, [int]::MaxValue)]
-        [int]$ParentWorkItemId,
+        [string]$ReproductionSteps,
 
         [Parameter()]
-        [ValidateRange(0.1, 999.9)]
-        [decimal]$EstimatedHours,
+        [string]$SystemInfo,
 
         [Parameter()]
-        [ValidateRange(0, 999.9)]
-        [decimal]$RemainingHours,
+        [ValidateRange(1, 4)]
+        [int]$Severity = 3,
 
         [Parameter()]
         [ValidateRange(1, 4)]
         [int]$Priority = 2,
+
+        [Parameter()]
+        [string]$FoundInBuild,
 
         [Parameter()]
         [string]$AssignedTo,
@@ -147,25 +143,38 @@ function New-PSUADOTask {
                 },
                 @{
                     op    = "add"
+                    path  = "/fields/Microsoft.VSTS.Common.Severity"
+                    value = $Severity
+                },
+                @{
+                    op    = "add"
                     path  = "/fields/Microsoft.VSTS.Common.Priority"
                     value = $Priority
                 }
             )
 
             # Add optional fields if provided
-            if ($EstimatedHours) {
+            if ($ReproductionSteps) {
                 $fields += @{
                     op    = "add"
-                    path  = "/fields/Microsoft.VSTS.Scheduling.OriginalEstimate"
-                    value = $EstimatedHours
+                    path  = "/fields/Microsoft.VSTS.TCM.ReproSteps"
+                    value = $ReproductionSteps
                 }
             }
 
-            if ($RemainingHours) {
+            if ($SystemInfo) {
                 $fields += @{
                     op    = "add"
-                    path  = "/fields/Microsoft.VSTS.Scheduling.RemainingWork"
-                    value = $RemainingHours
+                    path  = "/fields/Microsoft.VSTS.TCM.SystemInfo"
+                    value = $SystemInfo
+                }
+            }
+
+            if ($FoundInBuild) {
+                $fields += @{
+                    op    = "add"
+                    path  = "/fields/Microsoft.VSTS.Build.FoundIn"
+                    value = $FoundInBuild
                 }
             }
 
@@ -201,26 +210,11 @@ function New-PSUADOTask {
                 }
             }
 
-            # Add parent link if specified (works with any work item type)
-            if ($ParentWorkItemId) {
-                $fields += @{
-                    op    = "add"
-                    path  = "/relations/-"
-                    value = @{
-                        rel = "System.LinkTypes.Hierarchy-Reverse"
-                        url = "https://dev.azure.com/$Organization/$Project/_apis/wit/workItems/$ParentWorkItemId"
-                    }
-                }
-            }
-
-            $body = $fields | ConvertTo-Json -Depth 4
+            $body = $fields | ConvertTo-Json -Depth 3
             $escapedProject = [uri]::EscapeDataString($Project)
-            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$Task?api-version=7.1-preview.3"
+            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$Bug?api-version=7.1-preview.3"
 
-            Write-Verbose "Creating task in project: $Project"
-            if ($ParentWorkItemId) {
-                Write-Verbose "Linking to parent work item ID: $ParentWorkItemId"
-            }
+            Write-Verbose "Creating bug in project: $Project"
             Write-Verbose "API URI: $uri"
 
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
@@ -230,19 +224,20 @@ function New-PSUADOTask {
                 Title            = $response.fields.'System.Title'
                 Description      = $response.fields.'System.Description'
                 State            = $response.fields.'System.State'
+                Severity         = $response.fields.'Microsoft.VSTS.Common.Severity'
                 Priority         = $response.fields.'Microsoft.VSTS.Common.Priority'
-                EstimatedHours   = $response.fields.'Microsoft.VSTS.Scheduling.OriginalEstimate'
-                RemainingHours   = $response.fields.'Microsoft.VSTS.Scheduling.RemainingWork'
+                ReproductionSteps = $response.fields.'Microsoft.VSTS.TCM.ReproSteps'
+                SystemInfo       = $response.fields.'Microsoft.VSTS.TCM.SystemInfo'
+                FoundInBuild     = $response.fields.'Microsoft.VSTS.Build.FoundIn'
                 AssignedTo       = $response.fields.'System.AssignedTo'.displayName
                 CreatedDate      = $response.fields.'System.CreatedDate'
                 CreatedBy        = $response.fields.'System.CreatedBy'.displayName
                 WorkItemType     = $response.fields.'System.WorkItemType'
                 AreaPath         = $response.fields.'System.AreaPath'
                 IterationPath    = $response.fields.'System.IterationPath'
-                ParentId         = $ParentWorkItemId
                 Url              = $response.url
                 WebUrl           = $response._links.html.href
-                PSTypeName       = 'PSU.ADO.Task'
+                PSTypeName       = 'PSU.ADO.Bug'
             }
         }
         catch {
