@@ -5,9 +5,13 @@ Interact with Azure DevOps APIs, pipelines, repos, and work items.
 > Module version: 1.0.5 | Last updated: 2025-08-11
 
 ## 📋 Available Functions
-
-| Function | Description |
-|----------|-------------|
+| Function                        | Description                              |
+|---------------------------------|----------------------------------------------|
+| `New-PSUADOBug` | Creates a new Azure DevOps work item of type "Bug". Use this function to log and track software defects within your project. |
+| `New-PSUADOPullRequest` | Initiates a new pull request in Azure DevOps. This function helps automate the process of code review and merging changes between branches. |
+| `New-PSUADOSpike` | Creates a new "Spike" work item in Azure DevOps. Use this function to document research tasks or investigations required to resolve uncertainties in your project. |
+| `New-PSUADOTask` | Adds a new "Task" work item to Azure DevOps. This function is used to break down user stories or bugs into actionable development tasks. |
+| `New-PSUADOUserStory` | Generates a new "User Story" work item in Azure DevOps. Use this function to capture requirements or features from the end-user perspective. |
 | `Get-PSUADOPipeline` | Retrieves Azure DevOps pipeline information and details |
 | `Get-PSUADOPipelineBuild` | Gets details about specific Azure DevOps pipeline builds |
 | `Get-PSUADOPipelineLatestRun` | Retrieves the latest run information for Azure DevOps pipelines |

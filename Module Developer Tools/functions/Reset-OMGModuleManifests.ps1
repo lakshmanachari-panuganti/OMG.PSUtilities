@@ -66,7 +66,7 @@ function Reset-OMGModuleManifests {
         }
 
         # Get all public function names
-        $publicFunctions = Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse |
+        $publicFunctions = Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | Where-Object{$_.name -notlike "*--wip.ps1"} |
         Select-Object -ExpandProperty BaseName
 
         if (-not $publicFunctions) {
@@ -76,7 +76,7 @@ function Reset-OMGModuleManifests {
 
         # --- Extract aliases from each public function -----
         $aliasList = @()
-        Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | ForEach-Object {
+        Get-ChildItem -Path $publicPath -Filter *.ps1 -Recurse | Where-Object{$_.name -notlike "*--wip.ps1"} | ForEach-Object {
             $content = $null
             try{
             $content = Get-Content $_.FullName -Raw -ErrorAction Stop
@@ -99,7 +99,7 @@ function Reset-OMGModuleManifests {
         # --------- [Generate .psm1 content] --------------
         $psm1Content = @"
 # Load private functions
-Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | ForEach-Object {
+Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | Where-Object{`$_.name -notlike "*--wip.ps1"} | ForEach-Object {
     try {
         . `$(`$_.FullName)
     } catch {
@@ -108,7 +108,7 @@ Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | ForEach-Object {
 }
 
 # Load public functions
-Get-ChildItem -Path "`$PSScriptRoot\Public\*.ps1" -Recurse | ForEach-Object {
+Get-ChildItem -Path "`$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{`$_.name -notlike "*--wip.ps1"} | ForEach-Object {
     try {
         . `$(`$_.FullName)
     } catch {

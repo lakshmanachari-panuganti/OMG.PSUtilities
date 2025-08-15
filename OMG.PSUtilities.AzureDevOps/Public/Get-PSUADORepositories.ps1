@@ -69,7 +69,7 @@ function Get-PSUADORepositories {
                     SshUrl          = $_.sshUrl
                     RemoteUrl       = $_.remoteUrl
                     WebUrl          = $_.webUrl
-                    ProjectName     = $_.project.name
+                    Project         = $_.project.name
                     ProjectId       = $_.project.id
                     PSTypeName      = 'PSU.ADO.Repository'
                 }

@@ -1,6 +1,42 @@
-## Changelog
-- Initial scaffolding for OMG.PSUtilities.AzureCore
+# Changelog
 
-## [1.0.0] - 2025-07-16
-- OMG.PSUtilities.AzureCore.psd1 : Added functions 'Get-PSUAzToken' and  'Test-PSUAzConnection'
-- OMG.PSUtilities.AzureCore.psm1 : Added the code to load the private and public functions into the session, and further export public functions.
+# Changelog
+
+## [1.0.3] - 2025-08-15
+### Added
+- `Get-PSUAzAccountAccessInSubscriptions`: Retrieves account access details across Azure subscriptions.
+- `Get-PSUk8sPodLabel`: Gets labels for Kubernetes pods.
+- `Get-PSUAssignmentPrincipalId`: Private. Resolves principal IDs for assignments.
+- `Get-PSUBatchDirectoryObjects`: Private. Fetches directory objects in batches.
+- `Get-PSUGraphUser`: Private. Retrieves user information from Microsoft Graph.
+- `Get-PSURoleDefDetails`: Private. Gets details of role definitions.
+- `Get-PSUTransitiveGroups`: Private. Finds all transitive group memberships.
+- `Parse-PSUScopePath`: Private. Parses Azure scope paths.
+- `Resolve-PSUPrincipalDisplayFromCache`: Private. Resolves principal display names from cache.
+- `Test-AzCliLogin`: Private. Tests Azure CLI login status.
+- `Get-PSUAzAccountAccessInSubscriptions2--wip`: Work in progress. Next-gen account access retrieval.
+- `Update-AksKubeConfig--wip`: Work in progress. Updates AKS kubeconfig.
+
+### Changed
+- Improved error handling and bug fixes.
+- Updated `Get-PSUAzToken` for improved logging.
+- Updated README with comprehensive information.
+
+
+## [1.0.2] - 2025-08-11
+### Added
+- Test-PSUAzConnection (Public): Tests Azure connection.
+### Changed
+- Improved error handling in Get-PSUAzToken.
+### Fixed
+- Minor bug fixes in Get-PSUAksWorkloadIdentityInventory.
+
+## [1.0.1] - 2025-08-05
+### Added
+- Get-PSUAzToken (Public): Retrieves an Azure access token.
+
+## [1.0.0] - 2025-07-30
+### Added
+- Initial release of OMG.PSUtilities.AzureCore module.
+- Get-PSUAksWorkloadIdentityInventory (Public): Retrieves AKS workload identity inventory.
+- test.ps1 (Private): Internal

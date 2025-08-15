@@ -30,13 +30,13 @@ function Get-PSUAzToken {
 
         # Ensure user is logged in
         if (-not (Get-AzContext)) {
-            Write-Host "🔐 Logging in to Azure..." -ForegroundColor Yellow
+            Write-Host "Logging in to Azure..." -ForegroundColor Yellow
             Connect-AzAccount -ErrorAction Stop
         }
 
         # Acquire token
         $token = (Get-AzAccessToken -ResourceUrl $Resource -ErrorAction Stop).Token
-        Write-Host "✅ Access token acquired for $Resource"
+        Write-Host "Access token acquired for $Resource"
         return $token
     }
     catch {

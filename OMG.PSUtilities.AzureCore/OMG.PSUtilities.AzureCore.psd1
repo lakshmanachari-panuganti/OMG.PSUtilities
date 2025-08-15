@@ -69,7 +69,7 @@ RequiredModules = @('OMG.PSUtilities.Core')
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Get-PSUAksWorkloadIdentityInventory', 'Get-PSUAzToken', 'Test-PSUAzConnection')
+FunctionsToExport = @('Get-PSUAzAccountAccessInSubscriptions', 'Get-PSUAzToken', 'Get-PSUk8sPodLabel', 'Test-PSUAzConnection')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
