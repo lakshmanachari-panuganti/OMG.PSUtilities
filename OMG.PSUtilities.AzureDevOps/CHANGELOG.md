@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## [1.0.6] - 2025-08-15
+### Added
+
+`New-PSUADOBug`: Creates a new Azure DevOps work item of type "Bug". Use this function to log and track software defects within your project.
+
+`New-PSUADOPullRequest`: Initiates a new pull request in Azure DevOps. This function helps automate the process of code review and merging changes between branches.
+
+`New-PSUADOSpike`: Creates a new "Spike" work item in Azure DevOps. Use this function to document research tasks or investigations required to resolve uncertainties in your project.
+
+`New-PSUADOTask`: Adds a new "Task" work item to Azure DevOps. This function is used to break down user stories or bugs into actionable development tasks.
+
+`New-PSUADOUserStory`: Generates a new "User Story" work item in Azure DevOps. Use this function to capture requirements or features from the end-user perspective.
+
+
+- Added these functions to `FunctionsToExport` and public functions.
+- Filtering to exclude files ending with `--wip.ps1` when retrieving public and private functions.
+- Functions to create work items in Azure DevOps.
+
+### Changed
+- Refactored `Get-PSUADOPullRequest` to allow retrieving pull requests from a specific repository or all repositories in a project. Added parameters for `RepositoryId`, `RepositoryName`, and `State`.
+- Modified `Get-PSUADORepositories` to rename the `ProjectName` property to `Project`.
+
 ## [1.0.5] - 2025-08-11
 ### Added
 - **Get-PSUADOPipeline**: Retrieves Azure DevOps pipeline information and details

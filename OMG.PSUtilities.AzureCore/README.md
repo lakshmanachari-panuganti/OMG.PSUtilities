@@ -8,6 +8,19 @@ Core Azure-related scripting, including identity and subscription management.
 
 | Function                              | Description                                 |
 |----------------------------------------|---------------------------------------------|
+| `Get-PSUAzAccountAccessInSubscriptions` | Retrieves account access details across Azure subscriptions |
+| `Get-PSUk8sPodLabel`                    | Gets labels for Kubernetes pods                             |
+| `Get-PSUAssignmentPrincipalId`          | Private. Resolves principal IDs for assignments             |
+| `Get-PSUBatchDirectoryObjects`          | Private. Fetches directory objects in batches               |
+| `Get-PSUGraphUser`                      | Private. Retrieves user information from Microsoft Graph    |
+| `Get-PSURoleDefDetails`                 | Private. Gets details of role definitions                   |
+| `Get-PSUTransitiveGroups`               | Private. Finds all transitive group memberships             |
+| `Parse-PSUScopePath`                    | Private. Parses Azure scope paths                           |
+| `Resolve-PSUPrincipalDisplayFromCache`  | Private. Resolves principal display names from cache        |
+| `Test-AzCliLogin`                       | Private. Tests Azure CLI login status                       |
+| `Get-PSUAzAccountAccessInSubscriptions2--wip` | Work in progress. Next-gen account access retrieval  |
+
+
 | `Get-PSUAksWorkloadIdentityInventory`  | Retrieves AKS workload identity inventory   |
 | `Get-PSUAzToken`                       | Retrieves an Azure access token             |
 | `Test-PSUAzConnection`                 | Tests Azure connection                      |

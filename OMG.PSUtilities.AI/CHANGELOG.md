@@ -1,4 +1,9 @@
-## Changelog
+# Changelog
+
+## [1.0.8] - 2025-08-15
+
+- Default values for `SourceBranch` and `TargetBranch` parameters in `Invoke-PSUPullRequestCreation.ps1` using git commands.
+
 
 ## [1.0.7] - 2025-08-11
 ### Changed
