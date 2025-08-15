@@ -28,6 +28,7 @@ $PublicFunctions = @(
     'Get-PSUADORepositories'
     'Get-PSUADOVariableGroupInventory'
     'New-PSUADOBug'
+    'New-PSUADOPullRequest'
     'New-PSUADOSpike'
     'New-PSUADOTask'
     'New-PSUADOUserStory'
