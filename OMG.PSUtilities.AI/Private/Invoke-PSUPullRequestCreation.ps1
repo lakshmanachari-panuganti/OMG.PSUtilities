@@ -35,7 +35,7 @@ function Invoke-PSUPullRequestCreation {
     Invoke-PSUPullRequestCreation -Organization "myOrganization" -Project "MyProject" -RepoId "myrepo" `
         -SourceBranch "refs/heads/feature-x" -TargetBranch "refs/heads/main" `
         -Title "Feature X Implementation" -Description "This PR adds feature X." `
-        -PersonalAccessToken $env:AZDO_PAT
+        -PAT $env:AZDO_PAT
 
     .OUTPUTS
     Outputs the response from Azure DevOps (usually a PR object in JSON).

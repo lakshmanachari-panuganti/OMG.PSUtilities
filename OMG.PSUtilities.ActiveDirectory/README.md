@@ -2,7 +2,7 @@
 
 PowerShell utilities for Active Directory automation and reporting.
 
-> Module version: 1.0.1 | Last updated: 2025-07-16
+> Module version: 1.0.3 | Last updated: 2025-07-16
 
 ## 📋 Available Functions
 

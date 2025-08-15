@@ -90,12 +90,20 @@ function New-PSUADOPullRequest {
         [Parameter(Mandatory, ParameterSetName = 'ByRepoName')]
         [ValidateNotNullOrEmpty()]
         [string]$Repository,
+        
+        [Parameter()]
+        [ValidateScript({
+            if ($_ -match '^refs/heads/.+') { $true }
+            else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
+        })]
+        [string]$SourceBranch = $("refs/heads/$((git branch --show-current).Trim())"),
 
         [Parameter()]
-        [string]$SourceBranch = $(git branch --show-current),
-
-        [Parameter()]
-        [string]$TargetBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
+        [ValidateScript({
+            if ($_ -match '^refs/heads/.+') { $true }
+            else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
+        })]
+        [string]$TargetBranch = $("refs/heads/$((git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf).Trim())"),
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -112,59 +120,41 @@ function New-PSUADOPullRequest {
 
     process {
         try {
+            # Resolve repository ID if needed
+            $repositoryIdentifier = $null
+            if ($PSCmdlet.ParameterSetName -eq 'ByRepoId') {
+                $repositoryIdentifier = $RepoId
+            } else {
+                $repos = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
+                $matchedRepo = $repos | Where-Object { $_.Name -eq $Repository }
+                if (-not $matchedRepo) {
+                    throw "Repository '$Repository' not found in project '$Project'."
+                }
+                $repositoryIdentifier = $matchedRepo.Id
+            }
+
+            # Compose authentication header
             $headers = Get-PSUAdoAuthHeader -PAT $PAT
-            $headers['Content-Type'] = 'application/json'
-
-            $escapedProject = [uri]::EscapeDataString($Project)
-
-            # Determine repository identifier based on parameter set
-            $repositoryIdentifier = switch ($PSCmdlet.ParameterSetName) {
-                'ByRepoId' { 
-                    $RepoId 
-                }
-                'ByRepoName' { 
-                    # Resolve repository name to ID
-                    Write-Verbose "Resolving repository name '$Repository' to ID..."
-                    $repos = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
-                    $matchedRepo = $repos | Where-Object { $_.Name -eq $Repository }
-                    
-                    if (-not $matchedRepo) {
-                        throw "Repository '$Repository' not found in project '$Project'."
-                    }
-                    
-                    Write-Verbose "Resolved repository '$Repository' to ID: $($matchedRepo.Id)"
-                    $matchedRepo.Id
-                }
-            }
-
-            # Ensure $SourceBranch and $TargetBranch are exists.
-            $branches = git branch --list | ForEach-Object { $_.TrimStart('*').Trim() }
-            if (-not ($branches -contains $SourceBranch)) {
-                throw "Source branch '$SourceBranch' does not exist."
-            }
-            if (-not ($branches -contains $TargetBranch)) {
-                throw "Target branch '$TargetBranch' does not exist."
-            }
 
             $body = @{
                 sourceRefName = $SourceBranch
                 targetRefName = $TargetBranch
                 title         = $Title
-                description   = $Description
-            } | ConvertTo-Json -Depth 3
+                description   = ($Description -join "`n")
+            } | ConvertTo-Json -Depth 10
 
-            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.1-preview.1"
-
+            $escapedProject = [uri]::EscapeDataString($Project)
+            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.0"
             Write-Verbose "Creating pull request in project: $Project"
             Write-Verbose "Repository: $repositoryIdentifier"
             Write-Verbose "Source branch: $SourceBranch"
             Write-Verbose "Target branch: $TargetBranch"
             Write-Verbose "API URI: $uri"
 
-            $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body -ErrorAction Stop
-
+            $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -ErrorAction Stop
+            $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$repositoryIdentifier/pullrequest/$($response.pullRequestId)"
             Write-Host "Pull Request created successfully. PR ID: $($response.pullRequestId)" -ForegroundColor Green
-            Write-Host "PR URL: $($response._links.web.href)" -ForegroundColor Cyan
+            Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan
 
             [PSCustomObject]@{
                 Id              = $response.pullRequestId
@@ -180,7 +170,7 @@ function New-PSUADOPullRequest {
                 RepositoryId    = $response.repository.id
                 RepositoryName  = $response.repository.name
                 ProjectName     = $response.repository.project.name
-                WebUrl          = $response._links.web.href
+                WebUrl          = $WebUrl
                 ApiUrl          = $response.url
                 PSTypeName      = 'PSU.ADO.PullRequest'
             }
