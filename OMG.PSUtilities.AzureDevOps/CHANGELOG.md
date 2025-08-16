@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## [1.0.7] - 2025-08-16
+### Bug fix
+`New-PSUADOPullRequest`: a minor Bug fixed for this function.
+
 ## [1.0.6] - 2025-08-15
 ### Added
 
