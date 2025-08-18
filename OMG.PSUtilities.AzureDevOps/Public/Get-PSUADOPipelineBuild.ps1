@@ -33,9 +33,11 @@ function Get-PSUADOPipelineBuild {
         Date  : 2025-06-16 : Initial development
     
     .LINK
-        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
-        https://github.com/lakshmanachari-panuganti
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
         https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+        https://learn.microsoft.com/en-us/rest/api/azure/devops/build/builds/get
+
     #>
     [CmdletBinding()]
     param (

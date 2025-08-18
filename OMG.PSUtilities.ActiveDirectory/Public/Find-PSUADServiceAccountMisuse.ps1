@@ -43,6 +43,12 @@ function Find-PSUADServiceAccountMisuse {
         Author : Lakshmanachari Panuganti
         Date: 29 June 2025
         TODO: Add the server names where its  used.
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.ActiveDirectory
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.ActiveDirectory
+        https://learn.microsoft.com/en-us/powershell/module/activedirectory/
     #>
 
     [CmdletBinding()]

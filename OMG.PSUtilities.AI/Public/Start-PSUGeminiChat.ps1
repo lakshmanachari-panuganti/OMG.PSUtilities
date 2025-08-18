@@ -27,6 +27,12 @@ function Start-PSUGeminiChat {
     Date: 4th July 2025
     History: Initial development of Start-PSUGeminiChat Chatbot.
 
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+    https://ai.google.dev/gemini-api/docs
+
 .EXAMPLE
     Start-PSUGeminiChat
 #>

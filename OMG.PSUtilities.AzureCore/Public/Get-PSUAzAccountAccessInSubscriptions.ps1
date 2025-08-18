@@ -31,6 +31,13 @@ function Get-PSUAzAccountAccessInSubscriptions {
     .NOTES
         Author: Lakshmanachari Panuganti
         Requires: Az.Accounts, Az.Resources modules
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureCore
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureCore
+        https://learn.microsoft.com/en-us/powershell/module/az.resources/get-azroleassignment
+
     #>
     [CmdletBinding()]
     param(

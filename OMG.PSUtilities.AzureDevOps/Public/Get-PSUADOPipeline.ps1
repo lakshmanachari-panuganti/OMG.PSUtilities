@@ -41,7 +41,7 @@
     Created: August 2025
 
 .LINK
-    https://github.com/lakshmanachari-panuganti
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
     https://www.linkedin.com/in/lakshmanachari-panuganti/
     https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
     https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/pipelines/list

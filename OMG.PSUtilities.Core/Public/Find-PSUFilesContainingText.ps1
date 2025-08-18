@@ -29,6 +29,13 @@ function Find-PSUFilesContainingText {
     .NOTES
         Author: Lakshmanachari Panuganti
         File Creation Date: 2025-06-27
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
+        https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/select-string
+
     #>
     [CmdletBinding()]
     param (

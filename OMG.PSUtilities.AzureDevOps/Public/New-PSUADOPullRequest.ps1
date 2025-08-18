@@ -68,7 +68,8 @@ function New-PSUADOPullRequest {
         Updated: 2025-08-14 - Added Repository parameter and parameter sets
 
     .LINK
-        https://github.com/lakshmanachari-panuganti
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
         https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
         https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-requests/create
     #>

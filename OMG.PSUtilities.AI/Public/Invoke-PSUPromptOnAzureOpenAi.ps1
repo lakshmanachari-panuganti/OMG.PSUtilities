@@ -46,6 +46,13 @@ function Invoke-PSUPromptOnAzureOpenAi {
     Author: Lakshmanachari Panuganti
     Created: 2025-08-01
     API Version: 2025-01-01-preview
+
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+    https://learn.microsoft.com/en-us/azure/ai-services/openai/reference
+
 #>
 
     [CmdletBinding()]

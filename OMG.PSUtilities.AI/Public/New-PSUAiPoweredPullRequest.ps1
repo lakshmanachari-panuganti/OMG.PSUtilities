@@ -32,6 +32,13 @@ function New-PSUAiPoweredPullRequest {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date  : 2025-07-28
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+        https://ai.google.dev/gemini-api/docs
+
     #>
 
     [CmdletBinding()]
@@ -112,11 +119,28 @@ $PRTemplateStatement
         ($parsed.title) + '`n ' + ($parsed.description) | Set-Clipboard
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
 
-        Read-Host "Would you like me to submit the pull request with the current title and description, or retry generating new ones? (Y/N/R)"
-        #TODO: write the code to submit PR:
-        #Logic to get the Base branch -like refs/heads/main
-        #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
-        #New-PSUADOPullRequest (available in 'OMG.PSUtilities.AzureDevOps' Module)
+        $readHost = Read-Host "Would you like me to submit the pull request with the current title and description, or retry generating new ones? (Y/N/R)"
+
+        switch ($readHost) {
+            'Y' {
+                #TODO: write the code to submit PR:
+                #Logic to get the Base branch -like refs/heads/main
+                #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
+                #New-PSUADOPullRequest (available in 'OMG.PSUtilities.AzureDevOps' Module)
+            }
+            'N' {
+                Write-Host "Pull request submission canceled."
+            }
+            'R' {
+                Write-Host "Retrying PR generation..."
+                # Logic to regenerate PR content
+                & $MyInvocation.MyCommand @PSBoundParameters
+                return
+            }
+            default {
+                Write-Host "Invalid choice. Please enter Y, N, or R."
+            }
+        }
 
     }
     catch {

@@ -53,6 +53,13 @@ function Invoke-PSUPromptOnPerplexityAi {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 22 July 2025
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+        https://docs.perplexity.ai/docs/getting-started
+
     #>
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(

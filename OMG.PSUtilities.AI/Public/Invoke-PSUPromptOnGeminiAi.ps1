@@ -38,6 +38,13 @@ function Invoke-PSUPromptOnGeminiAi {
     Author: Lakshmanachari Panuganti
     Created: 2025-07-03
     Model: Gemini 2.0 Flash (Generative Language API)
+
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+    https://ai.google.dev/gemini-api/docs
+
 #>
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
