@@ -26,6 +26,7 @@ $PublicFunctions = @(
     'Get-PSUInstalledSoftware'
     'Get-PSUUserEnvironmentVariable'
     'Get-PSUUserSession'
+    'New-PSUGithubPullRequest'
     'New-PSUHTMLReport'
     'Remove-PSUUserEnvironmentVariable'
     'Remove-PSUUserSession'

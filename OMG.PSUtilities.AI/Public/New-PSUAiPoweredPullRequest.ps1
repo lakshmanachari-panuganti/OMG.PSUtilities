@@ -112,10 +112,10 @@ $PRTemplateStatement
     # Try parsing the AI response as JSON
     try {
         $parsed = $response | ConvertFrom-Json -ErrorAction Stop
-        #$PRContent = [PSCustomObject]@{
-        #    Title       = $parsed.title
-        #    Description = $parsed.description
-        #}
+        $Global:PRContent = [PSCustomObject]@{
+            Title       = $parsed.title
+            Description = $parsed.description
+        }
         ($parsed.title) + '`n ' + ($parsed.description) | Set-Clipboard
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
 
@@ -127,6 +127,17 @@ $PRTemplateStatement
                 #Logic to get the Base branch -like refs/heads/main
                 #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
                 #New-PSUADOPullRequest (available in 'OMG.PSUtilities.AzureDevOps' Module)
+                
+                # Determining the $gitProvider
+                $remoteUrl = git remote get-url origin
+                if ($remoteUrl -match 'github\.com') {
+                    $gitProvider = "GitHub"
+                } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                    $gitProvider = "Azure DevOps"
+                } else {
+                    $gitProvider = "Other"
+                }
+                Write-Host "Detected Git provider: $gitProvider"
             }
             'N' {
                 Write-Host "Pull request submission canceled."
