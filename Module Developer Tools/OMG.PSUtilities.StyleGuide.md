@@ -66,11 +66,10 @@ Where examples show indentation, **8 spaces** are used for content lines under e
 
 .OUTPUTS
         [PSCustomObject]
-        Properties include: Id, Name, Organization, Project, Repository, WebUrl, PSTypeName
 
 .NOTES
         Author: Lakshmanachari Panuganti
-        Date: DD month YYYY  (Example 22 July 2025)
+        Date: DD month YYYY  (Example 22nd July 2025, 02nd June 2025, 1st December 2025, 05th November 2024 )
 
 .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.<ModuleName>

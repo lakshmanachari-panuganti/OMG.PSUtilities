@@ -26,9 +26,13 @@ function Get-PSUUserEnvironmentVariable {
     .EXAMPLE
         [PSCustomObject] @{'Name' = 'API_KEY_GEMINI'} | Get-PSUUserEnvironmentVariable
 
+    .OUTPUTS
+        [PSCustomObject]
+        Properties include: Name, Value, Scope
+
     .NOTES
         Author: Lakshmanachari Panuganti
-        File Creation Date: 2025-07-27
+        Date: 27th July 2025
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core

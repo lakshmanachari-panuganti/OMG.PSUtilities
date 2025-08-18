@@ -86,7 +86,7 @@ function New-PSUGithubPullRequest {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: 2025-08-18
+        Date: 18th August 2025
         Requires: GitHub Personal Access Token with repo permissions
 
     .LINK

@@ -22,7 +22,7 @@ function Invoke-PSUGitCommit {
 
     .NOTES
         Author : Lakshmanachari Panuganti
-        Date   : 2025-07-31
+        Date   : 31st July 2025
         Requires:
             - Git CLI
             - $env:API_KEY_GEMINI

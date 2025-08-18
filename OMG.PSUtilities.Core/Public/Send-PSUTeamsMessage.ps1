@@ -26,9 +26,17 @@ function Send-PSUTeamsMessage {
     .EXAMPLE
         Send-PSUTeamsMessage -WebhookUrl 'https://outlook.office.com/webhook/...' -Message 'Deployment completed!'
 
+    .OUTPUTS
+        None
+
     .NOTES
         Author: Lakshmanachari Panuganti
-        File Creation Date: 2025-07-03
+        Date: 3rd July 2025
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
     #>
     param(
         [Parameter(Mandatory)]

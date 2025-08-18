@@ -52,7 +52,7 @@ function Approve-PSUGithubPullRequest {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: 2025-08-19
+        Date: 19th August 2025
         Requires: GitHub Personal Access Token with repo permissions
 
     .LINK

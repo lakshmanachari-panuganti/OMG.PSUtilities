@@ -41,7 +41,7 @@ function Find-PSUADServiceAccountMisuse {
 
     .NOTES
         Author : Lakshmanachari Panuganti
-        Date: 29 June 2025
+        Date: 29th June 2025
         TODO: Add the server names where its  used.
 
     .LINK

@@ -58,7 +58,7 @@ function Approve-PSUADOPullRequest {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: 2025-08-19
+        Date: 19th August 2025
         Requires: Azure DevOps Personal Access Token with appropriate permissions
 
     .LINK

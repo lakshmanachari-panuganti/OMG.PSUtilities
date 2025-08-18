@@ -45,7 +45,7 @@ function Complete-PSUPullRequest {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: 2025-08-19
+        Date: 19th August 2025
         Requires: Appropriate tokens for GitHub (GITHUB_TOKEN) or Azure DevOps (PAT)
 
     .LINK

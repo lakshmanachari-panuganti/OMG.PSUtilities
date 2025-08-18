@@ -40,7 +40,7 @@ function New-PSUAiPoweredPullRequest {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date  : 2025-07-28
+        Date: 28th July 2025
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
