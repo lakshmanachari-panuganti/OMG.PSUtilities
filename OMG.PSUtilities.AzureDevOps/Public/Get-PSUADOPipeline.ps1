@@ -8,19 +8,23 @@
     Use -AddDetails to fetch additional details for each pipeline (slower).
     You can also retrieve a specific pipeline by its ID.
 
-.PARAMETER Organization
-    The Azure DevOps organization name.
-
 .PARAMETER Project
-    The Azure DevOps project name.
+    (Mandatory) The Azure DevOps project name against which the pipeline should be retrieved.
+
+.PARAMETER Organization
+    (Optional) The Azure DevOps organization name under which the project resides.
+    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
 
 .PARAMETER PAT
-    Personal Access Token for Azure DevOps authentication.
+    (Optional) Personal Access Token for Azure DevOps authentication.
+    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
 
 .PARAMETER Id
-    The ID of a specific pipeline to retrieve.
+    (Optional) The ID of a specific pipeline to retrieve.
+    If not provided, it will fetch all pipelines data in the specified project.
 
 .PARAMETER AddDetails
+    (Optional) Switch parameter to include additional details in the output.
     If specified, fetches additional details for each pipeline (may be slower).
 
 .EXAMPLE

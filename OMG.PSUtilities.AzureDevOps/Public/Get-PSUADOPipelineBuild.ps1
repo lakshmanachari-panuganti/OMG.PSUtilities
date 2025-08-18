@@ -7,16 +7,18 @@ function Get-PSUADOPipelineBuild {
         This function connects to Azure DevOps using your Personal Access Token (PAT) and fetches information about a particular pipeline build. It returns details like the build ID, pipeline name, when it was queued, its status, result, and a link to view the build in Azure DevOps.
 
     .PARAMETER BuildId
-        The build ID of the pipeline run.
-
-    .PARAMETER PAT
-        Your Personal Access Token for Azure DevOps REST API authentication.
-
-    .PARAMETER Organization
-        The name of your Azure DevOps organization.
+        (Mandatory) The build ID of the pipeline run to retrieve details for.
 
     .PARAMETER Project
-        The name of your Azure DevOps project.
+        (Mandatory) The Azure DevOps project name containing the build.
+
+    .PARAMETER Organization
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
+
+    .PARAMETER PAT
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
 
     .EXAMPLE
         Get-PSUADOPipelineBuild -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'OmgItSolutions' -Project 'PSUtilities'

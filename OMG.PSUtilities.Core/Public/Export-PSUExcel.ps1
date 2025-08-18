@@ -21,30 +21,26 @@ function Export-PSUExcel {
         Use this function for more visually appealing Excel reports — especially useful in automation, reporting tools, or audit exports.
 
     .PARAMETER DataObject
-        The array of objects to export to Excel.
+        (Mandatory) The array of objects to export to Excel.
 
     .PARAMETER ExcelPath
-        The path where the Excel file will be saved.
+        (Mandatory) The path where the Excel file will be saved. Must have .xlsx extension.
 
     .PARAMETER KeepBackup
-        If specified, keeps a backup of the existing Excel file (if any) in a timestamped folder.
+        (Optional) Switch parameter to keep a backup of the existing Excel file in a timestamped folder.
+
+    .PARAMETER AutoOpen
+        (Optional) Switch parameter to automatically open the Excel file after creation.
+
+    .PARAMETER AutoFilter
+        (Optional) Switch parameter to enable Excel-style column filters.
 
     .PARAMETER WorksheetName
-        Specifies the name of the worksheet within the Excel file where the data will be exported.
-
-        If this parameter is provided:
-        - The data will be written to that named worksheet.
-        - If the Excel file already exists, the worksheet will be added or replaced.
-        - The file will not be deleted before writing.
-
-        If this parameter is NOT provided:
-        - A default worksheet name is used.
-        - The Excel file (if exists) will be removed before writing, unless overridden.
+        (Optional) The name of the worksheet within the Excel file where the data will be exported.
+        Default value is "Sheet1".
 
     .PARAMETER Clear
-        When specified and when -WorksheetName is not used, the existing Excel file at the specified path will be deleted before writing the new data.
-        This parameter has no effect if -WorksheetName is used, because multiple worksheet exports to the same file are expected in that scenario.
-        Use this when exporting to a single worksheet and you want to ensure the Excel file starts fresh.
+        (Optional) Switch parameter to delete the existing Excel file before writing new data when -WorksheetName is not used.
 
     .EXAMPLE
         Export-PSUExcel -DataObject $data -ExcelPath 'C:\Reports\report.xlsx'

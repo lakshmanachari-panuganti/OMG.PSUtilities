@@ -19,19 +19,22 @@ function Invoke-PSUPromptOnAzureOpenAi {
         Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"
 
 .PARAMETER Prompt
-    The message to send to Azure OpenAI for generating a response.
+    (Mandatory) The message to send to Azure OpenAI for generating a response.
 
 .PARAMETER ApiKey
-    Optional. Overrides the API key stored in environment variable API_KEY_AZURE_OPENAI.
+    (Optional) The API key for Azure OpenAI authentication.
+    Default value is $env:API_KEY_AZURE_OPENAI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "your-api-key"
 
 .PARAMETER Endpoint
-    Optional. Overrides the endpoint stored in AZURE_OPENAI_ENDPOINT.
+    (Optional) The Azure OpenAI endpoint URL.
+    Default value is $env:AZURE_OPENAI_ENDPOINT. Set using: Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "your-endpoint"
 
 .PARAMETER Deployment
-    Optional. Overrides the deployment name stored in AZURE_OPENAI_DEPLOYMENT.
+    (Optional) The Azure OpenAI deployment name.
+    Default value is $env:AZURE_OPENAI_DEPLOYMENT. Set using: Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "your-deployment-name"
 
 .PARAMETER ReturnJsonResponse
-    If specified, the function will attempt to extract and return raw JSON (array/object) from the response.
+    (Optional) Switch parameter to extract and return raw JSON from the response.
 
 .EXAMPLE
     API_KEY_AZURE_OPENAI -Prompt "Summarize Kubernetes in one line"

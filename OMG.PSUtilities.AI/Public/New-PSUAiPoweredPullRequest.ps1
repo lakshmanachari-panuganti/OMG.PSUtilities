@@ -7,11 +7,21 @@ function New-PSUAiPoweredPullRequest {
         This function takes Git change summaries and uses the Gemini model (via Invoke-PSUPromptOnGeminiAi)
         to produce a high-quality PR title and description written from a developer or DevOps perspective.
 
-    .PARAMETER ChangeSummary
-        Input array or pipeline of Git file change summaries, with File, TypeOfChange, and Summary fields.
+    .PARAMETER BaseBranch
+        (Optional) The base branch to compare against.
+        Default value is the default branch from git symbolic-ref refs/remotes/origin/HEAD.
+
+    .PARAMETER FeatureBranch
+        (Optional) The feature branch being merged.
+        Default value is the current git branch from git branch --show-current.
+
+    .PARAMETER PullRequestTemplate
+        (Optional) Path to the Pull Request template file.
+        Default value is "C:\Temp\PRTemplate.txt".
 
     .PARAMETER ApiKey
-        Optional API key to pass to Gemini if needed.
+        (Optional) The API key for Google Gemini AI service.
+        Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
 
     .OUTPUTS
         [PSCustomObject]

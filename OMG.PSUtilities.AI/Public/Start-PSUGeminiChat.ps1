@@ -18,7 +18,9 @@ function Start-PSUGeminiChat {
     3. Click **"Create API Key"**
     4. Copy the key and save it using:
 
-    Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "<your-api-key>"
+.PARAMETER ApiKey
+    (Optional) The API key for Google Gemini AI service.
+    Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
 
 .NOTES
     Author: Lakshmanachari Panuganti

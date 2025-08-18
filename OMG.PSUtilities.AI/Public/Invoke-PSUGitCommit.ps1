@@ -8,7 +8,8 @@ function Invoke-PSUGitCommit {
         commits those changes, pulls latest from remote with rebase, and pushes your new commit.
 
     .PARAMETER RootPath
-        Optional. Git repository root path. Defaults to current directory.
+        (Optional) Git repository root path.
+        Default value is the current directory from (Get-Location).Path.
 
     .EXAMPLE
         Invoke-PSUGitCommit

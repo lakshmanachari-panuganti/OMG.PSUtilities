@@ -1,4 +1,37 @@
 function Get-PSUAzAccountAccessInSubscriptions {
+    <#
+    .SYNOPSIS
+        Retrieves Azure role assignments for a specified user across filtered subscriptions.
+
+    .DESCRIPTION
+        This function analyzes Azure role assignments for a user by checking their direct assignments
+        and transitive group memberships across filtered subscriptions.
+
+    .PARAMETER UserPrincipalName
+        (Mandatory) The User Principal Name (UPN) of the user to analyze.
+
+    .PARAMETER OutputCsv
+        (Optional) Path where the CSV output file will be saved.
+        Default value is "C:\Temp\account-access-by-subscription.csv".
+
+    .PARAMETER OutputJson
+        (Optional) Switch parameter to enable JSON output format.
+
+    .PARAMETER JsonDepth
+        (Optional) Depth level for JSON serialization.
+        Default value is 6.
+
+    .PARAMETER SubscriptionFilter
+        (Optional) Array of subscription name patterns to filter by.
+        Default value is @('*Non-Prod*').
+
+    .EXAMPLE
+        Get-PSUAzAccountAccessInSubscriptions -UserPrincipalName "user@domain.com"
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Requires: Az.Accounts, Az.Resources modules
+    #>
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true)]  [string]   $UserPrincipalName,

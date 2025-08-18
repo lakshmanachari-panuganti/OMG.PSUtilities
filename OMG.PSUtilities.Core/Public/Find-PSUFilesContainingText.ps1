@@ -8,19 +8,20 @@ function Find-PSUFilesContainingText {
         Recursively or non-recursively searches files in a directory for a given text string, with options to filter by extension and exclude certain file types.
 
     .PARAMETER SearchPath
-        Directory to search.
+        (Mandatory) Directory to search. Must be a valid existing directory path.
 
     .PARAMETER SearchText
-        Text to search for in files.
+        (Mandatory) Text to search for in files.
 
     .PARAMETER FileExtension
-        Only search files with this extension.
+        (Optional) Only search files with this specific extension.
 
     .PARAMETER ExcludeExtensions
-        Array of file extensions to exclude.
+        (Optional) Array of file extensions to exclude from search.
+        Default value is @('exe','dll','msi','bin','jpg','png','zip','iso','img','sys').
 
     .PARAMETER NoRecurse
-        If specified, search only the top-level directory.
+        (Optional) Switch parameter to search only the top-level directory without recursion.
 
     .EXAMPLE
         Find-PSUFilesContainingText -SearchPath 'C:\Projects' -SearchText 'TODO'
