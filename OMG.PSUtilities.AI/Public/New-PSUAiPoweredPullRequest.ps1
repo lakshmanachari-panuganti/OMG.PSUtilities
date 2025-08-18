@@ -198,12 +198,7 @@ $PRTemplateStatement
 
     }
     catch {
-        Write-Warning "Failed to parse AI response as JSON. Raw output returned."
-        [PSCustomObject]@{
-            Title       = "PR Title (AI parsing failed)"
-            Description = $response
-        }
+        $PSCmdlet.ThrowTerminatingError()
     }
-
 }
 
