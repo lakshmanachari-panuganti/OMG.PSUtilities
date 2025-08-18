@@ -57,11 +57,11 @@ function New-PSUAiPoweredPullRequest {
         # Add validation for template path
         [Parameter()]
         [ValidateScript({
-            if ($_ -and -not (Test-Path $_)) {
-                throw "PR template file not found: $_"
-            }
-            return $true
-        })]
+                if ($_ -and -not (Test-Path $_)) {
+                    throw "PR template file not found: $_"
+                }
+                return $true
+            })]
         [string]$PullRequestTemplate,
 
         [Parameter()]
@@ -140,14 +140,14 @@ $PRTemplateStatement
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
 
         # Better user prompt with clearer options
-        $readHost = Read-Host @"
-Choose an option:
-  Y - Submit the pull request now
-  N - Cancel and exit
-  R - Regenerate with new AI content
-  D - Draft the PR
-Enter your choice (Y/N/R/D)
-"@
+
+        Write-Host 'Choose an option:' -ForegroundColor Yellow
+        Write-Host '  Y - Submit the pull request now' -ForegroundColor Cyan
+        Write-Host '  N - Cancel and exit' -ForegroundColor Cyan
+        Write-Host '  R - Regenerate with new AI content' -ForegroundColor Cyan
+        Write-Host '  D - Draft the PR' -ForegroundColor Cyan
+
+        $readHost = Read-Host 'Enter your choice (Y/N/R/D)' -ForegroundColor Yellow
 
         switch ($readHost) {
             'Y' {                
@@ -157,11 +157,13 @@ Enter your choice (Y/N/R/D)
                     $gitProvider = "GitHub"
                     Write-Host "Creating the $gitProvider pull request"
                     New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN
-                } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                }
+                elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                     $gitProvider = "Azure DevOps"
                     Write-Host "Creating the $gitProvider pull request"     
                     New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT
-                } else {
+                }
+                else {
                     Write-Warning "git url: $remoteUrl"
                     Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
                 }
@@ -179,10 +181,12 @@ Enter your choice (Y/N/R/D)
                 if ($remoteUrl -match 'github\.com') {
                     Write-Host "Creating draft GitHub pull request"
                     New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN -Draft
-                } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                }
+                elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                     Write-Host "Azure DevOps doesn't support draft PRs via API. Creating regular PR."
                     New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT
-                } else {
+                }
+                else {
                     Write-Warning "git url: $remoteUrl"
                     Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
                 }
