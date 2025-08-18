@@ -2,28 +2,16 @@
 
 Core Azure-related scripting, including identity and subscription management.
 
-> Module version: 1.0.2 | Last updated: 2025-08-11
+> Module version: 1.0.5 | Last updated: 19th August 2025
 
 ## 📋 Available Functions
 
 | Function                              | Description                                 |
 |----------------------------------------|---------------------------------------------|
-| `Get-PSUAzAccountAccessInSubscriptions` | Retrieves account access details across Azure subscriptions |
-| `Get-PSUk8sPodLabel`                    | Gets labels for Kubernetes pods                             |
-| `Get-PSUAssignmentPrincipalId`          | Private. Resolves principal IDs for assignments             |
-| `Get-PSUBatchDirectoryObjects`          | Private. Fetches directory objects in batches               |
-| `Get-PSUGraphUser`                      | Private. Retrieves user information from Microsoft Graph    |
-| `Get-PSURoleDefDetails`                 | Private. Gets details of role definitions                   |
-| `Get-PSUTransitiveGroups`               | Private. Finds all transitive group memberships             |
-| `Parse-PSUScopePath`                    | Private. Parses Azure scope paths                           |
-| `Resolve-PSUPrincipalDisplayFromCache`  | Private. Resolves principal display names from cache        |
-| `Test-AzCliLogin`                       | Private. Tests Azure CLI login status                       |
-| `Get-PSUAzAccountAccessInSubscriptions2--wip` | Work in progress. Next-gen account access retrieval  |
-
-
-| `Get-PSUAksWorkloadIdentityInventory`  | Retrieves AKS workload identity inventory   |
-| `Get-PSUAzToken`                       | Retrieves an Azure access token             |
-| `Test-PSUAzConnection`                 | Tests Azure connection                      |
+| `Get-PSUAzAccountAccessInSubscriptions` | Retrieves Azure role assignments for a specified user across filtered subscriptions |
+| `Get-PSUAzToken`                       | Retrieves an Azure access token for a specified resource |
+| `Get-PSUk8sPodLabel`                   | Gets pod labels from AKS clusters in parallel with minimal kubectl overhead |
+| `Test-PSUAzConnection`                 | Checks if an active Azure session exists |
 
 ## 📦 Installation
 

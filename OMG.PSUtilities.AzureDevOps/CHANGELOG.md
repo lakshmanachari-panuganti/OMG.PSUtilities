@@ -1,5 +1,13 @@
 # CHANGELOG
 
+## [1.0.8] - 2025-08-19
+### Changed
+- Updated all public functions to comply with OMG.PSUtilities.StyleGuide.md standards
+- Standardized comment-based help with ordinal date format (DDth month YYYY)
+- Added comprehensive .OUTPUTS sections to all functions
+- Corrected .LINK section ordering (GitHub → LinkedIn → PowerShell Gallery → Microsoft Docs)
+- Enhanced documentation consistency and professional presentation across all Azure DevOps functions
+
 ## [1.0.7] - 2025-08-16
 ### Bug fix
 `New-PSUADOPullRequest`: a minor Bug fixed for this function.

@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.5] - 2025-08-19
+### Changed
+- Updated Get-PSUAzToken and Test-PSUAzConnection functions to comply with OMG.PSUtilities.StyleGuide.md standards
+- Standardized comment-based help with ordinal date format (DDth month YYYY)
+- Added comprehensive .OUTPUTS sections to all functions
+- Corrected .LINK section ordering (GitHub → LinkedIn → PowerShell Gallery → Microsoft Docs)
+- Enhanced documentation consistency and professional presentation
+
+## [1.0.4] - 2025-08-16
+### Changed
+- Updated `Get-PSUAzToken` for improved logging.
+
 # Changelog
 
 ## [1.0.3] - 2025-08-15

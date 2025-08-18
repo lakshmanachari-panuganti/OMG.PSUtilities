@@ -1,5 +1,14 @@
 # CHANGELOG
 
+## [1.0.8] - 2025-08-19
+### Changed
+- Updated all 17+ public functions to comply with OMG.PSUtilities.StyleGuide.md standards
+- Standardized comment-based help with ordinal date format (DDth month YYYY)
+- Added comprehensive .OUTPUTS sections to all functions
+- Corrected .LINK section ordering (GitHub → LinkedIn → PowerShell Gallery → Microsoft Docs)
+- Enhanced documentation consistency and professional presentation across all Core module functions
+- Functions updated include: Export-PSUExcel, Find-PSUFilesContainingText, Get-PSUConnectedWifiInfo, Get-PSUFunctionCommentBasedHelp, Get-PSUGitFileChangeMetadata, Get-PSUInstalledSoftware, Get-PSUUserEnvironmentVariable, Get-PSUUserSession, New-PSUHTMLReport, Remove-PSUUserEnvironmentVariable, Remove-PSUUserSession, Send-PSUHTMLReport, Send-PSUTeamsMessage, Set-PSUUserEnvironmentVariable, Test-PSUInternetConnection, Uninstall-PSUInstalledSoftware, and Resolve-PSUGitMergeConflict
+
 ## [1.0.7] - 2025-08-11
 ### Added
 - **Send-PSUTeamsMessage**: Sends messages to Microsoft Teams channels via webhook integration
