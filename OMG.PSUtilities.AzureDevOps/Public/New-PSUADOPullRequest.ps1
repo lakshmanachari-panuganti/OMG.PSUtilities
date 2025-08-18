@@ -9,31 +9,35 @@ function New-PSUADOPullRequest {
         You can specify the repository either by Repository ID or Repository Name.
 
     .PARAMETER Organization
-        The Azure DevOps organization name (optional). Defaults to the ORGANIZATION environment variable.
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
 
     .PARAMETER Project
-        The Azure DevOps project name.
+        (Mandatory) The Azure DevOps project name containing the repository.
 
     .PARAMETER RepoId
-        The repository GUID in which to create the pull request.
+        (Mandatory - ParameterSet: ByRepoId) The repository GUID in which to create the pull request.
 
     .PARAMETER Repository
-        The repository name in which to create the pull request (optional).
+        (Mandatory - ParameterSet: ByRepoName) The repository name in which to create the pull request.
 
     .PARAMETER SourceBranch
-        The full name of the source branch (e.g., 'refs/heads/feature-branch') (optional). Defaults to current git branch.
+        (Optional) The full name of the source branch (e.g., 'refs/heads/feature-branch').
+        Default value is 'refs/heads/' + current git branch from git branch --show-current.
 
     .PARAMETER TargetBranch
-        The full name of the target branch (e.g., 'refs/heads/main') (optional). Defaults to the default branch from git.
+        (Optional) The full name of the target branch (e.g., 'refs/heads/main').
+        Default value is 'refs/heads/' + default branch from git symbolic-ref refs/remotes/origin/HEAD.
 
     .PARAMETER Title
-        The title of the pull request.
+        (Mandatory) The title of the pull request.
 
     .PARAMETER Description
-        The detailed description of the pull request.
+        (Mandatory) The detailed description of the pull request.
 
     .PARAMETER PAT
-        The Azure DevOps Personal Access Token (PAT) used for authentication (optional). Defaults to the PAT environment variable.
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
 
     .EXAMPLE
         New-PSUADOPullRequest -Organization "myOrganization" -Project "MyProject" -RepoId "12345678-1234-1234-1234-123456789012" `
@@ -64,7 +68,8 @@ function New-PSUADOPullRequest {
         Updated: 2025-08-14 - Added Repository parameter and parameter sets
 
     .LINK
-        https://github.com/lakshmanachari-panuganti
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
         https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
         https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-requests/create
     #>

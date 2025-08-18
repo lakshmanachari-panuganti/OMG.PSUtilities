@@ -8,7 +8,8 @@ function Invoke-PSUGitCommit {
         commits those changes, pulls latest from remote with rebase, and pushes your new commit.
 
     .PARAMETER RootPath
-        Optional. Git repository root path. Defaults to current directory.
+        (Optional) Git repository root path.
+        Default value is the current directory from (Get-Location).Path.
 
     .EXAMPLE
         Invoke-PSUGitCommit
@@ -23,6 +24,12 @@ function Invoke-PSUGitCommit {
             - Git CLI
             - $env:API_KEY_GEMINI
             - Invoke-PSUPromptOnGeminiAi
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+        https://ai.google.dev/gemini-api/docs
 
     #>
     [CmdletBinding()]

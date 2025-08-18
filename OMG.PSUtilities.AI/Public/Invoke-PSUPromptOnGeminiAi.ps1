@@ -19,10 +19,14 @@ function Invoke-PSUPromptOnGeminiAi {
     You're now ready to call `Invoke-PSUPromptOnGeminiAi` with your prompt!
 
 .PARAMETER Prompt
-    The text you want Gemini AI to process and respond to.
+    (Mandatory) The text you want Gemini AI to process and respond to.
 
 .PARAMETER ApiKey
-    Optional. Overrides the environment variable API_KEY_GEMINI with a manually supplied key.
+    (Optional) The API key for Google Gemini AI service.
+    Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
+
+.PARAMETER ReturnJsonResponse
+    (Optional) Switch parameter to return only valid JSON object from the response.
 
 .EXAMPLE
     Invoke-PSUPromptOnGeminiAi -Prompt "Generate a PowerShell script to get system uptime"
@@ -34,6 +38,13 @@ function Invoke-PSUPromptOnGeminiAi {
     Author: Lakshmanachari Panuganti
     Created: 2025-07-03
     Model: Gemini 2.0 Flash (Generative Language API)
+
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+    https://ai.google.dev/gemini-api/docs
+
 #>
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(

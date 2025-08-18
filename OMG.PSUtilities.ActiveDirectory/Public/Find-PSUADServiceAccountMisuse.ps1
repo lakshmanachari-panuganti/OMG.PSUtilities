@@ -11,25 +11,28 @@ function Find-PSUADServiceAccountMisuse {
         Returns an array of psobject with properties: SamAccountName, LogonCount, RiskScore, RiskLevel, LastLogon, Description
 
     .PARAMETER DaysBack
-        Number of days to look back in security event logs. Default is 7.
+        (Optional) Number of days to look back in security event logs.
+        Default value is 7.
 
     .PARAMETER Credential
-        Optional. Use alternate credentials for AD and event log queries.
+        (Optional) Use alternate credentials for AD and event log queries.
 
     .PARAMETER Detailed
-        Switch. If specified, returns detailed login events.
+        (Optional) Switch parameter to return detailed login events.
 
     .PARAMETER ExportPath
-        Optional path to export results to CSV.
+        (Optional) Path to export results to CSV file.
 
     .PARAMETER IncludeBuiltin
-        Switch. If specified, includes built-in service accounts like "LOCAL SERVICE", "NETWORK SERVICE" etc.
+        (Optional) Switch parameter to include built-in service accounts like "LOCAL SERVICE", "NETWORK SERVICE".
 
     .PARAMETER Filter
-        Optional string filter to apply to user names (e.g., '*svc').
+        (Optional) String filter to apply to user names (e.g., '*svc').
+        Default value is '*'.
 
     .PARAMETER Server
-        Optional if you running the function on the domain controler itself. or else pass the AD server or DC.
+        (Optional) The AD server or domain controller to query.
+        Default value is $env:COMPUTERNAME. Should be a domain controller.
     .OUTPUTS
         PSCustomObject[]
 
@@ -40,6 +43,12 @@ function Find-PSUADServiceAccountMisuse {
         Author : Lakshmanachari Panuganti
         Date: 29 June 2025
         TODO: Add the server names where its  used.
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.ActiveDirectory
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.ActiveDirectory
+        https://learn.microsoft.com/en-us/powershell/module/activedirectory/
     #>
 
     [CmdletBinding()]

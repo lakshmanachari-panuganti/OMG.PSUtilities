@@ -7,11 +7,21 @@ function New-PSUAiPoweredPullRequest {
         This function takes Git change summaries and uses the Gemini model (via Invoke-PSUPromptOnGeminiAi)
         to produce a high-quality PR title and description written from a developer or DevOps perspective.
 
-    .PARAMETER ChangeSummary
-        Input array or pipeline of Git file change summaries, with File, TypeOfChange, and Summary fields.
+    .PARAMETER BaseBranch
+        (Optional) The base branch to compare against.
+        Default value is the default branch from git symbolic-ref refs/remotes/origin/HEAD.
+
+    .PARAMETER FeatureBranch
+        (Optional) The feature branch being merged.
+        Default value is the current git branch from git branch --show-current.
+
+    .PARAMETER PullRequestTemplate
+        (Optional) Path to the Pull Request template file.
+        Default value is "C:\Temp\PRTemplate.txt".
 
     .PARAMETER ApiKey
-        Optional API key to pass to Gemini if needed.
+        (Optional) The API key for Google Gemini AI service.
+        Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
 
     .OUTPUTS
         [PSCustomObject]
@@ -22,6 +32,13 @@ function New-PSUAiPoweredPullRequest {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date  : 2025-07-28
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+        https://ai.google.dev/gemini-api/docs
+
     #>
 
     [CmdletBinding()]
@@ -95,18 +112,46 @@ $PRTemplateStatement
     # Try parsing the AI response as JSON
     try {
         $parsed = $response | ConvertFrom-Json -ErrorAction Stop
-        #$PRContent = [PSCustomObject]@{
-        #    Title       = $parsed.title
-        #    Description = $parsed.description
-        #}
+        $Global:PRContent = [PSCustomObject]@{
+            Title       = $parsed.title
+            Description = $parsed.description
+        }
         ($parsed.title) + '`n ' + ($parsed.description) | Set-Clipboard
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
 
-        Read-Host "Would you like me to submit the pull request with the current title and description, or retry generating new ones? (Y/N/R)"
-        #TODO: write the code to submit PR:
-        #Logic to get the Base branch -like refs/heads/main
-        #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
-        #New-PSUADOPullRequest (available in 'OMG.PSUtilities.AzureDevOps' Module)
+        $readHost = Read-Host "Would you like me to submit the pull request with the current title and description, or retry generating new ones? (Y/N/R)"
+
+        switch ($readHost) {
+            'Y' {
+                #TODO: write the code to submit PR:
+                #Logic to get the Base branch -like refs/heads/main
+                #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
+                #New-PSUADOPullRequest (available in 'OMG.PSUtilities.AzureDevOps' Module)
+                
+                # Determining the $gitProvider
+                $remoteUrl = git remote get-url origin
+                if ($remoteUrl -match 'github\.com') {
+                    $gitProvider = "GitHub"
+                } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                    $gitProvider = "Azure DevOps"
+                } else {
+                    $gitProvider = "Other"
+                }
+                Write-Host "Detected Git provider: $gitProvider"
+            }
+            'N' {
+                Write-Host "Pull request submission canceled."
+            }
+            'R' {
+                Write-Host "Retrying PR generation..."
+                # Logic to regenerate PR content
+                & $MyInvocation.MyCommand @PSBoundParameters
+                return
+            }
+            default {
+                Write-Host "Invalid choice. Please enter Y, N, or R."
+            }
+        }
 
     }
     catch {

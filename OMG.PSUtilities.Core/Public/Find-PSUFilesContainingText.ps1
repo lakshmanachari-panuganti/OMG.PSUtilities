@@ -8,19 +8,20 @@ function Find-PSUFilesContainingText {
         Recursively or non-recursively searches files in a directory for a given text string, with options to filter by extension and exclude certain file types.
 
     .PARAMETER SearchPath
-        Directory to search.
+        (Mandatory) Directory to search. Must be a valid existing directory path.
 
     .PARAMETER SearchText
-        Text to search for in files.
+        (Mandatory) Text to search for in files.
 
     .PARAMETER FileExtension
-        Only search files with this extension.
+        (Optional) Only search files with this specific extension.
 
     .PARAMETER ExcludeExtensions
-        Array of file extensions to exclude.
+        (Optional) Array of file extensions to exclude from search.
+        Default value is @('exe','dll','msi','bin','jpg','png','zip','iso','img','sys').
 
     .PARAMETER NoRecurse
-        If specified, search only the top-level directory.
+        (Optional) Switch parameter to search only the top-level directory without recursion.
 
     .EXAMPLE
         Find-PSUFilesContainingText -SearchPath 'C:\Projects' -SearchText 'TODO'
@@ -28,6 +29,13 @@ function Find-PSUFilesContainingText {
     .NOTES
         Author: Lakshmanachari Panuganti
         File Creation Date: 2025-06-27
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
+        https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.management/select-string
+
     #>
     [CmdletBinding()]
     param (

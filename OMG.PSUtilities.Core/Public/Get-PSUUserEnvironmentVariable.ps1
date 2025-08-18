@@ -29,6 +29,13 @@ function Get-PSUUserEnvironmentVariable {
     .NOTES
         Author: Lakshmanachari Panuganti
         File Creation Date: 2025-07-27
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
+        https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables
+
     #>
     [CmdletBinding()]
     param (

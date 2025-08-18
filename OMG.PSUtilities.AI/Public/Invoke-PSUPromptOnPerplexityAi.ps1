@@ -20,28 +20,26 @@ function Invoke-PSUPromptOnPerplexityAi {
         You're now ready to call `Invoke-PSUPromptOnPerplexityAi` with your prompt!
 
     .PARAMETER Prompt
-        The text you want Perplexity AI to process and respond to.
+        (Mandatory) The text you want Perplexity AI to process and respond to.
 
     .PARAMETER ApiKey
-        Optional. Overrides the environment variable API_KEY_PERPLEXITY with a manually supplied key.
+        (Optional) The API key for Perplexity AI authentication.
+        Default value is $env:API_KEY_PERPLEXITY. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_PERPLEXITY" -Value "your-api-key"
 
     .PARAMETER Model
-        Optional. Specifies the Perplexity AI model to use for generation.
-        Common models include "sonar" (default), "sonar-small-online", "sonar-medium-online", etc.
-        Refer to Perplexity AI documentation for available models.
+        (Optional) The Perplexity AI model to use for generation.
+        Default value is "sonar". Common models include "sonar-small-online", "sonar-medium-online", etc.
 
     .PARAMETER MaxTokens
-        Optional. The maximum number of tokens (words or word pieces) the AI should generate in its response.
-        A higher value allows for longer responses. Default is 512.
+        (Optional) The maximum number of tokens the AI should generate in its response.
+        Default value is 512.
 
     .PARAMETER Temperature
-        Optional. Controls the randomness and creativity of the generated response.
-        Values closer to 0 make the output more focused and deterministic, while higher values (e.g., 1.0)
-        make it more diverse and creative. Default is 0.7.
+        (Optional) Controls the randomness and creativity of the generated response.
+        Default value is 0.7. Values closer to 0 are more focused, values closer to 1.0 are more creative.
 
     .PARAMETER ReturnJsonResponse
-        Optional. If specified, the function will return the raw JSON response received from the Perplexity AI API.
-        This is useful for debugging or when you need to parse the full API response programmatically.
+        (Optional) Switch parameter to return the raw JSON response from the Perplexity AI API.
 
     .EXAMPLE
         Invoke-PSUPromptOnPerplexityAi -Prompt "Write a short poem about the future of AI."
@@ -55,6 +53,13 @@ function Invoke-PSUPromptOnPerplexityAi {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 22 July 2025
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+        https://docs.perplexity.ai/docs/getting-started
+
     #>
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(

@@ -11,10 +11,16 @@ function Get-PSUAiPoweredGitChangeSummary {
         Depends: git CLI
 
     .PARAMETER BaseBranch
-        The base branch to compare against. Defaults to 'main'.
+        (Optional) The base branch to compare against.
+        Default value is the default branch from git symbolic-ref refs/remotes/origin/HEAD.
 
     .PARAMETER FeatureBranch
-        The feature branch being merged. Defaults to 'feature/dev'.
+        (Optional) The feature branch being merged.
+        Default value is the current git branch from git branch --show-current.
+
+    .PARAMETER ApiKeyGemini
+        (Optional) The API key for Google Gemini AI service.
+        Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
 
     .EXAMPLE
         Get-PSUAiPoweredGitChangeSummary -BaseBranch main -FeatureBranch feature/login-ui
@@ -25,6 +31,9 @@ function Get-PSUAiPoweredGitChangeSummary {
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+        https://ai.google.dev/gemini-api/docs
     #>
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
