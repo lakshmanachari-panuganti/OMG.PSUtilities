@@ -6,9 +6,11 @@ function Get-PSUConnectedWifiInfo {
     .DESCRIPTION
         Returns connection details for the currently connected Wi-Fi:
         SSID, Signal Strength, Private IP, Band, Transmit/Receive Rate, and Public IP.
+        This function uses the Windows netsh command to gather network information.
 
     .EXAMPLE
         Get-PSUConnectedWifiInfo
+        Gets details of the currently connected Wi-Fi network.
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -19,7 +21,6 @@ function Get-PSUConnectedWifiInfo {
         https://www.linkedin.com/in/lakshmanachari-panuganti/
         https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
         https://learn.microsoft.com/en-us/windows-server/networking/technologies/netsh/netsh-contexts
-
     #>
 
     [CmdletBinding()]

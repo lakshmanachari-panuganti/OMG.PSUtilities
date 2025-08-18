@@ -49,16 +49,16 @@ function Export-PSUExcel {
         $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -KeepBackup
 
     .EXAMPLE
-        # Export data and automatically open the Excel file after creation
         $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -AutoOpen
+        Export data and automatically open the Excel file after creation
 
     .EXAMPLE
-        # Export data with Excel-style column filters enabled
         $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -AutoFilter
+        Export data with Excel-style column filters enabled
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        File Creation Date: 2025-06-27
+        Created: 2025-06-27
         Inspired by the author of the ImportExcel Module developer Doug Finke. Thanks to him.
         Updated: 2025-07-03 - Now supports pipeline input for DataObject and backup handling.
 

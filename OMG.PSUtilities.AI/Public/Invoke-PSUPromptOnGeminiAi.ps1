@@ -34,12 +34,10 @@ function Invoke-PSUPromptOnGeminiAi {
 .EXAMPLE
     Invoke-PSUPromptOnGeminiAi -Prompt "Summarize cloud computing in one line"
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    Created: 2025-07-03
-    Model: Gemini 2.0 Flash (Generative Language API)
-
-.LINK
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Date: 2025-07-03
+        Model: Gemini 2.0 Flash (Generative Language API).LINK
     https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
     https://www.linkedin.com/in/lakshmanachari-panuganti/
     https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
@@ -76,7 +74,7 @@ function Invoke-PSUPromptOnGeminiAi {
    3. Click **"Create API Key"**
    4. Copy the key and save it using:
 
-    ✅  Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "YOUR_API_KEY_VALUE"
+       Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "YOUR_API_KEY_VALUE"
 
 "@ -ForegroundColor Cyan
         return
