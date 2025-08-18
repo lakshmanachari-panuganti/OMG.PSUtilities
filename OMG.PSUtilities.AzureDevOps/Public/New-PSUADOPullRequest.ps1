@@ -13,13 +13,15 @@ function New-PSUADOPullRequest {
         Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
 
     .PARAMETER Project
-        (Mandatory) The Azure DevOps project name containing the repository.
+        (Optional) The Azure DevOps project name containing the repository.
+        Default value is auto-detected from git remote origin URL.
 
     .PARAMETER RepoId
         (Mandatory - ParameterSet: ByRepoId) The repository GUID in which to create the pull request.
 
     .PARAMETER Repository
-        (Mandatory - ParameterSet: ByRepoName) The repository name in which to create the pull request.
+        (Optional - ParameterSet: ByRepoName) The repository name in which to create the pull request.
+        Default value is auto-detected from git remote origin URL.
 
     .PARAMETER SourceBranch
         (Optional) The full name of the source branch (e.g., 'refs/heads/feature-branch').
@@ -34,6 +36,9 @@ function New-PSUADOPullRequest {
 
     .PARAMETER Description
         (Mandatory) The detailed description of the pull request.
+
+    .PARAMETER Draft
+        (Optional) Switch parameter to create the pull request as a draft.
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
@@ -51,6 +56,17 @@ function New-PSUADOPullRequest {
             -Title "Bug fix for login" -Description "Fixed authentication issue"
 
         Creates a pull request using repository name with default source/target branches.
+
+    .EXAMPLE
+        New-PSUADOPullRequest -Title "Auto-detected PR" -Description "Uses auto-detection for org, project, and repo"
+
+        Creates a pull request using auto-detected organization, project, and repository from git remote URL.
+
+    .EXAMPLE
+        New-PSUADOPullRequest -Project "MyProject" -Repository "MyRepo" `
+            -Title "Bug fix for login" -Description "Fixed authentication issue" -Draft
+
+        Creates a draft pull request using repository name with default source/target branches.
 
     .EXAMPLE
         New-PSUADOPullRequest -Organization "myOrganization" -Project "MyProject" -Repository "MyRepo" `
@@ -82,19 +98,29 @@ function New-PSUADOPullRequest {
     param (
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $env:ORGANIZATION,
+        [string]$Organization = $(if ($env:ORGANIZATION) { $env:ORGANIZATION } else {
+            git remote get-url origin 2>$null | ForEach-Object {
+                if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
+            }
+        }),
 
-        [Parameter(Mandatory)]
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Project,
+        [string]$Project = $(git remote get-url origin 2>$null | ForEach-Object {
+            if ($_ -match 'dev\.azure\.com/[^/]+/([^/]+)/_git/') { 
+                $matches[1]
+            }
+        }),
 
         [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
         [ValidateNotNullOrEmpty()]
         [string]$RepoId,
 
-        [Parameter(Mandatory, ParameterSetName = 'ByRepoName')]
+        [Parameter(ParameterSetName = 'ByRepoName')]
         [ValidateNotNullOrEmpty()]
-        [string]$Repository,
+        [string]$Repository = $(git remote get-url origin 2>$null | ForEach-Object {
+            if ($_ -match '/_git/([^/]+?)(?:\.git)?/?$') { $matches[1] }
+        }),
         
         [Parameter()]
         [ValidateScript({
@@ -117,6 +143,9 @@ function New-PSUADOPullRequest {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Description,
+
+        [Parameter()]
+        [switch]$Draft,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -146,11 +175,13 @@ function New-PSUADOPullRequest {
                 targetRefName = $TargetBranch
                 title         = $Title
                 description   = ($Description -join "`n")
+                isDraft       = $Draft.IsPresent
             } | ConvertTo-Json -Depth 10
 
             $escapedProject = [uri]::EscapeDataString($Project)
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.0"
-            Write-Verbose "Creating pull request in project: $Project"
+            $draftStatus = if ($Draft.IsPresent) { "draft " } else { "" }
+            Write-Verbose "Creating ${draftStatus}pull request in project: $Project"
             Write-Verbose "Repository: $repositoryIdentifier"
             Write-Verbose "Source branch: $SourceBranch"
             Write-Verbose "Target branch: $TargetBranch"
@@ -158,7 +189,8 @@ function New-PSUADOPullRequest {
 
             $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -ErrorAction Stop
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$repositoryIdentifier/pullrequest/$($response.pullRequestId)"
-            Write-Host "Pull Request created successfully. PR ID: $($response.pullRequestId)" -ForegroundColor Green
+            $draftText = if ($response.isDraft) { "Draft " } else { "" }
+            Write-Host "${draftText}Pull Request created successfully. PR ID: $($response.pullRequestId)" -ForegroundColor Green
             Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan
 
             [PSCustomObject]@{
