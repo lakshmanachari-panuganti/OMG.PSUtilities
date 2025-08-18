@@ -118,7 +118,7 @@ Use a professional tone, and ensure the description is helpful to both developer
 ### Git Change Summaries:
 $formattedChanges
 
-Finally remove any duplicate data in description and respond in the following JSON format:
+Finally remove any duplicate data in description and respond in the following JSON format (***ONLY JSON format***):
 {
   "title": "<generated-title>",
   "description": "<generated-description>"
