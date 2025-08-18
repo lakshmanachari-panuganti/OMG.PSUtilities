@@ -23,11 +23,20 @@ function New-PSUAiPoweredPullRequest {
         (Optional) The API key for Google Gemini AI service.
         Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
 
+    .PARAMETER CompleteOnApproval
+        (Optional) Switch parameter to enable auto-completion when the pull request is approved.
+        This will be passed to the underlying PR creation function.
+
     .OUTPUTS
         [PSCustomObject]
 
     .EXAMPLE
         New-PSUAiPoweredPullRequest
+
+    .EXAMPLE
+        New-PSUAiPoweredPullRequest -CompleteOnApproval
+
+        Generates an AI-powered pull request that will automatically complete when approved.
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -65,7 +74,10 @@ function New-PSUAiPoweredPullRequest {
         [string]$PullRequestTemplate,
 
         [Parameter()]
-        [string] $ApiKey = $env:API_KEY_GEMINI
+        [string] $ApiKey = $env:API_KEY_GEMINI,
+
+        [Parameter()]
+        [switch]$CompleteOnApproval
     )
 
 
@@ -155,11 +167,23 @@ $PRTemplateStatement
                 $remoteUrl = git remote get-url origin
                 if ($remoteUrl -match 'github\.com') {
                     Write-Host "Creating the GitHub pull request"
-                    New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN
+                    $params = @{
+                        Title = $PRContent.Title
+                        Description = $PRContent.Description
+                        Token = $env:GITHUB_TOKEN
+                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    New-PSUGithubPullRequest @params
                 }
                 elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
-                    Write-Host "Creating the Azure DevOps pull request"     
-                    New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT
+                    Write-Host "Creating the Azure DevOps pull request"
+                    $params = @{
+                        Title = $PRContent.Title
+                        Description = $PRContent.Description
+                        PAT = $env:PAT
+                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    New-PSUADOPullRequest @params
                 }
                 else {
                     Write-Warning "git url: $remoteUrl"
@@ -178,11 +202,25 @@ $PRTemplateStatement
                 $remoteUrl = git remote get-url origin
                 if ($remoteUrl -match 'github\.com') {
                     Write-Host "Creating draft GitHub pull request"
-                    New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN -Draft
+                    $params = @{
+                        Title = $PRContent.Title
+                        Description = $PRContent.Description
+                        Token = $env:GITHUB_TOKEN
+                        Draft = $true
+                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    New-PSUGithubPullRequest @params
                 }
                 elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                     Write-Host "Creating draft Azure DevOps pull request"
-                    New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT -Draft
+                    $params = @{
+                        Title = $PRContent.Title
+                        Description = $PRContent.Description
+                        PAT = $env:PAT
+                        Draft = $true
+                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    New-PSUADOPullRequest @params
                 }
                 else {
                     Write-Warning "git url: $remoteUrl"
