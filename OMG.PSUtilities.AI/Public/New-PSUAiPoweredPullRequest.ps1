@@ -151,16 +151,14 @@ $PRTemplateStatement
 
         switch ($readHost) {
             'Y' {                
-                # Determining the $gitProvider
+                # Determining the gitProvider
                 $remoteUrl = git remote get-url origin
                 if ($remoteUrl -match 'github\.com') {
-                    $gitProvider = "GitHub"
-                    Write-Host "Creating the $gitProvider pull request"
+                    Write-Host "Creating the GitHub pull request"
                     New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN
                 }
                 elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
-                    $gitProvider = "Azure DevOps"
-                    Write-Host "Creating the $gitProvider pull request"     
+                    Write-Host "Creating the Azure DevOps pull request"     
                     New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT
                 }
                 else {
@@ -183,8 +181,8 @@ $PRTemplateStatement
                     New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN -Draft
                 }
                 elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
-                    Write-Host "Azure DevOps doesn't support draft PRs via API. Creating regular PR."
-                    New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT
+                    Write-Host "Creating draft Azure DevOps pull request"
+                    New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT -Draft
                 }
                 else {
                     Write-Warning "git url: $remoteUrl"
