@@ -172,7 +172,9 @@ $PRTemplateStatement
                         Description = $PRContent.Description
                         Token = $env:GITHUB_TOKEN
                     }
-                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    if ($CompleteOnApproval) { 
+                        $params.CompleteOnApproval = $true 
+                    }
                     New-PSUGithubPullRequest @params
                 }
                 elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
@@ -182,7 +184,9 @@ $PRTemplateStatement
                         Description = $PRContent.Description
                         PAT = $env:PAT
                     }
-                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    if ($CompleteOnApproval) { 
+                        $params.CompleteOnApproval = $true 
+                    }
                     New-PSUADOPullRequest @params
                 }
                 else {
@@ -208,7 +212,9 @@ $PRTemplateStatement
                         Token = $env:GITHUB_TOKEN
                         Draft = $true
                     }
-                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    if ($CompleteOnApproval) { 
+                        $params.CompleteOnApproval = $true 
+                    }
                     New-PSUGithubPullRequest @params
                 }
                 elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
@@ -219,7 +225,9 @@ $PRTemplateStatement
                         PAT = $env:PAT
                         Draft = $true
                     }
-                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
+                    if ($CompleteOnApproval) { 
+                        $params.CompleteOnApproval = $true 
+                    }
                     New-PSUADOPullRequest @params
                 }
                 else {
