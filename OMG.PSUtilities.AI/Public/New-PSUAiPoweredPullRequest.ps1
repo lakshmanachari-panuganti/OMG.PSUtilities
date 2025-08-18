@@ -54,8 +54,15 @@ function New-PSUAiPoweredPullRequest {
         [Parameter()]
         [string]$FeatureBranch = $(git branch --show-current),
 
+        # Add validation for template path
         [Parameter()]
-        $PullRequestTemplate = "C:\Temp\PRTemplate.txt",
+        [ValidateScript({
+                if ($_ -and -not (Test-Path $_)) {
+                    throw "PR template file not found: $_"
+                }
+                return $true
+            })]
+        [string]$PullRequestTemplate,
 
         [Parameter()]
         [string] $ApiKey = $env:API_KEY_GEMINI
@@ -71,22 +78,35 @@ function New-PSUAiPoweredPullRequest {
 
     # Convert summaries into a nice prompt for Gemini
     $formattedChanges = ($ChangeSummary | ForEach-Object {
-            "- File: `$($_.File)` | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
+            "- File: $($_.File) | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
         }) -join "`n"
 
-    $PRTemplateContent = Get-Content -Path $PullRequestTemplate | Out-String
-
-    $PRTemplateStatement = @(
-        "NOTE: Please follow the Pull Request template guidelines below carefully:",
-        "",
-        $PRTemplateContent,
-        "",
-        "DO NOT modify the template structure.",
-        "DO NOT change the checklists or their wording.",
-        "Update the checklists by marking the correct [X] where applicable.",
-        "DO NOT alter anything that impacts organizational standards.",
-        "ONLY update the DESCRIPTION section thoughtfully and clearly."
-    )
+    # Handle PR template - check if file exists
+    $PRTemplateContent = ""
+    $PRTemplateStatement = @()
+    
+    if (Test-Path $PullRequestTemplate) {
+        try {
+            $PRTemplateContent = Get-Content -Path $PullRequestTemplate -ErrorAction Stop | Out-String
+            $PRTemplateStatement = @(
+                "NOTE: Please follow the Pull Request template guidelines below carefully:",
+                "",
+                $PRTemplateContent,
+                "",
+                "DO NOT modify the template structure.",
+                "DO NOT change the checklists or their wording.",
+                "Update the checklists by marking the correct [X] where applicable.",
+                "DO NOT alter anything that impacts organizational standards.",
+                "ONLY update the DESCRIPTION section thoughtfully and clearly."
+            )
+        }
+        catch {
+            Write-Warning "Could not read PR template file: $($_.Exception.Message)"
+        }
+    }
+    else {
+        Write-Verbose "No PR template specified. Proceeding without template."
+    }
 
 
     $prompt = @"
@@ -98,7 +118,7 @@ Use a professional tone, and ensure the description is helpful to both developer
 ### Git Change Summaries:
 $formattedChanges
 
-Finally remove any duplicate data in description and respond in the following JSON format:
+Finally remove any duplicate data in description and respond in the following JSON format (***ONLY JSON format***):
 {
   "title": "<generated-title>",
   "description": "<generated-description>"
@@ -112,55 +132,73 @@ $PRTemplateStatement
     # Try parsing the AI response as JSON
     try {
         $parsed = $response | ConvertFrom-Json -ErrorAction Stop
-        $Global:PRContent = [PSCustomObject]@{
+        $PRContent = [PSCustomObject]@{
             Title       = $parsed.title
             Description = $parsed.description
         }
         ($parsed.title) + '`n ' + ($parsed.description) | Set-Clipboard
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
 
-        $readHost = Read-Host "Would you like me to submit the pull request with the current title and description, or retry generating new ones? (Y/N/R)"
+        # Better user prompt with clearer options
+
+        Write-Host 'Choose an option:' -ForegroundColor Yellow
+        Write-Host '  Y - Submit the pull request now' -ForegroundColor Cyan
+        Write-Host '  N - Cancel and exit' -ForegroundColor Cyan
+        Write-Host '  R - Regenerate with new AI content' -ForegroundColor Cyan
+        Write-Host '  D - Draft the PR' -ForegroundColor Cyan
+
+        $readHost = Read-Host 'Enter your choice (Y/N/R/D)' -ForegroundColor Yellow
 
         switch ($readHost) {
-            'Y' {
-                #TODO: write the code to submit PR:
-                #Logic to get the Base branch -like refs/heads/main
-                #Logic to get the Base feature branch -like refs/heads/featuire-ui-design
-                #New-PSUADOPullRequest (available in 'OMG.PSUtilities.AzureDevOps' Module)
-                
+            'Y' {                
                 # Determining the $gitProvider
                 $remoteUrl = git remote get-url origin
                 if ($remoteUrl -match 'github\.com') {
                     $gitProvider = "GitHub"
-                } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
-                    $gitProvider = "Azure DevOps"
-                } else {
-                    $gitProvider = "Other"
+                    Write-Host "Creating the $gitProvider pull request"
+                    New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN
                 }
-                Write-Host "Detected Git provider: $gitProvider"
+                elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                    $gitProvider = "Azure DevOps"
+                    Write-Host "Creating the $gitProvider pull request"     
+                    New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT
+                }
+                else {
+                    Write-Warning "git url: $remoteUrl"
+                    Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
+                }
             }
             'N' {
                 Write-Host "Pull request submission canceled."
             }
             'R' {
-                Write-Host "Retrying PR generation..."
-                # Logic to regenerate PR content
-                & $MyInvocation.MyCommand @PSBoundParameters
-                return
+                Write-Host "Regenerating PR content..."
+                return (New-PSUAiPoweredPullRequest @PSBoundParameters)
+            }
+            'D' {
+                # Determining the $gitProvider for draft PR
+                $remoteUrl = git remote get-url origin
+                if ($remoteUrl -match 'github\.com') {
+                    Write-Host "Creating draft GitHub pull request"
+                    New-PSUGithubPullRequest -Title $PRContent.Title -Description $PRContent.Description -Token $env:GITHUB_TOKEN -Draft
+                }
+                elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                    Write-Host "Azure DevOps doesn't support draft PRs via API. Creating regular PR."
+                    New-PSUADOPullRequest -Title $PRContent.Title -Description $PRContent.Description -PAT $env:PAT
+                }
+                else {
+                    Write-Warning "git url: $remoteUrl"
+                    Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
+                }
             }
             default {
-                Write-Host "Invalid choice. Please enter Y, N, or R."
+                Write-Warning "Invalid choice. Please enter Y, N, R, or D."
             }
         }
 
     }
     catch {
-        Write-Warning "Failed to parse AI response as JSON. Raw output returned."
-        [PSCustomObject]@{
-            Title       = "PR Title (AI parsing failed)"
-            Description = $response
-        }
+        $PSCmdlet.ThrowTerminatingError()
     }
-
 }
 

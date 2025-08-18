@@ -168,7 +168,7 @@
 "@
 
     $htmlContent | Out-File -FilePath $OutputPath -Encoding UTF8
-    Write-Host "HTML preview saved to: $OutputPath"
+    Write-Host "HTML preview saved to: $OutputPath" -ForegroundColor Green
 
     if ($OpenInBrowser) {
         Start-Process "msedge.exe" $OutputPath
