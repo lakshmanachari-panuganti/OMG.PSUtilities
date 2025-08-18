@@ -18,6 +18,9 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name
 
 # Export public functions
 $PublicFunctions = @(
+    'Approve-PSUGithubPullRequest'
+    'Approve-PSUPullRequest'
+    'Complete-PSUPullRequest'
     'Export-PSUExcel'
     'Find-PSUFilesContainingText'
     'Get-PSUConnectedWifiInfo'
