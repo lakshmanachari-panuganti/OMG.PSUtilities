@@ -17,6 +17,9 @@ function Invoke-PSUGitCommit {
     .EXAMPLE
         Invoke-PSUGitCommit -RootPath "c:\repo"
 
+    .OUTPUTS
+        None
+
     .NOTES
         Author : Lakshmanachari Panuganti
         Date   : 2025-07-31

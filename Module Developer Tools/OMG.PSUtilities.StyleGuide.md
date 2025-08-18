@@ -10,6 +10,7 @@ It is designed to be fed directly to Large Language Models (LLMs) so they can **
 - **LLMs** acting as code auditors or code generators for the modules.
 
 > **No emojis** must appear in **any** public or private function code or comment-based help.
+    Except : [Write-Host "🧠 Thinking..." -ForegroundColor Cyan] 
 
 ---
 
@@ -69,7 +70,7 @@ Where examples show indentation, **8 spaces** are used for content lines under e
 
 .NOTES
         Author: Lakshmanachari Panuganti
-        Date: YYYY-MM-DD
+        Date: DD month YYYY  (Example 22 July 2025)
 
 .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.<ModuleName>
@@ -337,7 +338,7 @@ function Verb-PSUADONoun {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: YYYY-MM-DD
+        Date: DD month YYYY
         Requires: Azure DevOps PAT with appropriate permissions
 
     .LINK
@@ -441,7 +442,7 @@ function Verb-PSUUtilityNoun {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: YYYY-MM-DD
+        Date: DD month YYYY
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core
