@@ -45,3 +45,33 @@ Test-PSUCommentBasedHelp -ModulePath $env:BASE_MODULE_PATH | Where-Object{$_.Has
 # Build Module locally with Reset-OMGModuleManifests (Reset-OMGModuleManifests is built in Build-OMGModuleLocally)
 Get-OMGModules | Build-OMGModuleLocally -SkipScriptAnalyzer
 # NOTE: Increment of the module version is required when it is publishing to PSGallery!
+
+function omgpublishmodule {
+    Get-OMGModules | ForEach-Object {
+        try{
+            Publish-Module -Path $_.ModuleName -NuGetApiKey $env:apikey -Verbose
+        } catch {
+            Write-Warning "Failed to publish module $($_.ModuleName): $_"
+        }
+    }
+}
+
+function omgupdatemodule {
+    Get-OMGModules | ForEach-Object {
+        try{
+            Update-Module -Name $_.ModuleName -Verbose -Force
+        } catch {
+            Write-Warning "Failed to update module $($_.ModuleName): $_"
+        }
+    }
+}
+
+function omgbuildmodule {
+    Get-OMGModules | ForEach-Object {
+        try{
+            Build-OMGModuleLocally -ModuleName $_.ModuleName -SkipScriptAnalyzer -Verbose
+        } catch {
+            Write-Warning "Failed to build module $($_.ModuleName): $_"
+        }
+    }
+}

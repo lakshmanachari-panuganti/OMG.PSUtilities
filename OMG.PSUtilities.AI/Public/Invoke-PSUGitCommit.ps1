@@ -122,49 +122,91 @@ Limit to 1-5 lines, based on the number of files changes and based on scenario.
 
 Example: 
 
-fix: typo in function name in utils.ps1
-Corrected a spelling error in the `Get-ConfigData` function which was causing a runtime failure in some environments.
+fix: typo in function name in utils.ps1!
+- Corrected a spelling error in the `Get-ConfigData` function which was causing a runtime failure in some environments.
 
 #----------------------------------------------------------------
-chore: update logging logic and error handling in backup script
-- Improved log verbosity in Backup-Logs.ps1
-- Added fallback error message in ErrorHandler.ps1 for better diagnostics
+chore: update logging logic and error handling in backup script!
+- Improved log verbosity in Backup-Logs.ps1.
+- Added fallback error message in ErrorHandler.ps1 for better diagnostics.
 
 #----------------------------------------------------------------
-refactor: clean up deployment scripts for clarity and reuse
-- Modularized common functions in Deploy-Common.ps1
-- Updated AzureDeploy.ps1 to use shared logic
-- Removed redundant code from PreDeploy.ps1
+refactor: clean up deployment scripts for clarity and reuse!
+- Modularized common functions in Deploy-Common.ps1.
+- Updated AzureDeploy.ps1 to use shared logic.
+- Removed redundant code from PreDeploy.ps1.
 
 #----------------------------------------------------------------
-feat: add environment variable for staging to appsettings.json
-Introduced `STAGE_API_URL` to support separate staging endpoints for CI pipelines.
+feat: add environment variable for staging to appsettings.json!
+- Introduced `STAGE_API_URL` to support separate staging endpoints for CI pipelines.
 
 #----------------------------------------------------------------
-feat: implement retry logic in API integration scripts
-- Added `Invoke-WithRetry` to helper module
+feat: implement retry logic in API integration scripts!
+- Added `Invoke-WithRetry` to helper module.
 - Refactored UploadArtifacts.ps1 and SyncMetadata.ps1 to use retry logic
-- Updated config schema to include retry parameters
+- Updated config schema to include retry parameters.
 - Improved test coverage for retry scenarios
 
 #----------------------------------------------------------------
-chore: enhance secret management for automation scripts
-- Integrated Azure Key Vault access in AuthHelper.ps1
-- Masked sensitive values in CI/CD output logs
+chore: enhance secret management for automation scripts!
+- Integrated Azure Key Vault access in AuthHelper.ps1.
+- Masked sensitive values in CI/CD output logs.
 
 #----------------------------------------------------------------
-docs: update README with new usage instructions for cleanup script
-Clarified the usage examples and added a note on required permissions for `Cleanup-TempFiles.ps1`.
+docs: update README with new usage instructions for cleanup script!
+- Clarified the usage examples and added a note on required permissions for `Cleanup-TempFiles.ps1`.
 
 #----------------------------------------------------------------
+test: add unit tests for Invoke-AzBackup and improve validation logic!
+- Added Pester tests for core scenarios.
+- Enhanced input validation inside Invoke-AzBackup.ps1.
+- Minor formatting fixes in Test-Helpers.ps1.
+
+#----------------------------------------------------------------
+
+NOTE: No empty line or line breaks as follows, below is the example which should not be:
 test: add unit tests for Invoke-AzBackup and improve validation logic
+
 - Added Pester tests for core scenarios
 - Enhanced input validation inside Invoke-AzBackup.ps1
 - Minor formatting fixes in Test-Helpers.ps1
 
 #----------------------------------------------------------------
 
-Changes:
+Examples of commit messages that should NOT be used:
+
+1. Missing conventional prefix:
+Added new retry logic to API scripts
+- Added Invoke-WithRetry function
+- Refactored UploadArtifacts.ps1
+
+2. Empty line between subject and body:
+feat: add retry logic in API integration scripts
+
+- Added Invoke-WithRetry function
+- Refactored UploadArtifacts.ps1
+
+3. Too long or verbose (exceeds 5 lines):
+feat: implement retry logic in API integration scripts
+- Added Invoke-WithRetry to helper module
+- Refactored UploadArtifacts.ps1 and SyncMetadata.ps1
+- Updated config schema to include retry parameters
+- Improved test coverage for retry scenarios
+- Updated README with new instructions
+- Fixed minor bugs in SyncMetadata.ps1
+
+4. Improper line breaks within bullet points:
+fix: typo in function name in utils.ps1
+- Corrected a spelling error in the `Get-ConfigData`
+function which was causing a runtime failure in some
+environments.
+
+5. No detailed bullet points (too minimal):
+fix: typo fix
+
+#----------------------------------------------------------------
+
+Following are the git changes:
 "@
 
         foreach ($item in $fileChanges) {
