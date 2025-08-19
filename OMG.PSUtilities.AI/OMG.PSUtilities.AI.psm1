@@ -25,6 +25,8 @@ $PublicFunctions = @(
     'Invoke-PSUPromptOnPerplexityAi'
     'New-PSUAiPoweredPullRequest'
     'Start-PSUGeminiChat'
+    'Update-PSUChangeLog'
+    'Update-PSUReadMe'
 )
 
 $AliasesToExport = @(
