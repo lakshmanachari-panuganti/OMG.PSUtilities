@@ -42,9 +42,12 @@ function Invoke-PSUPromptOnAzureOpenAi {
 .EXAMPLE
     API_KEY_AZURE_OPENAI -Prompt "Return a JSON with name and city" -ReturnJsonResponse
 
+.OUTPUTS
+    [String]
+
 .NOTES
     Author: Lakshmanachari Panuganti
-    Created: 2025-08-01
+    Date: 2025-08-01
     API Version: 2025-01-01-preview
 
 .LINK

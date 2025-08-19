@@ -12,9 +12,17 @@ function Get-PSUAzToken {
 .EXAMPLE
     Get-PSUAzToken -Resource "https://graph.microsoft.com/"
 
+.OUTPUTS
+    [String]
+
 .NOTES
     Author: Lakshmanachari Panuganti
-    File Creation Date: 2025-06-27
+    Date: 27th June 2025
+
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureCore
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureCore
 #>
     [CmdletBinding()]
     param (

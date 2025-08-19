@@ -46,13 +46,14 @@ function Get-PSUADOPullRequest {
 
 .NOTES
     Author: Lakshmanachari Panuganti  
-    Date: 2 August 2025 - Initial Development
-    Updated: 11 August 2025 - Made repository parameters optional
+    Date: 2nd August 2025
+    Updated: 11th August 2025 - Made repository parameters optional
 
 .LINK
-    https://www.linkedin.com/in/lakshmanachari-panuganti
-    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
     https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+    https://learn.microsoft.com/en-us/rest/api/azure/devops
 #>
 
     [CmdletBinding(DefaultParameterSetName = 'AllRepos')]

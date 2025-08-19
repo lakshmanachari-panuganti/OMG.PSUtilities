@@ -40,6 +40,10 @@ function New-PSUADOPullRequest {
     .PARAMETER Draft
         (Optional) Switch parameter to create the pull request as a draft.
 
+    .PARAMETER CompleteOnApproval
+        (Optional) Switch parameter to enable auto-completion when the pull request is approved.
+        The PR will automatically complete when all required approvals and policies are met.
+
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
         Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
@@ -67,6 +71,12 @@ function New-PSUADOPullRequest {
             -Title "Bug fix for login" -Description "Fixed authentication issue" -Draft
 
         Creates a draft pull request using repository name with default source/target branches.
+
+    .EXAMPLE
+        New-PSUADOPullRequest -Title "Auto-complete feature" -Description "This will auto-complete when approved" `
+            -CompleteOnApproval
+
+        Creates a pull request that will automatically complete when all approvals and policies are satisfied.
 
     .EXAMPLE
         New-PSUADOPullRequest -Organization "myOrganization" -Project "MyProject" -Repository "MyRepo" `
@@ -148,6 +158,9 @@ function New-PSUADOPullRequest {
         [switch]$Draft,
 
         [Parameter()]
+        [switch]$CompleteOnApproval,
+
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
@@ -193,23 +206,50 @@ function New-PSUADOPullRequest {
             Write-Host "${draftText}Pull Request created successfully. PR ID: $($response.pullRequestId)" -ForegroundColor Green
             Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan
 
+            # Enable auto-completion if specified
+            if ($CompleteOnApproval) {
+                try {
+                    # Set auto-complete options
+                    $autoCompleteBody = @{
+                        autoCompleteSetBy = @{
+                            id = $response.createdBy.id
+                        }
+                        completionOptions = @{
+                            mergeStrategy = "noFastForward"
+                            deleteSourceBranch = $false
+                            squashMerge = $false
+                        }
+                    } | ConvertTo-Json -Depth 10
+
+                    $autoCompleteUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests/$($response.pullRequestId)?api-version=7.0"
+                    Write-Verbose "Setting auto-completion for PR ID: $($response.pullRequestId)"
+                    
+                    Invoke-RestMethod -Method Patch -Uri $autoCompleteUri -Headers $headers -Body $autoCompleteBody -ContentType "application/json" -ErrorAction Stop
+                    Write-Host "Auto-completion enabled. PR will complete automatically when all policies and approvals are satisfied." -ForegroundColor Yellow
+                }
+                catch {
+                    Write-Warning "Failed to enable auto-completion: $($_.Exception.Message)"
+                }
+            }
+
             [PSCustomObject]@{
-                Id              = $response.pullRequestId
-                Title           = $response.title
-                Description     = $response.description
-                Status          = $response.status
-                IsDraft         = $response.isDraft
-                SourceBranch    = $response.sourceRefName
-                TargetBranch    = $response.targetRefName
-                CreatedBy       = $response.createdBy.displayName
-                CreatorEmail    = $response.createdBy.uniqueName
-                CreationDate    = $response.creationDate
-                RepositoryId    = $response.repository.id
-                RepositoryName  = $response.repository.name
-                ProjectName     = $response.repository.project.name
-                WebUrl          = $WebUrl
-                ApiUrl          = $response.url
-                PSTypeName      = 'PSU.ADO.PullRequest'
+                Id                  = $response.pullRequestId
+                Title               = $response.title
+                Description         = $response.description
+                Status              = $response.status
+                IsDraft             = $response.isDraft
+                SourceBranch        = $response.sourceRefName
+                TargetBranch        = $response.targetRefName
+                CreatedBy           = $response.createdBy.displayName
+                CreatorEmail        = $response.createdBy.uniqueName
+                CreationDate        = $response.creationDate
+                RepositoryId        = $response.repository.id
+                RepositoryName      = $response.repository.name
+                ProjectName         = $response.repository.project.name
+                WebUrl              = $WebUrl
+                ApiUrl              = $response.url
+                CompleteOnApproval  = $CompleteOnApproval.IsPresent
+                PSTypeName          = 'PSU.ADO.PullRequest'
             }
         }
         catch {

@@ -13,9 +13,17 @@ function Uninstall-PSUInstalledSoftware {
     .EXAMPLE
         Get-PSUInstalledSoftware -Name '*Zoom*' | Uninstall-PSUInstalledSoftware -WhatIf
 
+    .OUTPUTS
+        None
+
     .NOTES
         Author: Lakshmanachari Panuganti
-        Updated: 2025-07-03
+        Date: 3rd July 2025
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
     #>
     [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
     [Alias('Remove-PSUInstalledSoftware', 'Uninstall-Software')]

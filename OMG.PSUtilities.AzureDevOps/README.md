@@ -2,25 +2,27 @@
 
 Interact with Azure DevOps APIs, pipelines, repos, and work items.
 
-> Module version: 1.0.5 | Last updated: 2025-08-11
+> Module version: 1.0.8 | Last updated: 19th August 2025
 
 ## 📋 Available Functions
 | Function                        | Description                              |
 |---------------------------------|----------------------------------------------|
-| `New-PSUADOBug` | Creates a new Azure DevOps work item of type "Bug". Use this function to log and track software defects within your project. |
-| `New-PSUADOPullRequest` | Initiates a new pull request in Azure DevOps. This function helps automate the process of code review and merging changes between branches. |
-| `New-PSUADOSpike` | Creates a new "Spike" work item in Azure DevOps. Use this function to document research tasks or investigations required to resolve uncertainties in your project. |
-| `New-PSUADOTask` | Adds a new "Task" work item to Azure DevOps. This function is used to break down user stories or bugs into actionable development tasks. |
-| `New-PSUADOUserStory` | Generates a new "User Story" work item in Azure DevOps. Use this function to capture requirements or features from the end-user perspective. |
-| `Get-PSUADOPipeline` | Retrieves Azure DevOps pipeline information and details |
-| `Get-PSUADOPipelineBuild` | Gets details about specific Azure DevOps pipeline builds |
-| `Get-PSUADOPipelineLatestRun` | Retrieves the latest run information for Azure DevOps pipelines |
-| `Get-PSUADOProjectList` | Lists all projects in an Azure DevOps organization |
-| `Get-PSUADOPullRequest` | Gets information about Azure DevOps pull requests |
-| `Get-PSUADOPullRequestInventory` | Provides an inventory of pull requests across repositories |
-| `Get-PSUADORepoBranchList` | Lists all branches in Azure DevOps repositories |
-| `Get-PSUADORepositories` | Retrieves a list of repositories in Azure DevOps projects |
-| `Get-PSUADOVariableGroupInventory` | Gets an inventory of variable groups across Azure DevOps projects |
+| `Approve-PSUADOPullRequest` | Approves a pull request in Azure DevOps using REST API |
+| `Complete-PSUADOPullRequest` | Completes (merges) a pull request in Azure DevOps using REST API |
+| `Get-PSUADOPipeline` | Retrieves Azure DevOps pipelines for a specified project or by pipeline ID |
+| `Get-PSUADOPipelineBuild` | Get details about a specific Azure DevOps pipeline build |
+| `Get-PSUADOPipelineLatestRun` | Gets the latest Azure DevOps pipeline run information using pipeline ID or URL |
+| `Get-PSUADOProjectList` | Retrieves the list of Azure DevOps projects within the specified organization |
+| `Get-PSUADOPullRequest` | Retrieves pull requests from Azure DevOps repositories within a project |
+| `Get-PSUADOPullRequestInventory` | Retrieves all active pull requests from accessible Azure DevOps repositories across all projects in the organization |
+| `Get-PSUADORepoBranchList` | Retrieves a list of branches for a specified Azure DevOps repository |
+| `Get-PSUADORepositories` | Retrieves all repositories from Azure DevOps for a given organization and project |
+| `Get-PSUADOVariableGroupInventory` | Retrieves an inventory of Azure DevOps variable groups across projects |
+| `New-PSUADOBug` | Creates a new bug work item in Azure DevOps |
+| `New-PSUADOPullRequest` | Creates a pull request in Azure DevOps using REST API |
+| `New-PSUADOSpike` | Creates a new spike work item in Azure DevOps |
+| `New-PSUADOTask` | Creates a new task work item in Azure DevOps and optionally links it to a parent work item |
+| `New-PSUADOUserStory` | Creates a new user story in Azure DevOps |
 
 ## 📦 Installation
 

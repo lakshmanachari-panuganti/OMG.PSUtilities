@@ -2,28 +2,32 @@
 
 General purpose PowerShell utilities and system-level tools.
 
-> Module version: 1.0.7 | Last updated: 2025-08-11
+> Module version: 1.0.8 | Last updated: 19th August 2025
 
 ## 📋 Available Functions
 
 | Function | Description |
 |----------|-------------|
-| `Export-PSUExcel` | Exports PowerShell objects to Excel files with formatting and styling options |
-| `Find-PSUFilesContainingText` | Searches for files containing specific text patterns across directories |
-| `Get-PSUConnectedWifiInfo` | Retrieves information about currently connected WiFi networks |
-| `Get-PSUFunctionCommentBasedHelp` | Extracts specific help sections (like .SYNOPSIS or .EXAMPLE) from PowerShell scripts for automated documentation |
-| `Get-PSUGitFileChangeMetadata` | Gets metadata about file changes in a Git repository |
-| `Get-PSUInstalledSoftware` | Retrieves a list of installed software on the system |
-| `Get-PSUUserEnvironmentVariable` | Gets user-specific environment variables |
+| `Approve-PSUGithubPullRequest` | Approves a pull request in GitHub using REST API |
+| `Approve-PSUPullRequest` | Approves a pull request in GitHub or Azure DevOps automatically based on git remote |
+| `Complete-PSUPullRequest` | Completes (merges) a pull request in GitHub or Azure DevOps automatically based on git remote |
+| `Export-PSUExcel` | Converts an array of objects to a styled Excel file |
+| `Find-PSUFilesContainingText` | Searches files for a specific text string |
+| `Get-PSUConnectedWifiInfo` | Gets details of the currently connected Wi-Fi network |
+| `Get-PSUFunctionCommentBasedHelp` | Pulls out a specific help section (like .SYNOPSIS or .EXAMPLE) from a PowerShell script, useful for reading documentation automatically |
+| `Get-PSUGitFileChangeMetadata` | Gets metadata about file changes between two Git branches |
+| `Get-PSUInstalledSoftware` | Lists installed software on the system |
+| `Get-PSUUserEnvironmentVariable` | Gets one or more user environment variables |
 | `Get-PSUUserSession` | Retrieves information about active user sessions |
-| `New-PSUHTMLReport` | Creates HTML reports from PowerShell data |
-| `Remove-PSUUserEnvironmentVariable` | Removes user-specific environment variables |
-| `Remove-PSUUserSession` | Terminates user sessions |
+| `New-PSUGithubPullRequest` | Creates a pull request in GitHub using REST API |
+| `New-PSUHTMLReport` | Creates an HTML report as PowerShell object |
+| `Remove-PSUUserEnvironmentVariable` | Removes one or more user environment variables |
+| `Remove-PSUUserSession` | Logs off selected user sessions |
 | `Resolve-PSUGitMergeConflict` | Helps resolve Git merge conflicts (Work in Progress) |
-| `Send-PSUHTMLReport` | Sends HTML reports via email or other methods |
-| `Send-PSUTeamsMessage` | Sends messages to Microsoft Teams channels |
-| `Set-PSUUserEnvironmentVariable` | Sets user-specific environment variables |
-| `Test-PSUInternetConnection` | Tests internet connectivity and network status |
+| `Send-PSUHTMLReport` | Sends HTML reports that are created with New-PSUHTMLReport function |
+| `Send-PSUTeamsMessage` | Sends a message to a Microsoft Teams channel via webhook |
+| `Set-PSUUserEnvironmentVariable` | Sets or updates a user environment variable |
+| `Test-PSUInternetConnection` | Tests general internet connectivity |
 | `Uninstall-PSUInstalledSoftware` | Removes installed software from the system |
 
 ## 📦 Installation

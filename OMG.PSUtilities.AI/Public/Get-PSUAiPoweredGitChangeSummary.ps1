@@ -25,9 +25,13 @@ function Get-PSUAiPoweredGitChangeSummary {
     .EXAMPLE
         Get-PSUAiPoweredGitChangeSummary -BaseBranch main -FeatureBranch feature/login-ui
 
+    .OUTPUTS
+        [PSCustomObject]
+        Properties include: FileName, ChangeType, Summary
+
     .NOTES
         Author: Lakshmanachari Panuganti
-        Created: 2025-07-27
+        Date: 27th July 2025
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI

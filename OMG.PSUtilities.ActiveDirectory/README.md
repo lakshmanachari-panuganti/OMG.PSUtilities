@@ -2,13 +2,13 @@
 
 PowerShell utilities for Active Directory automation and reporting.
 
-> Module version: 1.0.3 | Last updated: 2025-07-16
+> Module version: 1.0.4 | Last updated: 19th August 2025
 
 ## 📋 Available Functions
 
 | Function                          | Description                                      |
 |------------------------------------|--------------------------------------------------|
-| `Find-PSUADServiceAccountMisuse`   | Finds potential misuse of service accounts in AD  |
+| `Find-PSUADServiceAccountMisuse`   | Identifies potential misuse of service accounts by detecting interactive logon events in AD |
 
 ## 📦 Installation
 

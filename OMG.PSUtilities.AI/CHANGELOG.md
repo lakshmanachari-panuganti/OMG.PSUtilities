@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.9] - 2025-08-19
+### Changed
+- Updated all public functions to comply with OMG.PSUtilities.StyleGuide.md standards
+- Standardized comment-based help with ordinal date format (DDth month YYYY)
+- Added comprehensive .OUTPUTS sections to all functions
+- Corrected .LINK section ordering (GitHub → LinkedIn → PowerShell Gallery → Microsoft Docs)
+- Enhanced documentation consistency and professional presentation across all functions
+
 ## [1.0.8] - 2025-08-15
 
 - Default values for `SourceBranch` and `TargetBranch` parameters in `Invoke-PSUPullRequestCreation.ps1` using git commands.

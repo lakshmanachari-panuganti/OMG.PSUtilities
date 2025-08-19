@@ -26,9 +26,13 @@ function Find-PSUFilesContainingText {
     .EXAMPLE
         Find-PSUFilesContainingText -SearchPath 'C:\Projects' -SearchText 'TODO'
 
+    .OUTPUTS
+        [PSCustomObject]
+        Properties include: FileName, LineNumber, LineContent, FullPath
+
     .NOTES
         Author: Lakshmanachari Panuganti
-        File Creation Date: 2025-06-27
+        Date: 27th June 2025
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core

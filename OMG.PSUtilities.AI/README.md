@@ -2,19 +2,19 @@
 
 PowerShell utilities for AI-powered automation and reporting.
 
-> Module version: 1.0.7 | Last updated: 2025-08-11
+> Module version: 1.0.9 | Last updated: 19th August 2025
 
 ## 📋 Available Functions
 
 | Function                               | Description                                  |
 |-----------------------------------------|----------------------------------------------|
-| `Get-PSUAiPoweredGitChangeSummary`      | Summarizes Git changes using AI              |
-| `Invoke-PSUGitCommit`                   | Commits changes to Git repository            |
-| `Invoke-PSUPromptOnAzureOpenAi`         | Sends prompt to Azure OpenAI                 |
-| `Invoke-PSUPromptOnGeminiAi`            | Sends prompt to Gemini AI                    |
-| `Invoke-PSUPromptOnPerplexityAi`        | Sends prompt to Perplexity AI                |
-| `New-PSUAiPoweredPullRequest`           | Creates a new pull request with AI summary   |
-| `Start-PSUGeminiChat`                   | Starts an interactive Gemini AI chat         |
+| `Get-PSUAiPoweredGitChangeSummary`      | Summarizes file-level changes between two Git branches using Google Gemini AI |
+| `Invoke-PSUGitCommit`                   | Generates and commits a conventional Git commit message using Gemini AI, then syncs with remote |
+| `Invoke-PSUPromptOnAzureOpenAi`         | Sends a prompt to Azure OpenAI (Chat Completions API) and returns the generated response |
+| `Invoke-PSUPromptOnGeminiAi`            | Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response |
+| `Invoke-PSUPromptOnPerplexityAi`        | Sends a text prompt to the Perplexity AI API and returns the generated response |
+| `New-PSUAiPoweredPullRequest`           | Uses Gemini AI to generate a professional Pull Request title and description from Git change summaries |
+| `Start-PSUGeminiChat`                   | Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API |
 
 ## 📦 Installation
 

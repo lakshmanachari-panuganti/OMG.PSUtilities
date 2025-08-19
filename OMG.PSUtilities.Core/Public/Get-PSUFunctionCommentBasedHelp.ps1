@@ -17,9 +17,17 @@ function Get-PSUFunctionCommentBasedHelp {
     .EXAMPLE
         Get-PSUFunctionCommentBasedHelp -FunctionPath "C:\repos\OMG.PSUtilities.Core\Public\Get-PSUGitRepositoryChanges.ps1" -HelpType SYNOPSIS
 
+    .OUTPUTS
+        [String]
+
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date  : 2025-07-16
+        Date: 16th July 2025
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.Core
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
     #>
 
     [CmdletBinding()]

@@ -21,12 +21,13 @@ function Get-PSUADOProjectList {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        2 August 2025: Initial Development
+        Date: 2nd August 2025
 
     .LINK
-        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
-        https://github.com/lakshmanachari-panuganti
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
         https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+        https://learn.microsoft.com/en-us/rest/api/azure/devops
     #>
 
     [CmdletBinding()]

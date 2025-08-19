@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.Core.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.7'
+ModuleVersion = '1.0.8'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -71,7 +71,7 @@ RequiredModules = @(
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Export-PSUExcel', 'Find-PSUFilesContainingText', 'Get-PSUConnectedWifiInfo', 'Get-PSUFunctionCommentBasedHelp', 'Get-PSUGitFileChangeMetadata', 'Get-PSUInstalledSoftware', 'Get-PSUUserEnvironmentVariable', 'Get-PSUUserSession', 'New-PSUGithubPullRequest', 'New-PSUHTMLReport', 'Remove-PSUUserEnvironmentVariable', 'Remove-PSUUserSession', 'Send-PSUHTMLReport', 'Send-PSUTeamsMessage', 'Set-PSUUserEnvironmentVariable', 'Test-PSUInternetConnection', 'Uninstall-PSUInstalledSoftware')
+FunctionsToExport = @('Approve-PSUGithubPullRequest', 'Approve-PSUPullRequest', 'Complete-PSUPullRequest', 'Export-PSUExcel', 'Find-PSUFilesContainingText', 'Get-PSUConnectedWifiInfo', 'Get-PSUFunctionCommentBasedHelp', 'Get-PSUGitFileChangeMetadata', 'Get-PSUInstalledSoftware', 'Get-PSUUserEnvironmentVariable', 'Get-PSUUserSession', 'New-PSUGithubPullRequest', 'New-PSUHTMLReport', 'Remove-PSUUserEnvironmentVariable', 'Remove-PSUUserSession', 'Send-PSUHTMLReport', 'Send-PSUTeamsMessage', 'Set-PSUUserEnvironmentVariable', 'Test-PSUInternetConnection', 'Uninstall-PSUInstalledSoftware')
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
