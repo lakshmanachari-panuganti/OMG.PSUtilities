@@ -72,11 +72,13 @@ RequiredModules = @('OMG.PSUtilities.Core')
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
     'Get-PSUAiPoweredGitChangeSummary',
+    'Invoke-PSUAiPrompt',
     'Invoke-PSUGitCommit',
     'Invoke-PSUPromptOnAzureOpenAi',
     'Invoke-PSUPromptOnGeminiAi',
     'Invoke-PSUPromptOnPerplexityAi',
     'New-PSUAiPoweredPullRequest',
+    'Set-PSUDefaultAiEngine',
     'Start-PSUGeminiChat',
     'Update-PSUChangeLog'
 )
