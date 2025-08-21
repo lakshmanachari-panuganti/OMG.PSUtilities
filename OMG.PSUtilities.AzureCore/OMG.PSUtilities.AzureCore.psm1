@@ -18,14 +18,10 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name
 
 # Export public functions
 $PublicFunctions = @(
-    'Get-PSUAiPoweredGitChangeSummary'
-    'Invoke-PSUGitCommit'
-    'Invoke-PSUPromptOnAzureOpenAi'
-    'Invoke-PSUPromptOnGeminiAi'
-    'Invoke-PSUPromptOnPerplexityAi'
-    'New-PSUAiPoweredPullRequest'
-    'Start-PSUGeminiChat'
-    'Update-PSUChangeLog'
+    'Get-PSUAzAccountAccessInSubscriptions'
+    'Get-PSUAzToken'
+    'Get-PSUk8sPodLabel'
+    'Test-PSUAzConnection'
 )
 
 $AliasesToExport = @(
