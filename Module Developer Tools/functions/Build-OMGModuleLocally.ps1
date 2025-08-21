@@ -85,7 +85,14 @@
             Write-Host ""
         }
         catch {
-            Write-Error "Failed to import module: $_"
+            $cmdlet.throwTerminatingError(
+                [System.Management.Automation.ErrorRecord]::new(
+                    $_,
+                    'BuildOMGModuleLocallyFailed',
+                    [System.Management.Automation.ErrorCategory]::NotSpecified,
+                    $ModuleName
+                )
+            )
         }
     }
 }
