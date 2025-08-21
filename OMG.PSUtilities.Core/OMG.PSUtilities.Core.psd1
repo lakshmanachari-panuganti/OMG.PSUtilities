@@ -33,7 +33,7 @@ Copyright = '(c) Lakshmanachari Panuganti. All rights reserved.'
 Description = 'General purpose PowerShell utilities and system-level tools.'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '5.1'
+PowerShellVersion = '7.4'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
@@ -71,7 +71,28 @@ RequiredModules = @(
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Approve-PSUGithubPullRequest', 'Approve-PSUPullRequest', 'Complete-PSUPullRequest', 'Export-PSUExcel', 'Find-PSUFilesContainingText', 'Get-PSUConnectedWifiInfo', 'Get-PSUFunctionCommentBasedHelp', 'Get-PSUGitFileChangeMetadata', 'Get-PSUInstalledSoftware', 'Get-PSUUserEnvironmentVariable', 'Get-PSUUserSession', 'New-PSUGithubPullRequest', 'New-PSUHTMLReport', 'Remove-PSUUserEnvironmentVariable', 'Remove-PSUUserSession', 'Send-PSUHTMLReport', 'Send-PSUTeamsMessage', 'Set-PSUUserEnvironmentVariable', 'Test-PSUInternetConnection', 'Uninstall-PSUInstalledSoftware')
+FunctionsToExport = @(
+    'Approve-PSUGithubPullRequest',
+    'Approve-PSUPullRequest',
+    'Complete-PSUPullRequest',
+    'Export-PSUExcel',
+    'Find-PSUFilesContainingText',
+    'Get-PSUConnectedWifiInfo',
+    'Get-PSUFunctionCommentBasedHelp',
+    'Get-PSUGitFileChangeMetadata',
+    'Get-PSUInstalledSoftware',
+    'Get-PSUUserEnvironmentVariable',
+    'Get-PSUUserSession',
+    'New-PSUGithubPullRequest',
+    'New-PSUHTMLReport',
+    'Remove-PSUUserEnvironmentVariable',
+    'Remove-PSUUserSession',
+    'Send-PSUHTMLReport',
+    'Send-PSUTeamsMessage',
+    'Set-PSUUserEnvironmentVariable',
+    'Test-PSUInternetConnection',
+    'Uninstall-PSUInstalledSoftware'
+)
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -80,7 +101,11 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @('Get-WifiInfo', 'Remove-PSUInstalledSoftware', 'Uninstall-Software')
+AliasesToExport = @(
+    'Get-WifiInfo',
+    'Remove-PSUInstalledSoftware',
+    'Uninstall-Software'
+)
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
