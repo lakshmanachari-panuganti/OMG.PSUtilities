@@ -20,6 +20,12 @@
     process {
         try {
             $modulePath = Join-Path $env:BASE_MODULE_PATH $ModuleName
+
+            # Check $modulePath existance
+            if (-not (Test-Path $modulePath)) {
+                throw "Module path does not exist: $modulePath"
+            }
+
             $psd1Path = Join-Path $modulePath "$ModuleName.psd1"
 
             Write-Verbose "Base path for module: $env:BASE_MODULE_PATH"
@@ -85,14 +91,7 @@
             Write-Host ""
         }
         catch {
-            $cmdlet.throwTerminatingError(
-                [System.Management.Automation.ErrorRecord]::new(
-                    $_,
-                    'BuildOMGModuleLocallyFailed',
-                    [System.Management.Automation.ErrorCategory]::NotSpecified,
-                    $ModuleName
-                )
-            )
+            $cmdlet.throwTerminatingError($_)
         }
     }
 }

@@ -43,7 +43,7 @@ function ConvertTo-QuotedArrayString {
         if ($allItems.Count -eq 0) {
             return '@()'
         }
-        $quotedItems = $allItems | ForEach-Object { "    '$_'," }
+        $quotedItems = @($allItems | ForEach-Object { "    '$_'," })
         if ($quotedItems.Count -gt 0) {
             $quotedItems[-1] = $quotedItems[-1].TrimEnd(',')
         }

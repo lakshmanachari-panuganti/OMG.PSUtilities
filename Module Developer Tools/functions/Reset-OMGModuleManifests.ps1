@@ -159,7 +159,7 @@ Get-ChildItem -Path "`$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{`$_.na
 
 # Export public functions
 `$PublicFunctions = @(
-$(@($publicFunctions | ForEach-Object { "    '$_'" }) -join "`n")
+$(@($functionsList | ForEach-Object { "    '$_'" }) -join "`n")
 )
 
 `$AliasesToExport = @(
