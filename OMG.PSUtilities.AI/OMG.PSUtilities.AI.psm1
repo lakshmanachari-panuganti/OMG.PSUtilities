@@ -26,10 +26,10 @@ $PublicFunctions = @(
     'New-PSUAiPoweredPullRequest'
     'Start-PSUGeminiChat'
     'Update-PSUChangeLog'
-    'Update-PSUReadMe'
 )
 
 $AliasesToExport = @(
+    'aichangelog'
     'aigitcommit'
     'Ask-Ai'
 )

@@ -16,12 +16,19 @@ function Update-PSUChangeLog {
         Update-PSUChangeLog -ModuleName OMG.PSUtilities.AI
     #>
     [CmdletBinding()]
+    [Alias("aichangelog")]
     param(
         [Parameter(Mandatory)]
         [string]$ModuleName,
+
+        [Parameter()]
         [string]$RootPath = $env:BASE_MODULE_PATH,
+
+        [Parameter()]
         [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD),
-        [string]$FeatureBranch
+
+        [Parameter()]
+        [string]$FeatureBranch = $(git branch --show-current)
     )
 
     $moduleRoot = Join-Path $RootPath $ModuleName
@@ -30,11 +37,6 @@ function Update-PSUChangeLog {
     if (-not (Test-Path $changelogPath)) {
         Write-Error "CHANGELOG.md not found for $ModuleName."
         return
-    }
-
-    # Default feature branch to current branch if not provided
-    if (-not $FeatureBranch) {
-        $FeatureBranch = git -C $moduleRoot rev-parse --abbrev-ref HEAD
     }
 
     # Get changed .ps1 files in Public/Private
