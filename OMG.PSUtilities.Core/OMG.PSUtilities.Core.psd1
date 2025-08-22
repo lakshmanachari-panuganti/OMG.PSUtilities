@@ -81,6 +81,7 @@ FunctionsToExport = @(
     'Get-PSUFunctionCommentBasedHelp',
     'Get-PSUGitFileChangeMetadata',
     'Get-PSUInstalledSoftware',
+    'Get-PSUModule',
     'Get-PSUUserEnvironmentVariable',
     'Get-PSUUserSession',
     'New-PSUGithubPullRequest',
