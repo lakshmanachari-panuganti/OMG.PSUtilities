@@ -138,6 +138,19 @@ function Reset-OMGModuleManifests {
 
     # --------- [Reset .psm1 content] --------------
     $existingPsm1content = (Get-Content -Path $psm1Path -Raw -ErrorAction SilentlyContinue).Trim()
+
+    $publicFunctionsBlock = $functionsList | ForEach-Object { "    '$_'," }
+    if ($publicFunctionsBlock.Count -gt 0) {
+        $publicFunctionsBlock[-1] = $publicFunctionsBlock[-1].TrimEnd(',')
+    }
+    $publicFunctionsBlock = $publicFunctionsBlock -join "`n"
+
+    $aliasesBlock = $aliasList | ForEach-Object { "    '$_'," }
+    if ($aliasesBlock.Count -gt 0) {
+        $aliasesBlock[-1] = $aliasesBlock[-1].TrimEnd(',')
+    }
+    $aliasesBlock = $aliasesBlock -join "`n"
+
     $psm1Content = @"
 # Load private functions
 Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | Where-Object{`$_.name -notlike "*--wip.ps1"} | ForEach-Object {
@@ -159,11 +172,11 @@ Get-ChildItem -Path "`$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{`$_.na
 
 # Export public functions
 `$PublicFunctions = @(
-$(@($functionsList | ForEach-Object { "    '$_'" }) -join "`n")
+$publicFunctionsBlock
 )
 
 `$AliasesToExport = @(
-$(@($aliasList | ForEach-Object { "    '$_'" }) -join "`n")
+$aliasesBlock
 )
 
 Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
