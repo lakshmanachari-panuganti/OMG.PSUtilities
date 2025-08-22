@@ -66,7 +66,7 @@ function omgpublishmodule {
     ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique
 
     $ModulesUpdated | Update-OMGModuleVersion -Increment Patch
-    git commit -m "Bump module versions "
+    aigitcommit
     $ModulesUpdated | Update-PSUChangeLog -ErrorAction Continue
     $ModulesUpdated | Reset-OMGModuleManifests
     $publishModule = Read-Host "Do you want to publish the updated modules to PSGallery? (Y/N)"
