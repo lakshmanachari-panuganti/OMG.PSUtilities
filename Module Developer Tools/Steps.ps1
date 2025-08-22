@@ -64,11 +64,13 @@ function omgpublishmodule {
         $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
     } |
     ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique
-
     $ModulesUpdated | Update-OMGModuleVersion -Increment Patch
-    aigitcommit
-    $ModulesUpdated | Update-PSUChangeLog -ErrorAction Continue
     $ModulesUpdated | Reset-OMGModuleManifests
+    aigitcommit
+    $updateChangeLog = Read-Host "Do you want to update the CHANGELOG.md for the updated modules? (Y/N)"
+    if ($updateChangeLog -eq 'Y') {
+        $ModulesUpdated | Update-PSUChangeLog -ErrorAction Continue
+    }
     $publishModule = Read-Host "Do you want to publish the updated modules to PSGallery? (Y/N)"
     if ($publishModule -eq 'Y') {
         $ModulesUpdated | ForEach-Object { 

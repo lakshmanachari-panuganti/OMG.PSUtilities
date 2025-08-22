@@ -35,12 +35,8 @@ function Update-PSUChangeLog {
         [Parameter()]
         [string]$FeatureBranch = $(git branch --show-current 2>$null)
     )
-
-    begin {
-        Write-Host "Starting Update-PSUChangeLog for module [$ModuleName]"
-    }
-
     process {
+        Write-Host "Starting Update-PSUChangeLog for module [$ModuleName]"
         try {
             $moduleRoot   = Join-Path $RootPath $ModuleName
             $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
@@ -130,8 +126,8 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
 "@
 
             foreach ($diff in $diffs) {
-                $prompt += "### File: $($diff.FileName)`n"
-                $prompt += "Diff: $($diff.DiffContent | Out-String)`n"
+                $prompt += "`n### File: $($diff.FileName)`n"
+                $prompt += "`nDiff: `n$($diff.DiffContent | Out-String)`n"
                 $prompt += "#------[ End of this file changes ]------#`n`n"
             }
 
@@ -140,9 +136,10 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                 $ChangeLogSummary = Invoke-PSUPromptOnAzureOpenAi -Prompt ($prompt | Out-String)
 
                 Write-Verbose "Fetching module metadata..."
-                $psmodule = Find-Module -Name $ModuleName -Repository ($env:PSREPOSITORY ?? 'PSGallery')
+                $psd1Path = Get-PSUModule -ScriptPath $changelogPath | Select-Object -ExpandProperty ManifestPath
+                $psDataFile = Import-PowerShellDataFile -Path $psd1Path
 
-                $entry = "## [$($psmodule.Version)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
+                $entry = "## [$($psDataFile.ModuleVersion)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
                 $currentChangelog = Get-Content -Path $changelogPath -Raw
 
                 $newChangelog = $entry + $currentChangelog
@@ -154,9 +151,5 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
         catch {
             Write-Error "Failed to update changelog for $ModuleName. Error: $_"
         }
-    }
-
-    end {
-        Write-Verbose "Finished Update-PSUChangeLog for module [$ModuleName]"
     }
 }
