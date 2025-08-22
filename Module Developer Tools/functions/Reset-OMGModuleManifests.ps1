@@ -125,14 +125,14 @@ function Reset-OMGModuleManifests {
         "`$1$aliasesString"
     )
 
-    # Removing empty lines at the end -- only at the end of the file
-    $psd1content = $psd1content.Trim()
+    # Normalize line endings and trim for accurate comparison
+    $normExistingPsd1 = ($existingPsd1content -replace "`r`n|`r|`n", "`n").Trim()
+    $normNewPsd1 = ($psd1content -replace "`r`n|`r|`n", "`n").Trim()
 
-    # If the content is same as existing, skip writing
-    if ($psd1content -eq $existingPsd1content) {
+    if ($normNewPsd1 -eq $normExistingPsd1) {
         Write-Host "No changes detected in: $ModuleName.psd1" -ForegroundColor Yellow
     } else {
-        Set-Content -Path $psd1Path -Value $psd1content -Encoding UTF8
+        $psd1content.Trim() | Set-Content -Path $psd1Path -Encoding UTF8
         Write-Host "UPDATED: $ModuleName.psd1" -ForegroundColor Green
     }
 
@@ -182,11 +182,14 @@ $aliasesBlock
 Export-ModuleMember -Function `$PublicFunctions -Alias `$AliasesToExport
 "@
 
-    #if the existing content of $psm1Path is same as $psm1Content, then
-    if ($existingPsm1content -eq $psm1Content) {
+    # Normalize line endings and trim for accurate comparison
+    $normExistingpsm1 = ($existingPsm1content -replace "`r`n|`r|`n", "`n").Trim()
+    $normNewpsm1 = ($psm1Content -replace "`r`n|`r|`n", "`n").Trim()
+
+    if ($normExistingpsm1 -eq $normNewpsm1) {
         Write-Host "No changes detected in: $ModuleName.psm1" -ForegroundColor Yellow
     } else {
-        $psm1Content | Set-Content -Path $psm1Path -Encoding UTF8
+        $psm1Content.Trim() | Set-Content -Path $psm1Path -Encoding UTF8
         Write-Host "UPDATED: $ModuleName.psm1" -ForegroundColor Green
     }
 }
