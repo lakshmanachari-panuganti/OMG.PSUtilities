@@ -139,13 +139,13 @@ function Reset-OMGModuleManifests {
     # --------- [Reset .psm1 content] --------------
     $existingPsm1content = (Get-Content -Path $psm1Path -Raw -ErrorAction SilentlyContinue).Trim()
 
-    $publicFunctionsBlock = $functionsList | ForEach-Object { "    '$_'," }
+    $publicFunctionsBlock = @($functionsList | ForEach-Object { "    '$_'," })
     if ($publicFunctionsBlock.Count -gt 0) {
         $publicFunctionsBlock[-1] = $publicFunctionsBlock[-1].TrimEnd(',')
     }
     $publicFunctionsBlock = $publicFunctionsBlock -join "`n"
 
-    $aliasesBlock = $aliasList | ForEach-Object { "    '$_'," }
+    $aliasesBlock = @($aliasList | ForEach-Object { "    '$_'," })
     if ($aliasesBlock.Count -gt 0) {
         $aliasesBlock[-1] = $aliasesBlock[-1].TrimEnd(',')
     }
