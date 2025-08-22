@@ -18,21 +18,21 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name
 
 # Export public functions
 $PublicFunctions = @(
-    'Approve-PSUADOPullRequest'
-    'Complete-PSUADOPullRequest'
-    'Get-PSUADOPipeline'
-    'Get-PSUADOPipelineBuild'
-    'Get-PSUADOPipelineLatestRun'
-    'Get-PSUADOProjectList'
-    'Get-PSUADOPullRequest'
-    'Get-PSUADOPullRequestInventory'
-    'Get-PSUADORepoBranchList'
-    'Get-PSUADORepositories'
-    'Get-PSUADOVariableGroupInventory'
-    'New-PSUADOBug'
-    'New-PSUADOPullRequest'
-    'New-PSUADOSpike'
-    'New-PSUADOTask'
+    'Approve-PSUADOPullRequest',
+    'Complete-PSUADOPullRequest',
+    'Get-PSUADOPipeline',
+    'Get-PSUADOPipelineBuild',
+    'Get-PSUADOPipelineLatestRun',
+    'Get-PSUADOProjectList',
+    'Get-PSUADOPullRequest',
+    'Get-PSUADOPullRequestInventory',
+    'Get-PSUADORepoBranchList',
+    'Get-PSUADORepositories',
+    'Get-PSUADOVariableGroupInventory',
+    'New-PSUADOBug',
+    'New-PSUADOPullRequest',
+    'New-PSUADOSpike',
+    'New-PSUADOTask',
     'New-PSUADOUserStory'
 )
 
