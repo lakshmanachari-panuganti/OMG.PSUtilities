@@ -67,7 +67,7 @@ function Get-PSUModule {
             $psd1 = Get-ChildItem -Path $currentPath -Filter '*.psd1' -ErrorAction SilentlyContinue | Select-Object -First 1
             $psm1 = Get-ChildItem -Path $currentPath -Filter '*.psm1' -ErrorAction SilentlyContinue | Select-Object -First 1
 
-            if ($psd1 -or $psm1) {
+            if ($psd1 -or $psm1)  {
                 $parentModule = Split-Path -Path $currentPath -Parent | Split-Path -Leaf
                 $currentVersion = $null
                 if ($psd1) {
@@ -85,7 +85,7 @@ function Get-PSUModule {
                     HasModuleFile  = [bool]$psm1
                     ParentModule   = $parentModule
                     CurrentVersion = $currentVersion
-                    PSTypeName     = 'PSU.ModuleName.Info'
+                    PSTypeName     = 'PSU.Module.Data'
                 }
             }
 

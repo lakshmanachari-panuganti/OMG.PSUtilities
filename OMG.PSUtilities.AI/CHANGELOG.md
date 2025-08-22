@@ -1,4 +1,11 @@
-# Changelog
+## [1.0.10] - 23rd August 2025
+### Added
+- `Invoke-PSUAiPrompt.ps1`: Public function to route prompts to the selected AI provider (`AzureOpenAi`, `GeminiAi`, or `PerplexityAi`) with support for JSON response.
+- `Set-PSUDefaultAiEngine.ps1`: Public function to set and persist the default AI engine for module use.
+- `Update-PSUChangeLog.ps1`: Public function that leverages AI to generate and prepend a professional changelog entry based on `.ps1` file diffs.
+
+### Changed
+- `New-PSUAiPoweredPullRequest.ps1`: Now prompts the user to update `ChangeLog.md` with changes and invokes `Update-PSUChangeLog` if confirmed.
 
 ## [1.0.9] - 2025-08-19
 ### Changed
