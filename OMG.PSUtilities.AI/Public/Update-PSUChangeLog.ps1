@@ -14,51 +14,64 @@ function Update-PSUChangeLog {
         The feature branch to compare (default: current branch).
     .EXAMPLE
         Update-PSUChangeLog -ModuleName OMG.PSUtilities.AI
+    .NOTES
+        Author : Lakshmanachari Panuganti
+        Date : 22nd August 2025
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias("aichangelog")]
     param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [ValidateNotNullOrEmpty()]
         [string]$ModuleName,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$RootPath = $env:BASE_MODULE_PATH,
 
         [Parameter()]
-        [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD),
+        [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD 2>$null),
 
         [Parameter()]
-        [string]$FeatureBranch = $(git branch --show-current)
+        [string]$FeatureBranch = $(git branch --show-current 2>$null)
     )
 
-    $moduleRoot = Join-Path $RootPath $ModuleName
-    $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
-
-    if (-not (Test-Path $changelogPath)) {
-        Write-Error "CHANGELOG.md not found for $ModuleName."
-        return
+    begin {
+        Write-Host "Starting Update-PSUChangeLog for module [$ModuleName]"
     }
 
-    # Get changed .ps1 files in Public/Private
-    $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only |
-        Where-Object { ($_ -replace '\\', '/') -match "$ModuleName/(Public|Private)/.*\.ps1$" }
+    process {
+        try {
+            $moduleRoot   = Join-Path $RootPath $ModuleName
+            $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
 
-    if (-not $files) {
-        Write-Host "No .ps1 file changes detected between $BaseBranch and $FeatureBranch." -ForegroundColor Yellow
-        return
-    }
+            if (-not (Test-Path $changelogPath)) {
+                Write-Error "CHANGELOG.md not found for $ModuleName at path [$changelogPath]."
+                return
+            }
 
-    $diffs = @()
-    foreach ($file in $files) {
-        $diffContent = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" -- "$file"
-        $diffs += [PSCustomObject]@{
-            FileName    = $file
-            DiffContent = $diffContent
-        }
-    }
+            # Detect changed files
+            Write-Verbose "Comparing changes between [$BaseBranch] and [$FeatureBranch]"
+            $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only |
+                Where-Object { ($_ -replace '\\', '/') -match "$ModuleName/(Public|Private)/.*\.ps1$" }
+
+            if (-not $files) {
+                Write-Warning "No .ps1 file changes detected between $BaseBranch and $FeatureBranch."
+                return
+            }
+
+            $diffs = foreach ($file in $files) {
+                Write-Verbose "Processing diff for file: $file"
+                [PSCustomObject]@{
+                    FileName    = $file
+                    DiffContent = (git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" -- "$file")
+                }
+            }
+
+            # Build prompt for AI
 
     $prompt = @"
-You are a master in reviewing and analyzing git logs. 
+You are a master in reviewing and analyzing git logs.
 
 Strictly follow the output rules below:
 - Format the result in **valid Markdown**.
@@ -116,22 +129,34 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
 #------[ Generate a changelog entry summary for the following file changes: ]------#
 "@
 
-    $diffs | ForEach-Object {
-        $diff1 = $_
-        $prompt += "###File: $($diff1.FileName)`n"
-        $prompt += "Diff: $($diff1.DiffContent | Out-String)`n"
-        $prompt += "#------[ End of this file changes ]------#`n`n"
+            foreach ($diff in $diffs) {
+                $prompt += "### File: $($diff.FileName)`n"
+                $prompt += "Diff: $($diff.DiffContent | Out-String)`n"
+                $prompt += "#------[ End of this file changes ]------#`n`n"
+            }
+
+            if ($PSCmdlet.ShouldProcess($ModuleName, "Update CHANGELOG.md")) {
+                Write-Verbose "Invoking AI summarization..."
+                $ChangeLogSummary = Invoke-PSUPromptOnAzureOpenAi -Prompt ($prompt | Out-String)
+
+                Write-Verbose "Fetching module metadata..."
+                $psmodule = Find-Module -Name $ModuleName -Repository ($env:PSREPOSITORY ?? 'PSGallery')
+
+                $entry = "## [$($psmodule.Version)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
+                $currentChangelog = Get-Content -Path $changelogPath -Raw
+
+                $newChangelog = $entry + $currentChangelog
+                Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8
+
+                Write-Host "CHANGELOG.md updated successfully for $ModuleName." -ForegroundColor Green
+            }
+        }
+        catch {
+            Write-Error "Failed to update changelog for $ModuleName. Error: $_"
+        }
     }
 
-    $ChangeLogSummary = Invoke-PSUPromptOnAzureOpenAi -Prompt ($prompt | Out-String)
-
-    # Prepend to CHANGELOG.md
-    $currentChangelog = Get-Content -Path $changelogPath -Raw
-    $psmodule = Find-Module -Name $ModuleName -Repository ($null -ne $env:PSREPOSITORY ? $env:PSREPOSITORY : 'PSGallery')
-    $entry = "## [$($psmodule.Version)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
-    $newChangelog = $entry + $currentChangelog
-    Set-Content -Path $changelogPath -Value $newChangelog
-    Write-Host "CHANGELOG.md updated for $ModuleName." -ForegroundColor Green
+    end {
+        Write-Verbose "Finished Update-PSUChangeLog for module [$ModuleName]"
+    }
 }
-
-
