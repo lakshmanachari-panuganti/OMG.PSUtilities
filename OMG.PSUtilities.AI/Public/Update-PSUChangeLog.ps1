@@ -38,7 +38,7 @@ function Update-PSUChangeLog {
     process {
         Write-Host "Starting Update-PSUChangeLog for module [$ModuleName]"
         try {
-            $moduleRoot   = Join-Path $RootPath $ModuleName
+            $moduleRoot = Join-Path $RootPath $ModuleName
             $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
 
             if (-not (Test-Path $changelogPath)) {
@@ -49,7 +49,7 @@ function Update-PSUChangeLog {
             # Detect changed files
             Write-Verbose "Comparing changes between [$BaseBranch] and [$FeatureBranch]"
             $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only |
-                Where-Object { ($_ -replace '\\', '/') -match "$ModuleName/(Public|Private)/.*\.ps1$" }
+            Where-Object { ($_ -replace '\\', '/') -match "$ModuleName/(Public|Private)/.*\.ps1$" }
 
             if (-not $files) {
                 Write-Warning "No .ps1 file changes detected between $BaseBranch and $FeatureBranch."
@@ -66,7 +66,7 @@ function Update-PSUChangeLog {
 
             # Build prompt for AI
 
-    $prompt = @"
+            $prompt = @"
 You are a master in reviewing and analyzing git logs.
 
 Strictly follow the output rules below:
@@ -138,14 +138,18 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                 Write-Verbose "Fetching module metadata..."
                 $psd1Path = Get-PSUModule -ScriptPath $changelogPath | Select-Object -ExpandProperty ManifestPath
                 $psDataFile = Import-PowerShellDataFile -Path $psd1Path
+                $currentChangelog = (Get-Content -Path $changelogPath -Raw).Trim()
 
-                $entry = "## [$($psDataFile.ModuleVersion)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
-                $currentChangelog = Get-Content -Path $changelogPath -Raw
+                if ($currentChangelog.StartsWith("## [$($psDataFile.ModuleVersion)]")) {
+                    Write-Host "Already found existing changelog entry for version $($psDataFile.ModuleVersion)" -ForegroundColor Green
+                } else {
 
-                $newChangelog = $entry + $currentChangelog
-                Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8
+                    $entry = "## [$($psDataFile.ModuleVersion)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
+                    $newChangelog = $entry + $currentChangelog
+                    Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8
 
-                Write-Host "CHANGELOG.md updated successfully for $ModuleName." -ForegroundColor Green
+                    Write-Host "CHANGELOG.md updated successfully for $ModuleName." -ForegroundColor Green
+                }
             }
         }
         catch {
