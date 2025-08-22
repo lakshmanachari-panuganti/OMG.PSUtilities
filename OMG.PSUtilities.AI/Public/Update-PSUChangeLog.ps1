@@ -64,7 +64,7 @@ function Update-PSUChangeLog {
                 Write-Verbose "Processing diff for file: $file"
                 [PSCustomObject]@{
                     FileName    = $file
-                    DiffContent = (git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" -- "$file")
+                    DiffContent = (git -C $RootPath diff "$($BaseBranch)...$($FeatureBranch)" -- "$file")
                 }
             }
 
