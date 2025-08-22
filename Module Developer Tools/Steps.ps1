@@ -44,8 +44,17 @@ Test-PSUCommentBasedHelp -ModulePath $env:BASE_MODULE_PATH | Where-Object { $_.H
     Write-Host ""
 }
 
+function omgmod {
+    Get-ChildItem -Path $env:BASE_MODULE_PATH -Directory | Where-Object {$_.Name -like "$($env:BASE_MODULE_PATH.Split('\')[-1])*"} | ForEach-Object{
+        [PSCustomobject] @{
+            ModuleName = $_.Name
+            Path = $_.FullName
+        }
+    }
+}
+
 # Build Module locally with Reset-OMGModuleManifests (Reset-OMGModuleManifests is built in Build-OMGModuleLocally)
-Get-OMGModules | Build-OMGModuleLocally -SkipScriptAnalyzer
+omgmod | Build-OMGModuleLocally -SkipScriptAnalyzer
 # NOTE: Increment of the module version is required when it is publishing to PSGallery!
 
 function omgpublishmodule {
@@ -64,15 +73,15 @@ function omgpublishmodule {
     if ($publishModule -eq 'Y') {
         $ModulesUpdated | ForEach-Object { 
             $module = "$env:BASE_MODULE_PATH\$_"
-            try{
-                Publish-Module -Name $module -NuGetApiKey $env:apikey -Verbose -ErrorAction Stop
+            try {
+                Publish-Module -Name $module -NuGetApiKey $env:apikey -ErrorAction Stop
                 Write-Host "$module : Published successfully." -ForegroundColor Green
-            } Catch{
+            }
+            Catch {
                 $Exception = $_.Exception.Message
-                if($Exception -like "* current version * is already available in the repository *"){
+                if ($Exception -like "* current version * is already available in the repository *") {
                     Write-Host "$module : The current version is already available in the repository." -ForegroundColor Green
-                }
-                else {
+                } else {
                     Write-Error "Failed to publish $module : $Exception"
                 }
             }
@@ -81,22 +90,20 @@ function omgpublishmodule {
 }
 
 function omgupdatemodule {
-    Get-OMGModules | ForEach-Object {
+    omgmod | ForEach-Object {
         try {
             Update-Module -Name $_.ModuleName -Verbose -Force
-        }
-        catch {
+        } catch {
             Write-Warning "Failed to update module $($_.ModuleName): $_"
         }
     }
 }
 
 function omgbuildmodule {
-    Get-OMGModules | ForEach-Object {
+    omgmod | ForEach-Object {
         try {
             Build-OMGModuleLocally -ModuleName $_.ModuleName -SkipScriptAnalyzer -Verbose
-        }
-        catch {
+        } catch {
             Write-Warning "Failed to build module $($_.ModuleName): $_"
         }
     }

@@ -23,12 +23,3 @@ if ($null -eq $env:BASE_MODULE_PATH) {
     Write-Host '$env:BASE_MODULE_PATH ' -NoNewline -ForegroundColor Green
     Write-Host "is already set to: $env:BASE_MODULE_PATH" -ForegroundColor Green
 }
-
-function Get-OMGModules {
-    Get-ChildItem -Path $env:BASE_MODULE_PATH -Directory | Where-Object {$_.Name -like "$($env:BASE_MODULE_PATH.Split('\')[-1])*"} | ForEach-Object{
-        [PSCustomobject] @{
-            ModuleName = $_.Name
-            Path = $_.FullName
-        }
-    }
-}
