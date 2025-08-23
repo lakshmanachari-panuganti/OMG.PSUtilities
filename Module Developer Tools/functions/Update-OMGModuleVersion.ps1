@@ -1,7 +1,8 @@
 function Update-OMGModuleVersion {
     [CmdletBinding()]
     param (
-        [Parameter(Mandatory = $true,
+        [Parameter(Mandatory,
+            ValueFromPipeline,
             ValueFromPipelineByPropertyName)]
         [string]$ModuleName,
 

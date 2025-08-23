@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AI.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.9'
+ModuleVersion = '1.0.10'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -70,7 +70,18 @@ RequiredModules = @('OMG.PSUtilities.Core')
 # NestedModules = @()
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @('Get-PSUAiPoweredGitChangeSummary', 'Invoke-PSUGitCommit', 'Invoke-PSUPromptOnAzureOpenAi', 'Invoke-PSUPromptOnGeminiAi', 'Invoke-PSUPromptOnPerplexityAi', 'New-PSUAiPoweredPullRequest', 'Start-PSUGeminiChat', 'Update-PSUChangeLog', 'Update-PSUReadMe')
+FunctionsToExport = @(
+    'Get-PSUAiPoweredGitChangeSummary',
+    'Invoke-PSUAiPrompt',
+    'Invoke-PSUGitCommit',
+    'Invoke-PSUPromptOnAzureOpenAi',
+    'Invoke-PSUPromptOnGeminiAi',
+    'Invoke-PSUPromptOnPerplexityAi',
+    'New-PSUAiPoweredPullRequest',
+    'Set-PSUDefaultAiEngine',
+    'Start-PSUGeminiChat',
+    'Update-PSUChangeLog'
+)
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
 CmdletsToExport = @()
@@ -79,7 +90,11 @@ CmdletsToExport = @()
 VariablesToExport = @()
 
 # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @('aigitcommit', 'Ask-Ai')
+AliasesToExport = @(
+    'aichangelog',
+    'aigitcommit',
+    'Ask-Ai'
+)
 
 # DSC resources to export from this module
 # DscResourcesToExport = @()
@@ -130,4 +145,3 @@ PrivateData = @{
 # DefaultCommandPrefix = ''
 
 }
-
