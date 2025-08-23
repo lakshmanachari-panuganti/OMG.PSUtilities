@@ -7,7 +7,7 @@ function ConvertTo-QuotedArrayString {
     .DESCRIPTION
         This function takes a string array and converts it into a string representation of a PowerShell array.
         Each item is wrapped in single quotes and placed on a new line with indentation inside an `@()` block.
-        Useful for generating reusable code or documentation examples.
+        Useful for exporting function names in PowerShell Modules or generating reusable code or documentation examples.
 
     .PARAMETER InputArray
         The array of strings to convert.
@@ -17,8 +17,28 @@ function ConvertTo-QuotedArrayString {
 
         Output:
         @(
-            'Apple'
-            'Banana'
+            'Apple',
+            'Banana',
+            'Cherry'
+        )
+    
+    .EXAMPLE
+        ConvertTo-QuotedArrayString -InputArray @('Apple', 'Banana', 'Cherry')
+
+        Output:
+        @(
+            'Apple',
+            'Banana',
+            'Cherry'
+        )
+
+    .EXAMPLE
+        ConvertTo-QuotedArrayString @('Apple', 'Banana', 'Cherry')
+
+        Output:
+        @(
+            'Apple',
+            'Banana',
             'Cherry'
         )
     #>
