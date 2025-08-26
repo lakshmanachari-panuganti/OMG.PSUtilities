@@ -1,4 +1,3 @@
-
 function ConvertTo-QuotedArrayString {
     <#
     .SYNOPSIS
