@@ -47,10 +47,19 @@ function Get-PSUADOProjectList {
 
         try {
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -ErrorAction Stop
-            if ($response.value) {
-                ConvertTo-CapitalizedObject -InputObject $response.value
+            $response.value | ForEach-Object {
+                [PSCustomObject]@{
+                    Name           = $_.name
+                    Id             = $_.id
+                    Description    = $_.description
+                    Url            = $_.url
+                    State          = $_.state
+                    Revision       = $_.revision
+                    Visibility     = $_.visibility
+                    LastUpdateTime = $_.lastUpdateTime
+                    PSTypeName     = 'PSU.ADO.Project'
+                }
             }
-
         }
         catch {
             $PSCmdlet.ThrowTerminatingError($_)
