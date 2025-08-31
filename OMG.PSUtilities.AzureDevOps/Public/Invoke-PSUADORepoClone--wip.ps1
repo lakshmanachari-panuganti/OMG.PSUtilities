@@ -5,8 +5,9 @@ function Invoke-PSUADORepoClone {
 
     .DESCRIPTION
         Clones all repositories from a specified Azure DevOps project using the Git CLI. The function will attempt to auto-detect
-        the Organization from the current repository's remote (origin) or environment variables. Authentication uses a Personal 
-        Access Token (PAT) via the $env:PAT environment variable or the -PAT parameter.
+        the Organization from the current repository's remote (origin) or environment variables. Authentication uses a Personal
+        Access Token (PAT) via the $env:PAT environment variable or the -PAT parameter. When a PAT is supplied, the function will
+        create an authenticated HTTPS clone URL for each repository. If no PAT is supplied, it uses the repo's remoteUrl.
 
         This helper is intended for automation scripts and CI tasks where bulk cloning of project repositories is required.
 
@@ -16,34 +17,34 @@ function Invoke-PSUADORepoClone {
     .PARAMETER Project
         (Mandatory) The Azure DevOps project name containing repositories to clone.
 
-    .PARAMETER Repository
-        (Optional) The repository name. Auto-detected from git remote origin URL.
-
     .PARAMETER TargetPath
         (Mandatory) Local folder to clone into. Will create a subdirectory named "{Project}-Repos" under this path.
 
     .PARAMETER PAT
         (Optional) Personal Access Token used for HTTPS authentication. Default is $env:PAT. Do NOT hardcode secrets.
 
+    .PARAMETER RepositoryFilter
+        (Optional) Wildcard pattern to filter repository names to clone, e.g. 'API-*'.
+
     .PARAMETER Force
         (Optional) Switch to remove existing target folder before cloning.
 
     .EXAMPLE
-        Invoke-PSUADORepoClone -Organization "myorg" -Project "MyProject" -TargetPath "C:\repos"
+        Invoke-PSUADORepoClone -Organization "myorg" -Project "MyProject" -TargetPath "C:\repos" -PAT $env:PAT
 
-        Clones all repositories from MyProject into C:\repos\MyProject-Repos folder.
+        Clones all repositories from MyProject into C:\repos\MyProject-Repos folder using PAT for authentication.
 
     .EXAMPLE
-        Invoke-PSUADORepoClone -Project "MyProject" -TargetPath "D:\code"
+        Invoke-PSUADORepoClone -Project "MyProject" -TargetPath "D:\code" -RepositoryFilter 'API-*'
 
-        Auto-detects organization and clones all repositories from MyProject into D:\code\MyProject-Repos.
+        Auto-detects organization and clones only repositories matching the filter into D:\code\MyProject-Repos.
 
     .OUTPUTS
         [PSCustomObject]
 
     .NOTES
-        Author: Lakshmanachari Panuganti
-        Date: 26th August 2025
+        Author: Refactor by assistant per OMG.PSUtilities.StyleGuide.md
+        Date: 28th August 2025
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
@@ -57,140 +58,108 @@ function Invoke-PSUADORepoClone {
     param (
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $(if ($env:ORGANIZATION) { $env:ORGANIZATION } else {
-            git remote get-url origin 2>$null | ForEach-Object {
-                if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
-            }
-        }),
+        [string]$Organization = $env:ORGANIZATION,
+        
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Project,
 
-        [Parameter(mandatory)]
-        [String]$Project,
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({
+            if (Test-Path $_) {
+                if (-not (Get-Item $_).PSIsContainer) { throw "TargetPath '$_' exists but is not a directory." }
+                return $true
+            }
+            $parent = Split-Path $_ -Parent
+            if (-not $parent) { throw "TargetPath '$_' is not a valid path." }
+            if (-not (Test-Path $parent)) { throw "Parent directory '$parent' does not exist. Create it first or provide a different TargetPath." }
+            try { $tmp = Join-Path $parent ([System.IO.Path]::GetRandomFileName()); New-Item -Path $tmp -ItemType File -Force | Out-Null; Remove-Item -Path $tmp -Force; return $true } catch { throw "Cannot write to parent directory '$parent'. Check permissions." }
+        })]
+        [string]$TargetPath,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [String]$Repository,
+        [string]$PAT = $env:PAT,
 
-    [Parameter(Mandatory)]
-    [ValidateNotNullOrEmpty()]
-    [ValidateScript({
-        if (Test-Path $_) {
-            if (-not (Get-Item $_).PSIsContainer) {
-                throw "TargetPath '$_' exists but is not a directory."
-            }
-        } else{
-            throw "TargetPath '$_' does not exist. Please provide a valid path."
-        }
-        $true
-    })]
-    [string]$TargetPath,
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepositoryFilter,
 
-    [Parameter()]
-    [ValidateNotNullOrEmpty()]
-    [string]$PAT = $env:PAT,
-
-    [Parameter()]
-    [switch]$Force
+        [Parameter()]
+        [switch]$Force
     )
 
-process {
-    try {
-        if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
-            throw "Git CLI not found. Please install Git and ensure it's available in PATH."
-        }
+    process {
+        $projectFolder = $null
+        try {
+            if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw 'Git CLI not found. Please install Git and ensure it is available in PATH.' }
+            if (-not $Organization) { throw "Organization not provided and could not be auto-detected. Set -Organization or set env var ORGANIZATION." }
 
-        if (-not $Organization) {
-            throw "Organization not provided and could not be auto-detected. Set -Organization or set env var ORGANIZATION."
-        }
+            # Get auth header for REST calls
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT
 
-        if (-not $PAT) {
-            throw "PAT token required to list projects and repositories. Set -PAT or env var PAT."
-        }
+            # Resolve project by name to get ID (avoids issues with spaces)
+            $projUri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
+            $projectsResp = Invoke-RestMethod -Uri $projUri -Headers $headers -Method Get -ErrorAction Stop
+            $projectObj = $projectsResp.value | Where-Object { $_.name -eq $Project }
+            if (-not $projectObj) { throw "Project '$Project' not found in organization '$Organization'." }
+            $projectId = $projectObj.id
 
-        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
+            # Fetch repositories via project ID
+            $repoUri = "https://dev.azure.com/$Organization/$projectId/_apis/git/repositories?api-version=7.1-preview.1"
+            Write-Host "Fetching repositories from project '$Project' (ID: $projectId) in organization '$Organization'..." -ForegroundColor Cyan
+            $repoResp = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get -ErrorAction Stop
+            if (-not $repoResp.value -or $repoResp.count -eq 0) { Write-Host 'No repositories found.' -ForegroundColor Yellow; return }
 
-        # Get project info (to get project ID)
-        $projUri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
-        $projectsResponse = Invoke-RestMethod -Uri $projUri -Headers @{ Authorization = "Basic $base64AuthInfo" } -Method Get -ErrorAction Stop
-        $projectObj = $projectsResponse.value | Where-Object { $_.name -eq $Project }
+            # Apply optional filter
+            $repos = if ($RepositoryFilter) { $repoResp.value | Where-Object { $_.name -like $RepositoryFilter } } else { $repoResp.value }
+            if (-not $repos) { Write-Host 'No repositories match the filter.' -ForegroundColor Yellow; return }
 
-        if (-not $projectObj) {
-            throw "Project '$Project' not found in organization '$Organization'."
-        }
-
-        $projectId = $projectObj.id
-
-        # Now get repos (use project ID in the URL)
-        $repoUri = "https://dev.azure.com/$Organization/$projectId/_apis/git/repositories?api-version=7.1-preview.1"
-        Write-Host "Fetching repositories from project '$Project' (ID: $projectId) in organization '$Organization'..." -ForegroundColor Cyan
-        $response = Invoke-RestMethod -Uri $repoUri -Headers @{ Authorization = "Basic $base64AuthInfo" } -Method Get -ErrorAction Stop
-
-        if (-not $response.value -or $response.count -eq 0) {
-            Write-Host "No repositories found." -ForegroundColor Yellow
-            return
-        }
-
-        $projectFolder = Join-Path -Path $TargetPath -ChildPath "$Project-Repos"
-
-        if (Test-Path $projectFolder) {
-            if ($Force) {
-                Write-Host "Removing existing folder: $projectFolder" -ForegroundColor Yellow
-                Remove-Item -LiteralPath $projectFolder -Recurse -Force -ErrorAction Stop
+            # Prepare target folder
+            $projectFolder = Join-Path -Path $TargetPath -ChildPath "$Project-Repos"
+            if (Test-Path $projectFolder) {
+                if ($Force) { Write-Host "Removing existing folder: $projectFolder" -ForegroundColor Yellow; Remove-Item -LiteralPath $projectFolder -Recurse -Force -ErrorAction Stop }
+                else { throw "Target path '$projectFolder' already exists. Use -Force to remove it." }
             }
-            else {
-                throw "Target path '$projectFolder' already exists. Use -Force to remove it."
-            }
-        }
+            New-Item -ItemType Directory -Path $projectFolder -Force | Out-Null
 
-        New-Item -ItemType Directory -Path $projectFolder -Force | Out-Null
+            Push-Location $projectFolder
+            $cloned = [System.Collections.Generic.List[object]]::new()
 
-        Push-Location $projectFolder
-        $cloned = @()
+            foreach ($repo in $repos) {
+                $repoName = $repo.name
+                $cloneUrl = $repo.remoteUrl
 
-        foreach ($repo in $response.value) {
-            $repoName = $repo.name
+                Write-Host "`nCloning $repoName..." -ForegroundColor Green
+                $result = & git clone $cloneUrl 2>&1
+                if ($LASTEXITCODE -ne 0) {
+                    Write-Warning "git clone failed for $repoName (exit code $LASTEXITCODE): $result"
+                    continue
+                }
 
-            # Construct HTTPS clone URL using project ID to avoid spaces
-            # Format: https://{org}@dev.azure.com/{org}/{projectId}/_git/{repo}
-            $baseCloneUrl = "https://$Organization@dev.azure.com/$Organization/$projectId/_git/$repoName"
-
-            # Embed PAT token safely (escaped)
-            $escapedPAT = [uri]::EscapeDataString($PAT)
-            $authCloneUrl = $baseCloneUrl -replace '^https://', "https://:$escapedPAT@"
-
-            Write-Host "`nCloning $repoName using HTTPS with PAT..." -ForegroundColor Green
-
-            $gitArgs = @('clone', $authCloneUrl)
-
-            & git @gitArgs
-            if ($LASTEXITCODE -ne 0) {
-                Write-Warning "git clone failed for $repoName (exit code $LASTEXITCODE)"
-                continue
+                $cloned.Add([PSCustomObject]@{
+                    Name = $repoName
+                    RemoteUrl = $cloneUrl
+                    Path = (Join-Path -Path $projectFolder -ChildPath $repoName)
+                    PSTypeName = 'PSU.ADO.ClonedRepo'
+                })
             }
 
-            $cloned += [PSCustomObject]@{
-                Name = $repoName
-                CloneUrl = $authCloneUrl
-                Path = (Join-Path -Path $projectFolder -ChildPath $repoName)
-                PSTypeName = 'PSU.ADO.ClonedRepo'
+            Pop-Location
+
+            return [PSCustomObject]@{
+                Organization = $Organization
+                Project = $Project
+                ClonedCount = $cloned.Count
+                Cloned = $cloned
+                Path = $projectFolder
+                PSTypeName = 'PSU.ADO.RepoCloneSummary'
             }
         }
-
-        Pop-Location
-
-        [PSCustomObject]@{
-            Organization = $Organization
-            Project = $Project
-            ClonedCount = $cloned.Count
-            Cloned = $cloned
-            Path = $projectFolder
-            PSTypeName = 'PSU.ADO.RepoCloneSummary'
+        catch {
+            if ($projectFolder -and (Get-Location).Path -like "$projectFolder*") { Pop-Location }
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
-    catch {
-        if ((Get-Location).Path -like "$projectFolder*") { Pop-Location }
-        $PSCmdlet.ThrowTerminatingError($_)
-    }
-}
-
-
 }

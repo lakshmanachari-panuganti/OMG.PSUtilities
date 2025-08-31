@@ -18,7 +18,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name
 
 # Export public functions
 $PublicFunctions = @(
-    'Get-PSUAzAccountAccessInSubscriptions',
+    'Get-PSUAzSubscriptionRoleAssignments',
     'Get-PSUAzToken',
     'Get-PSUk8sPodLabel',
     'Test-PSUAzConnection'
