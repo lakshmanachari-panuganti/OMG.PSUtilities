@@ -117,24 +117,27 @@ function Invoke-PSUADORepoClone {
             if (-not $repos) { Write-Host 'No repositories match the filter.' -ForegroundColor Yellow; return }
 
             # Prepare target folder
-            $projectFolder = Join-Path -Path $TargetPath -ChildPath "$Project-Repos"
+            $projectFolder = Join-Path -Path $TargetPath -ChildPath "$Project"
             if (Test-Path $projectFolder) {
                 if ($Force) { Write-Host "Removing existing folder: $projectFolder" -ForegroundColor Yellow; Remove-Item -LiteralPath $projectFolder -Recurse -Force -ErrorAction Stop }
                 else { throw "Target path '$projectFolder' already exists. Use -Force to remove it." }
             }
             New-Item -ItemType Directory -Path $projectFolder -Force | Out-Null
 
-            Push-Location $projectFolder
+            Set-Location -Path $projectFolder
             $cloned = [System.Collections.Generic.List[object]]::new()
 
             foreach ($repo in $repos) {
                 $repoName = $repo.name
                 $cloneUrl = $repo.remoteUrl
-
-                Write-Host "`nCloning $repoName..." -ForegroundColor Green
+                if ($repo.isDisabled) {
+                    Write-Warning "   Skipping disabled repository '$repoName'."
+                    continue
+                }
+                Write-Host "   Attempting to clone the repo: $repoName..." -ForegroundColor Green
                 $result = & git clone $cloneUrl 2>&1
                 if ($LASTEXITCODE -ne 0) {
-                    Write-Warning "git clone failed for $repoName (exit code $LASTEXITCODE): $result"
+                    Write-Warning "   Failed to clone repository '$repoName' with ExitCode: $LASTEXITCODE. `nGit output: $result"
                     continue
                 }
 
@@ -146,7 +149,7 @@ function Invoke-PSUADORepoClone {
                 })
             }
 
-            Pop-Location
+            Set-Location -Path $TargetPath
 
             return [PSCustomObject]@{
                 Organization = $Organization
@@ -158,7 +161,7 @@ function Invoke-PSUADORepoClone {
             }
         }
         catch {
-            if ($projectFolder -and (Get-Location).Path -like "$projectFolder*") { Pop-Location }
+            Set-Location -Path $TargetPath
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

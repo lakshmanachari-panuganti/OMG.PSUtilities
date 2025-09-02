@@ -84,6 +84,7 @@ FunctionsToExport = @(
     'Get-PSUADORepoBranchList',
     'Get-PSUADORepositories',
     'Get-PSUADOVariableGroupInventory',
+    'Invoke-PSUADORepoClone',
     'New-PSUADOBug',
     'New-PSUADOPullRequest',
     'New-PSUADOSpike',
