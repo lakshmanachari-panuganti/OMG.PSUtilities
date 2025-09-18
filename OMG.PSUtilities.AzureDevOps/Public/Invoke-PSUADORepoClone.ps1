@@ -67,15 +67,15 @@ function Invoke-PSUADORepoClone {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript({
-            if (Test-Path $_) {
-                if (-not (Get-Item $_).PSIsContainer) { throw "TargetPath '$_' exists but is not a directory." }
-                return $true
-            }
-            $parent = Split-Path $_ -Parent
-            if (-not $parent) { throw "TargetPath '$_' is not a valid path." }
-            if (-not (Test-Path $parent)) { throw "Parent directory '$parent' does not exist. Create it first or provide a different TargetPath." }
-            try { $tmp = Join-Path $parent ([System.IO.Path]::GetRandomFileName()); New-Item -Path $tmp -ItemType File -Force | Out-Null; Remove-Item -Path $tmp -Force; return $true } catch { throw "Cannot write to parent directory '$parent'. Check permissions." }
-        })]
+                if (Test-Path $_) {
+                    if (-not (Get-Item $_).PSIsContainer) { throw "TargetPath '$_' exists but is not a directory." }
+                    return $true
+                }
+                $parent = Split-Path $_ -Parent
+                if (-not $parent) { throw "TargetPath '$_' is not a valid path." }
+                if (-not (Test-Path $parent)) { throw "Parent directory '$parent' does not exist. Create it first or provide a different TargetPath." }
+                try { $tmp = Join-Path $parent ([System.IO.Path]::GetRandomFileName()); New-Item -Path $tmp -ItemType File -Force | Out-Null; Remove-Item -Path $tmp -Force; return $true } catch { throw "Cannot write to parent directory '$parent'. Check permissions." }
+            })]
         [string]$TargetPath,
 
         [Parameter()]
@@ -91,78 +91,111 @@ function Invoke-PSUADORepoClone {
     )
 
     process {
-        $projectFolder = $null
+        $repoResults = @()
+        Set-Location $TargetPath
+        Write-Host "Setting the target path: $TargetPath"
+
         try {
-            if (-not (Get-Command git -ErrorAction SilentlyContinue)) { throw 'Git CLI not found. Please install Git and ensure it is available in PATH.' }
-            if (-not $Organization) { throw "Organization not provided and could not be auto-detected. Set -Organization or set env var ORGANIZATION." }
+            if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
+                throw 'Git CLI not found. Please install Git and ensure it is available in PATH.'
+            }
 
-            # Get auth header for REST calls
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT -ErrorAction Stop
 
-            # Resolve project by name to get ID (avoids issues with spaces)
+            # Get Project ID
             $projUri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
             $projectsResp = Invoke-RestMethod -Uri $projUri -Headers $headers -Method Get -ErrorAction Stop
             $projectObj = $projectsResp.value | Where-Object { $_.name -eq $Project }
-            if (-not $projectObj) { throw "Project '$Project' not found in organization '$Organization'." }
+
+            if (-not $projectObj) {
+                throw "Project '$Project' not found in organization '$Organization'."
+            }
+
             $projectId = $projectObj.id
 
-            # Fetch repositories via project ID
+            # Get repositories
             $repoUri = "https://dev.azure.com/$Organization/$projectId/_apis/git/repositories?api-version=7.1-preview.1"
-            Write-Host "Fetching repositories from project '$Project' (ID: $projectId) in organization '$Organization'..." -ForegroundColor Cyan
+            Write-Host "Processing the project: '$Project'..." -ForegroundColor Cyan
             $repoResp = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get -ErrorAction Stop
-            if (-not $repoResp.value -or $repoResp.count -eq 0) { Write-Host 'No repositories found.' -ForegroundColor Yellow; return }
+            $allRepos = $repoResp.value
 
-            # Apply optional filter
-            $repos = if ($RepositoryFilter) { $repoResp.value | Where-Object { $_.name -like $RepositoryFilter } } else { $repoResp.value }
-            if (-not $repos) { Write-Host 'No repositories match the filter.' -ForegroundColor Yellow; return }
+            if (-not $allRepos -or $allRepos.Count -eq 0) {
+                throw 'No repositories found in the project.'
+            }
+
+            # Apply filter if needed
+            $repos = if ($RepositoryFilter) {
+                $allRepos | Where-Object { $_.name -like $RepositoryFilter }
+            }
+            else {
+                $allRepos
+            }
+
+            if (-not $repos) {
+                throw "No repositories match the filter '$RepositoryFilter'."
+            }
 
             # Prepare target folder
             $projectFolder = Join-Path -Path $TargetPath -ChildPath "$Project"
             if (Test-Path $projectFolder) {
-                if ($Force) { Write-Host "Removing existing folder: $projectFolder" -ForegroundColor Yellow; Remove-Item -LiteralPath $projectFolder -Recurse -Force -ErrorAction Stop }
-                else { throw "Target path '$projectFolder' already exists. Use -Force to remove it." }
+                if ($Force) {
+                    Remove-Item -LiteralPath $projectFolder -Recurse -Force -ErrorAction Stop
+                }
+                else {
+                    throw "Target path '$projectFolder' already exists. Use -Force to remove it."
+                }
             }
             New-Item -ItemType Directory -Path $projectFolder -Force | Out-Null
 
-            Set-Location -Path $projectFolder
-            $cloned = [System.Collections.Generic.List[object]]::new()
-
+            # Clone or skip each repo
             foreach ($repo in $repos) {
                 $repoName = $repo.name
                 $cloneUrl = $repo.remoteUrl
+                $clonedPath = Join-Path -Path $projectFolder -ChildPath $repoName
+                $isCloned = $false
+                $errorMsg = $null
+
                 if ($repo.isDisabled) {
-                    Write-Warning "   Skipping disabled repository '$repoName'."
-                    continue
+                    $errorMsg = "Repo disabled"
                 }
-                Write-Host "   Attempting to clone the repo: $repoName..." -ForegroundColor Green
-                $result = & git clone $cloneUrl 2>&1
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Warning "   Failed to clone repository '$repoName' with ExitCode: $LASTEXITCODE. `nGit output: $result"
-                    continue
+                else {
+                    Write-Host "Cloning $repoName..." -ForegroundColor Green
+                    Set-Location $projectFolder
+                    $gitOutput = & git clone $cloneUrl 2>&1
+                    if ($LASTEXITCODE -eq 0) {
+                        $isCloned = $true
+                    }
+                    else {
+                        $errorMsg = "Git clone failed. Output: $gitOutput"
+                        $clonedPath = $null
+                    }
                 }
 
-                $cloned.Add([PSCustomObject]@{
-                    Name = $repoName
-                    RemoteUrl = $cloneUrl
-                    Path = (Join-Path -Path $projectFolder -ChildPath $repoName)
-                    PSTypeName = 'PSU.ADO.ClonedRepo'
-                })
+                $repoResults += [PSCustomObject]@{
+                    Organization = $Organization
+                    Project      = $Project
+                    Repository   = $repoName
+                    isCloned     = $isCloned
+                    PathCloned   = $clonedPath
+                    Error        = $errorMsg
+                    PSTypeName   = 'PSU.ADO.RepoCloneSummary'
+                }
             }
 
-            Set-Location -Path $TargetPath
-
-            return [PSCustomObject]@{
-                Organization = $Organization
-                Project = $Project
-                ClonedCount = $cloned.Count
-                Cloned = $cloned
-                Path = $projectFolder
-                PSTypeName = 'PSU.ADO.RepoCloneSummary'
-            }
+            return $repoResults
         }
         catch {
-            Set-Location -Path $TargetPath
-            $PSCmdlet.ThrowTerminatingError($_)
+            $repoResults += [PSCustomObject]@{
+                Organization = $Organization
+                Project      = $Project
+                Repository   = $null
+                isCloned     = $false
+                PathCloned   = $null
+                Error        = $_.Exception.Message
+                PSTypeName   = 'PSU.ADO.RepoCloneSummary'
+            }
+
+            return $repoResults
         }
     }
 }

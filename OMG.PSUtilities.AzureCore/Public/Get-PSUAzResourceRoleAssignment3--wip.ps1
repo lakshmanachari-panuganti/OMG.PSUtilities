@@ -109,13 +109,13 @@ foreach ($subscription in $subscriptionList) {
                         RoleDefinitionName   = $roleAssignment.RoleDefinitionName
                     }
                 }
-                
+
                 $resTypeShort = ($azResource.ResourceType) -split '/' | Select-Object -Last 1
                 $filename = "$($azResource.Name)" -replace '\\', '.'
                 # Replace all non-standard filename characters with '-'
                 $filename = $filename -replace '[^a-zA-Z0-9\-]', '-'
                 $filename = "$($azResource.ResourceGroupName).$resTypeShort.$filename"
-                $resourceData | ConvertTo-Json -Depth 10 | Out-File -FilePath (Join-Path -Path $RoleAssignmentDirectory -ChildPath "$filename.json") -Append -Encoding UTF8NoBOM
+                $resourceData | ConvertTo-Json -Depth 10 | Out-File -FilePath (Join-Path -Path $RoleAssignmentDirectory -ChildPath "$filename.json") -Encoding UTF8NoBOM
             }
         }
         catch {
@@ -125,24 +125,38 @@ foreach ($subscription in $subscriptionList) {
     } -ThrottleLimit $ThrottleLimit
 }
 
-# Final result should be calculated based on all the output files created $outputDirectory
-$finalResult = @()
-$outputFiles = Get-ChildItem -Path $outputDirectory -Filter "*.json" -Recurse
-foreach ($outputFile in $outputFiles) {
-    $finalResult += Get-Content -Path $outputFile.FullName | ConvertFrom-Json
-}
+$subscriptions = Get-Childitem $outputDirectory -Directory
 
-$endTime = Get-Date
-$duration = $endTime - $startTime
-    
-if ($finalResult.Count -gt 0) {
-    $finalResult | Sort-Object ResourceGroup, ResourceType, ResourceName | 
-    Export-PSUExcel -ExcelPath "C:\Temp\RoleAssignments.xlsx" -WorksheetName $subscription.Name
-    Write-Host "Exported $($finalResult.Count) role assignments for subscription: $($subscription.Name) in $($duration.TotalMinutes.ToString('F2')) minutes"
-}
-else {
-    Write-Host "No role assignments found for subscription: $($subscription.Name)"
-}
+foreach ($subscription in $subscriptions) {
+    $SubscriptionName = $subscription.Name
+    $fullname = $subscription.FullName
+    $subscriptionFiles = Get-ChildItem -Path $fullname -File -Filter "*.json"
 
-Write-Progress -Activity "Processing Subscriptions" -Completed
-Write-Host "Script completed successfully!"
+    $roleAssignmentsInfo = [System.Collections.Generic.List[object]]::new()
+
+    foreach ($file in $subscriptionFiles) {
+        try {
+            # Read entire file as a single string and parse it directly
+            $jsonContent = Get-Content -Path $file.FullName -Raw
+            $jsonObjects = $jsonContent | ConvertFrom-Json -Depth 10
+
+            # Handle case where the JSON is either an object or an array
+            if ($jsonObjects -is [System.Collections.IEnumerable]) {
+                foreach ($obj in $jsonObjects) {
+                    $roleAssignmentsInfo.Add($obj)
+                }
+            } else {
+                $roleAssignmentsInfo.Add($jsonObjects)
+            }
+        }
+        catch {
+            Write-Warning "Failed to process $($file.Name): $($_.Exception.Message)"
+        }
+    }
+
+    Write-Host "Processed $($roleAssignmentsInfo.Count) role assignments for subscription: $SubscriptionName" -NoNewline
+    $exportPath = Join-Path -Path $outputDirectory -ChildPath "RoleAssignments-$SubscriptionName.csv"
+    $roleAssignmentsInfo | Export-Csv -Path $exportPath -NoTypeInformation -Encoding UTF8
+
+    Write-Host " - Exported to worksheet $SubscriptionName" -ForegroundColor Green
+}
