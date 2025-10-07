@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AI.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.10'
+ModuleVersion = '1.0.11'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -78,6 +78,7 @@ FunctionsToExport = @(
     'Invoke-PSUPromptOnGeminiAi',
     'Invoke-PSUPromptOnPerplexityAi',
     'New-PSUAiPoweredPullRequest',
+    'Set-PSUAzureOpenAIEnvironment',
     'Set-PSUDefaultAiEngine',
     'Start-PSUGeminiChat',
     'Update-PSUChangeLog'
