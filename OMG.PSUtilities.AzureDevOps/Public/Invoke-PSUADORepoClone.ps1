@@ -43,7 +43,7 @@ function Invoke-PSUADORepoClone {
         [PSCustomObject]
 
     .NOTES
-        Author: Refactor by assistant per OMG.PSUtilities.StyleGuide.md
+        Author: Lakshmanachari Panuganti
         Date: 28th August 2025
 
     .LINK

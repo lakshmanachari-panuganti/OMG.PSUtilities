@@ -38,7 +38,8 @@ $PublicFunctions = @(
     'Send-PSUTeamsMessage',
     'Set-PSUUserEnvironmentVariable',
     'Test-PSUInternetConnection',
-    'Uninstall-PSUInstalledSoftware'
+    'Uninstall-PSUInstalledSoftware',
+    'Unlock-PSUTerraformStateAWS'
 )
 
 $AliasesToExport = @(
