@@ -21,7 +21,7 @@
 
 .PARAMETER Location
     Optional. Azure region for deployment. Default is 'eastus'. 
-    Available regions: eastus, eastus2, westus, westeurope, swedencentral, etc.
+    Available regions: eastus, eastus2.
 
 .PARAMETER OpenAIServiceName
     Optional. Name for the Azure OpenAI Service resource. Must be globally unique.
@@ -50,20 +50,19 @@
 .NOTES
     Author: Lakshmanachari Panuganti
     Date: October 7, 2025
-    
-    Required Azure Modules:
-    Install-Module -Name Az.Accounts -Force -AllowClobber
-    Install-Module -Name Az.Resources -Force -AllowClobber
-    Install-Module -Name Az.CognitiveServices -Force -AllowClobber
 
 .LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
     https://learn.microsoft.com/en-us/azure/ai-services/openai/
 #>
+param(
     [Parameter()]
     [string]$ResourceGroupName,
     
     [Parameter()]
-    [ValidateSet('eastus', 'eastus2', 'westus', 'westus2', 'westeurope', 'northeurope', 'swedencentral', 'switzerlandnorth', 'francecentral', 'uksouth', 'australiaeast', 'japaneast', 'canadaeast')]
+    [ValidateSet('eastus', 'eastus2', 'westus', 'westus2')]
     [string]$Location = 'eastus',
     
     [Parameter()]
@@ -74,7 +73,7 @@
     
     [Parameter()]
     [ValidateSet('gpt-4', 'gpt-35-turbo', 'gpt-4-turbo', 'gpt-4o')]
-    [string]$ModelName = 'gpt-4',
+    [string]$ModelName = 'gpt-4'
 )
 
 # Color output functions
@@ -151,12 +150,12 @@ $subscriptions = Get-AzSubscription
 if ($subscriptions.Count -gt 1) {
     Write-Host "`nAvailable Subscriptions:" -ForegroundColor Yellow
     for ($i = 0; $i -lt $subscriptions.Count; $i++) {
-        Write-Host "  [$i] $($subscriptions[$i].Name) ($($subscriptions[$i].Id))"
+        Write-Host "  [$($i + 1)] $($subscriptions[$i].Name) ($($subscriptions[$i].Id))"
     }
-    $selection = Read-Host "`nSelect subscription number [0-$($subscriptions.Count - 1)] or press Enter to use current"
+    $selection = Read-Host "`nSelect subscription number [1-$($subscriptions.Count)] or press Enter to use current"
     if ($selection -ne '') {
-        Set-AzContext -SubscriptionId $subscriptions[[int]$selection].Id | Out-Null
-        Write-Success "Switched to subscription: $($subscriptions[[int]$selection].Name)"
+        Set-AzContext -SubscriptionId $subscriptions[[int]$selection - 1].Id | Out-Null
+        Write-Success "Switched to subscription: $($subscriptions[[int]$selection - 1].Name)"
     }
 }
 
@@ -165,14 +164,14 @@ Write-Step "Resource Group Configuration"
 if (-not $ResourceGroupName) {
     $existingRGs = Get-AzResourceGroup
     Write-Host "`nOptions:" -ForegroundColor Yellow
-    Write-Host "  [0] Create new resource group"
+    Write-Host "  [1] Create new resource group"
     for ($i = 0; $i -lt $existingRGs.Count; $i++) {
-        Write-Host "  [$($i + 1)] Use existing: $($existingRGs[$i].ResourceGroupName) ($($existingRGs[$i].Location))"
+        Write-Host "  [$($i + 2)] Use existing: $($existingRGs[$i].ResourceGroupName) ($($existingRGs[$i].Location))"
     }
     
-    $rgSelection = Read-Host "`nSelect option [0-$($existingRGs.Count)]"
+    $rgSelection = Read-Host "`nSelect option [1-$($existingRGs.Count + 1)]"
     
-    if ($rgSelection -eq '0') {
+    if ($rgSelection -eq '1') {
         $ResourceGroupName = Read-Host "Enter new resource group name"
         $Location = Read-Host "Enter location (default: eastus)"
         if ([string]::IsNullOrWhiteSpace($Location)) { $Location = 'eastus' }
@@ -182,7 +181,7 @@ if (-not $ResourceGroupName) {
         Write-Success "Resource group created successfully"
     }
     else {
-        $selectedRG = $existingRGs[[int]$rgSelection - 1]
+        $selectedRG = $existingRGs[[int]$rgSelection - 2]
         $ResourceGroupName = $selectedRG.ResourceGroupName
         $Location = $selectedRG.Location
         Write-Success "Using existing resource group: $ResourceGroupName"
@@ -204,7 +203,7 @@ else {
 
 # Generate unique OpenAI Service name if not provided
 if (-not $OpenAIServiceName) {
-    $randomSuffix = -join ((97..122) | Get-Random -Count 6 | ForEach-Object { [char]$_ })
+    $randomSuffix = Get-Date -Format "yyMMddHHmm"
     $OpenAIServiceName = "omg-psutilities-$randomSuffix"
     Write-Info "Generated Azure OpenAI Service name: $OpenAIServiceName"
 }
@@ -212,7 +211,12 @@ if (-not $OpenAIServiceName) {
 # Create Azure OpenAI Service
 Write-Step "Creating Azure OpenAI Service: $OpenAIServiceName"
 try {
-    $openAIService = Get-AzCognitiveServicesAccount -ResourceGroupName $ResourceGroupName -Name $OpenAIServiceName -ErrorAction SilentlyContinue
+    $getAzCognitiveServicesParams = @{
+        ResourceGroupName = $ResourceGroupName
+        Name              = $OpenAIServiceName
+        ErrorAction       = 'SilentlyContinue'
+    }
+    $openAIService = Get-AzCognitiveServicesAccount @getAzCognitiveServicesParams
     
     if ($openAIService) {
         Write-Info "Azure OpenAI Service '$OpenAIServiceName' already exists"
@@ -220,13 +224,15 @@ try {
     else {
         Write-Info "Creating Azure OpenAI Service in $Location... (This may take 2-3 minutes)"
         
-        $openAIService = New-AzCognitiveServicesAccount `
-            -ResourceGroupName $ResourceGroupName `
-            -Name $OpenAIServiceName `
-            -Type "OpenAI" `
-            -SkuName "S0" `
-            -Location $Location `
-            -CustomSubdomainName $OpenAIServiceName
+        $newAzCognitiveServicesParams = @{
+            ResourceGroupName     = $ResourceGroupName
+            Name                  = $OpenAIServiceName
+            Type                  = "OpenAI"
+            SkuName              = "S0"
+            Location             = $Location
+            CustomSubdomainName  = $OpenAIServiceName
+        }
+        $openAIService = New-AzCognitiveServicesAccount @newAzCognitiveServicesParams
         
         Write-Success "Azure OpenAI Service created successfully"
     }
@@ -265,35 +271,63 @@ try {
     else {
         Write-Info "Creating deployment... (This may take 1-2 minutes)"
         
-        # Model version mapping
+        # Model version mapping - using latest non-deprecated versions
         $modelVersion = switch ($ModelName) {
-            'gpt-4' { '0613' }
-            'gpt-4-turbo' { '2024-04-09' }
-            'gpt-4o' { '2024-05-13' }
-            'gpt-35-turbo' { '0613' }
-            default { '0613' }
+            'gpt-4' { 'turbo-2024-04-09' }  # Latest GPT-4 Turbo version
+            'gpt-4-turbo' { 'turbo-2024-04-09' }
+            'gpt-4o' { '2024-08-06' }  # Latest GPT-4o version
+            'gpt-35-turbo' { '0125' }  # Latest GPT-3.5 Turbo version
+            default { 'turbo-2024-04-09' }
         }
         
-        az cognitiveservices account deployment create `
+        # Adjust model name for newer versions
+        $actualModelName = switch ($ModelName) {
+            'gpt-4' { 'gpt-4' }
+            'gpt-4-turbo' { 'gpt-4' }
+            'gpt-4o' { 'gpt-4o' }
+            'gpt-35-turbo' { 'gpt-35-turbo' }
+            default { 'gpt-4' }
+        }
+        
+        $deployOutput = az cognitiveservices account deployment create `
             --resource-group $ResourceGroupName `
             --name $OpenAIServiceName `
             --deployment-name $DeploymentName `
-            --model-name $ModelName `
+            --model-name $actualModelName `
             --model-version $modelVersion `
             --model-format OpenAI `
             --sku-capacity 1 `
-            --sku-name "Standard" | Out-Null
+            --sku-name "Standard" 2>&1
         
-        Write-Success "Model deployment created successfully"
+        # Check for errors in output
+        if ($LASTEXITCODE -ne 0) {
+            Write-Error-Custom "Deployment creation failed!"
+            Write-Host $deployOutput -ForegroundColor Red
+            Write-Info "`nYou need to create the deployment manually in Azure Portal:"
+            Write-Info "  1. Go to: https://portal.azure.com"
+            Write-Info "  2. Navigate to: $ResourceGroupName > $OpenAIServiceName > Model deployments"
+            Write-Info "  3. Click 'Create new deployment' or 'Manage Deployments'"
+            Write-Info "  4. Select the latest available model version"
+            Write-Info "  5. Name it: $DeploymentName"
+        }
+        elseif ($deployOutput -match 'ERROR:|deprecated') {
+            Write-Error-Custom "Deployment created with warnings:"
+            Write-Host $deployOutput -ForegroundColor Yellow
+            Write-Info "`nConsider updating the model version in Azure Portal if needed"
+        }
+        else {
+            Write-Success "Model deployment created successfully"
+        }
     }
 }
 catch {
-    Write-Error-Custom "Failed to create deployment using Azure CLI. Trying alternative method..."
-    Write-Info "Note: You may need to create the deployment manually in Azure Portal"
+    Write-Error-Custom "Failed to create deployment: $($_.Exception.Message)"
+    Write-Info "`nYou need to create the deployment manually in Azure Portal:"
     Write-Info "  1. Go to: https://portal.azure.com"
     Write-Info "  2. Navigate to: $ResourceGroupName > $OpenAIServiceName > Model deployments"
-    Write-Info "  3. Click 'Create new deployment'"
-    Write-Info "  4. Select model: $ModelName, Name: $DeploymentName"
+    Write-Info "  3. Click 'Create new deployment' or 'Manage Deployments'"
+    Write-Info "  4. Select the latest available model version"
+    Write-Info "  5. Name it: $DeploymentName"
 }
 
 # Display configuration summary
