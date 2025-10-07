@@ -1,3 +1,7 @@
+## [1.0.11] - 8th October 2025
+### Changes:
+- `Set-PSUAzureOpenAIEnvironment`: This function was added to set the environment configuration for **Azure OpenAI** interactions. This likely configures the necessary environment variables
+
 ## [1.0.10] - 23rd August 2025
 ### Added
 - `Invoke-PSUAiPrompt.ps1`: Public function to route prompts to the selected AI provider (`AzureOpenAi`, `GeminiAi`, or `PerplexityAi`) with support for JSON response.
