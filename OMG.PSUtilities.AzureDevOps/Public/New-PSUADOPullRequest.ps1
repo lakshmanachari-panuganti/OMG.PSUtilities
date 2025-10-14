@@ -191,7 +191,12 @@ function New-PSUADOPullRequest {
                 isDraft       = $Draft.IsPresent
             } | ConvertTo-Json -Depth 10
 
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.0"
             $draftStatus = if ($Draft.IsPresent) { "draft " } else { "" }
             Write-Verbose "Creating ${draftStatus}pull request in project: $Project"

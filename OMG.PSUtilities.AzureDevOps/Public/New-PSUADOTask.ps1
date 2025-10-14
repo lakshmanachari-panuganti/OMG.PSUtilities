@@ -132,7 +132,12 @@ function New-PSUADOTask {
         try {
             $headers = Get-PSUAdoAuthHeader -PAT $PAT
             $headers['Content-Type'] = 'application/json-patch+json'
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
             # Build the work item fields
             $fields = @(
                 @{

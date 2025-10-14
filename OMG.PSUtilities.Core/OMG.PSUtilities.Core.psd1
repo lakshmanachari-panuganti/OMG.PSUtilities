@@ -86,6 +86,7 @@ FunctionsToExport = @(
     'Get-PSUUserSession',
     'New-PSUGithubPullRequest',
     'New-PSUHTMLReport',
+    'New-PSUOutlookMeeting',
     'Remove-PSUUserEnvironmentVariable',
     'Remove-PSUUserSession',
     'Send-PSUHTMLReport',

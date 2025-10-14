@@ -202,7 +202,12 @@ function New-PSUADOBug {
             }
 
             $body = $fields | ConvertTo-Json -Depth 3
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$Bug?api-version=7.1-preview.3"
 
             Write-Verbose "Creating bug in project: $Project"

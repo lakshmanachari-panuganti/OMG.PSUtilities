@@ -200,7 +200,12 @@ function New-PSUADOUserStory {
             }
 
             $body = $fields | ConvertTo-Json -Depth 3
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$User%20Story?api-version=7.1-preview.3"
 
             Write-Verbose "Creating user story in project: $Project"

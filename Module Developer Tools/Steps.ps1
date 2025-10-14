@@ -53,9 +53,6 @@ function omgmod {
     }
 }
 
-# Build Module locally with Reset-OMGModuleManifests (Reset-OMGModuleManifests is built in Build-OMGModuleLocally)
-omgmod | Build-OMGModuleLocally -SkipScriptAnalyzer
-# NOTE: Increment of the module version is required when it is publishing to PSGallery!
 
 function omgpublishmodule {
     $ModulesUpdated = Get-PSUGitFileChangeMetadata | 
@@ -110,3 +107,7 @@ function omgbuildmodule {
         }
     }
 }
+
+# Build Module locally with Reset-OMGModuleManifests (Reset-OMGModuleManifests is built in Build-OMGModuleLocally)
+#omgmod | Build-OMGModuleLocally -SkipScriptAnalyzer
+# NOTE: Increment of the module version is required when it is publishing to PSGallery!

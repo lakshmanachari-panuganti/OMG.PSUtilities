@@ -113,7 +113,12 @@ function Get-PSUADOPipelineLatestRun {
 
             Write-Verbose "Processing Pipeline ID: $PipelineId"
             Write-Verbose "Escaping project name for URL..."
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
 
             # Get top 2 latest runs for fallback logic
             $runUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$PipelineId/runs" +

@@ -153,7 +153,12 @@ function Approve-PSUADOPullRequest {
 
             $bodyJson = $body | ConvertTo-Json -Depth 10
 
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
             $reviewerId = $userProfile.id
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId/reviewers/$reviewerId" + "?api-version=7.0"
             

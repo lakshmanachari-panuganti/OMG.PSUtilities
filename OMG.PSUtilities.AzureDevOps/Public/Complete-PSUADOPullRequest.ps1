@@ -178,7 +178,12 @@ function Complete-PSUADOPullRequest {
                 completionOptions = $completionOptions
             } | ConvertTo-Json -Depth 10
 
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId" + "?api-version=7.0"
             
             Write-Verbose "Completing pull request ID: $PullRequestId in project: $Project"

@@ -68,7 +68,12 @@ function Get-PSUADOPipelineBuild {
             Write-Verbose "Processing build ID: $BuildId"
             Write-Verbose "Escaping project name for the URL..."
             
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            }
+            else {
+                [uri]::EscapeDataString($Project)
+            }
 
             $buildUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/build/builds/$($BuildId)?api-version=7.1-preview.7"
             Write-Verbose "Calling Azure DevOps API at: $buildUrl"
