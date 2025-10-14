@@ -29,12 +29,17 @@ $PublicFunctions = @(
     'Get-PSUADORepoBranchList',
     'Get-PSUADORepositories',
     'Get-PSUADOVariableGroupInventory',
+    'Get-PSUADOWorkItem',
     'Invoke-PSUADORepoClone',
     'New-PSUADOBug',
     'New-PSUADOPullRequest',
     'New-PSUADOSpike',
     'New-PSUADOTask',
-    'New-PSUADOUserStory'
+    'New-PSUADOUserStory',
+    'Set-PSUADOBug',
+    'Set-PSUADOSpike',
+    'Set-PSUADOTask',
+    'Set-PSUADOUserStory'
 )
 
 $AliasesToExport = @(

@@ -128,6 +128,22 @@ function New-PSUADOUserStory {
 
     process {
         try {
+            # Display parameters
+            Write-Host "Parameters:" -ForegroundColor Cyan
+            foreach ($param in $PSBoundParameters.GetEnumerator()) {
+                if ($param.Key -eq 'PAT') {
+                    $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                    Write-Host "  $($param.Key): $maskedPAT" -ForegroundColor Cyan
+                } else {
+                    $displayValue = $param.Value.ToString()
+                    if ($displayValue.Length -gt 30) {
+                        $displayValue = $displayValue.Substring(0, 27) + "..."
+                    }
+                    Write-Host "  $($param.Key): $displayValue" -ForegroundColor Cyan
+                }
+            }
+            Write-Host ""
+
             $headers = Get-PSUAdoAuthHeader -PAT $PAT
             $headers['Content-Type'] = 'application/json-patch+json'
 
