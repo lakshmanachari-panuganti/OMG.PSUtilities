@@ -242,7 +242,7 @@ function New-PSUADOPullRequest {
                 $verboseParams.Headers['Authorization'] = 'Basic ***MASKED***'
                 $verboseParams.Body = $verboseParams.Body | ConvertFrom-Json -Depth 10
             }
-            Write-Verbose  "Invoke-RestMethod parameters: $($verboseParams | Out-String)"
+            Write-Verbose  "Invoke-RestMethod parameters for Pull Request creation: $($verboseParams | Out-String)"
             
             $response = Invoke-RestMethod @irmParams -Verbose:$false
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$repositoryIdentifier/pullrequest/$($response.pullRequestId)"
@@ -268,7 +268,26 @@ function New-PSUADOPullRequest {
                     $autoCompleteUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests/$($response.pullRequestId)?api-version=7.0"
                     Write-Verbose "  Setting auto-completion for PR ID: $($response.pullRequestId)"
 
-                    $response = Invoke-RestMethod -Method Patch -Uri $autoCompleteUri -Headers $headers -Body $autoCompleteBody -ContentType "application/json" -ErrorAction Stop
+                    # Use parameter splatting for auto-complete PATCH call
+                    $autoIRMParams = @{
+                        Method      = 'Patch'
+                        Uri         = $autoCompleteUri
+                        Headers     = $headers
+                        Body        = $autoCompleteBody
+                        ContentType = 'application/json'
+                        ErrorAction = 'Stop'
+                    }
+
+                    # Create safe version for verbose output (mask Authorization header)
+                    $verboseAutoIRMParams = $autoIRMParams.Clone()
+                    if ($verboseAutoIRMParams.Headers -and $verboseAutoIRMParams.Headers['Authorization']) {
+                        $verboseAutoIRMParams.Headers = $verboseAutoIRMParams.Headers.Clone()
+                        $verboseAutoIRMParams.Headers['Authorization'] = 'Basic ***MASKED***'
+                        $verboseAutoIRMParams.Body = $verboseAutoIRMParams.Body | ConvertFrom-Json -Depth 10
+                    }
+                    Write-Verbose "  Invoke-RestMethod parameters for set auto-complete: $($verboseAutoIRMParams | Out-String)"
+
+                    $response = Invoke-RestMethod @autoIRMParams -Verbose:$false
                     if($response.completionOptions.mergeStrategy -eq "noFastForward") {
                         Write-Verbose "  Auto-completion options set: MergeStrategy=$($response.completionOptions.mergeStrategy), DeleteSourceBranch=$($response.completionOptions.deleteSourceBranch), SquashMerge=$($response.completionOptions.squashMerge)"
                     }

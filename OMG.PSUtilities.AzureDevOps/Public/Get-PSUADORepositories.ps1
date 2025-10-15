@@ -87,7 +87,7 @@ function Get-PSUADORepositories {
             
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
 
-            $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
+            $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -Verbose:$false
             $response.value | ForEach-Object {
                 [PSCustomObject]@{
                     Id              = $_.id
