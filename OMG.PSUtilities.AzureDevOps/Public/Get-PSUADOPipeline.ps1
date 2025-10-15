@@ -111,6 +111,10 @@ function Get-PSUADOPipeline {
                 $detailsUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$Id`?api-version=7.1-preview.1"
                 $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
 
+                if (-not $pipelineDetails) {
+                    throw "Failed to retrieve pipeline details for ID: $Id"
+                }
+
                 $webUrl = "https://dev.azure.com/$Organization/$escapedProject/_build?definitionId=$Id"
 
                 [PSCustomObject]@{
@@ -138,15 +142,28 @@ function Get-PSUADOPipeline {
                     if ($AddDetails) {
                         $detailsUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$Id`?api-version=7.1-preview.1"
                         $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
-
-                        [PSCustomObject]@{
-                            Name           = $pipeline.name
-                            ID             = $pipeline.id
-                            URL            = $pipeline._links.web.href
-                            WebUrl         = $webUrl
-                            Folder         = $pipeline.folder
-                            YamlPath       = $pipelineDetails.configuration.path
-                            RepositoryType = $pipelineDetails.configuration.repository.type
+                        
+                        if (-not $pipelineDetails) {
+                            Write-Warning "Failed to retrieve details for pipeline ID: $Id"
+                            [PSCustomObject]@{
+                                Name           = $pipeline.name
+                                ID             = $pipeline.id
+                                URL            = $pipeline._links.web.href
+                                WebUrl         = $webUrl
+                                Folder         = $pipeline.folder
+                                YamlPath       = "Details unavailable"
+                                RepositoryType = "Details unavailable"
+                            }
+                        } else {
+                            [PSCustomObject]@{
+                                Name           = $pipeline.name
+                                ID             = $pipeline.id
+                                URL            = $pipeline._links.web.href
+                                WebUrl         = $webUrl
+                                Folder         = $pipeline.folder
+                                YamlPath       = $pipelineDetails.configuration.path
+                                RepositoryType = $pipelineDetails.configuration.repository.type
+                            }
                         }
                     } else {
                         [PSCustomObject]@{

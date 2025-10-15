@@ -176,8 +176,8 @@ function Get-PSUADOPipelineLatestRun {
             $buildParams = @{
                 BuildId      = $latestRun.id
                 Pat          = $PAT
-                Organization = $Organization  # Fixed: was $ORGANIZATION
-                Project      = $Project       # Fixed: was $PROJECT
+                Organization = $Organization
+                Project      = $Project
             }
 
             try {

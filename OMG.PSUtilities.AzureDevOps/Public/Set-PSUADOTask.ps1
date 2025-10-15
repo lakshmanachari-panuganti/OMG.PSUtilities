@@ -91,6 +91,7 @@ function Set-PSUADOTask {
         [int]$Id,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Title,
 
         [Parameter()]
@@ -113,15 +114,19 @@ function Set-PSUADOTask {
         [string]$Activity,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AssignedTo,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AreaPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$IterationPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Tags,
 
         [Parameter(Mandatory)]

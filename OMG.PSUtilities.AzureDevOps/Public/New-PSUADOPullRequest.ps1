@@ -18,7 +18,7 @@ function New-PSUADOPullRequest {
     .PARAMETER RepoId
         (Mandatory - ParameterSet: ByRepoId) The repository GUID in which to create the pull request.
 
-    .PARAMETER Repository
+    .PARAMETER RepositoryName
         (Mandatory - ParameterSet: ByRepoName) The repository name in which to create the pull request.
 
     .PARAMETER SourceBranch
@@ -47,32 +47,58 @@ function New-PSUADOPullRequest {
         Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -RepoId "12345678-1234-1234-1234-123456789012" `
-            -SourceBranch "refs/heads/feature-x" -TargetBranch "refs/heads/main" `
-            -Title "Feature X Implementation" -Description "This PR adds feature X."
+        $params = @{
+            Organization = "omg"
+            Project      = "psutilities"
+            RepoId       = "12345678-1234-1234-1234-123456789012"
+            SourceBranch = "refs/heads/feature-x"
+            TargetBranch = "refs/heads/main"
+            Title        = "Feature X Implementation"
+            Description  = "This PR adds feature X."
+        }
+        New-PSUADOPullRequest @params
 
         Creates a pull request using repository ID.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "AzureDevOps" `
-            -SourceBranch "refs/heads/feature-branch" -TargetBranch "refs/heads/main" `
-            -Title "Bug fix for login" -Description "Fixed authentication issue"
+        $params = @{
+            Organization   = "omg"
+            Project        = "psutilities"
+            RepositoryName = "AzureDevOps"
+            SourceBranch   = "refs/heads/feature-branch"
+            TargetBranch   = "refs/heads/main"
+            Title          = "Bug fix for login"
+            Description    = "Fixed authentication issue"
+        }
+        New-PSUADOPullRequest @params
 
         Creates a pull request using repository name with specific branches.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Ai" `
-            -Title "Bug fix for login" -Description "Fixed authentication issue" -Draft
+        $params = @{
+            Organization   = "omg"
+            Project        = "psutilities"
+            RepositoryName = "Ai"
+            Title          = "Bug fix for login"
+            Description    = "Fixed authentication issue"
+            Draft          = $true
+        }
+        New-PSUADOPullRequest @params
 
         Creates a draft pull request using repository name with git-detected source/target branches.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Core" `
-            -Title "Auto-complete feature" -Description "This will auto-complete when approved" -CompleteOnApproval
+        $params = @{
+            Organization       = "omg"
+            Project            = "psutilities"
+            RepositoryName     = "Core"
+            Title              = "Auto-complete feature"
+            Description        = "This will auto-complete when approved"
+            CompleteOnApproval = $true
+        }
+        New-PSUADOPullRequest @params
 
         Creates a pull request that will automatically complete when all approvals and policies are satisfied.
-
-        Creates a pull request using repository name with specific branches and PAT.
 
     .OUTPUTS
         [PSCustomObject]
@@ -80,7 +106,7 @@ function New-PSUADOPullRequest {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 2025-07-30
-        Updated: 2025-08-14 - Added Repository parameter and parameter sets
+        Updated: 2025-08-14 - Added RepositoryName parameter and parameter sets
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
@@ -97,37 +123,37 @@ function New-PSUADOPullRequest {
     param (
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Project,
+        [string]$Title,
 
-        [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$RepoId,
+        [string]$Description,
 
-        [Parameter(ParameterSetName = 'ByRepoName')]
-        [ValidateNotNullOrEmpty()]
-        [string]$Repository,
-
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateScript({
                 if ($_ -match '^refs/heads/.+') { $true }
                 else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
             })]
         [string]$SourceBranch,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateScript({
                 if ($_ -match '^refs/heads/.+') { $true }
                 else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
             })]
         [string]$TargetBranch,
 
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
         [ValidateNotNullOrEmpty()]
-        [string]$Title,
+        [string]$RepoId,
+
+        [Parameter(Mandatory, ParameterSetName = 'ByRepoName')]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepositoryName,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Description,
+        [string]$Project,
 
         [Parameter()]
         [switch]$Draft,
@@ -177,9 +203,9 @@ function New-PSUADOPullRequest {
                 $repositoryIdentifier = $RepoId
             } else {
                 $repos = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
-                $matchedRepo = $repos | Where-Object { $_.Name -eq $Repository }
+                $matchedRepo = $repos | Where-Object { $_.Name -eq $RepositoryName }
                 if (-not $matchedRepo) {
-                    throw "Repository '$Repository' not found in project '$Project'."
+                    throw "Repository '$RepositoryName' not found in project '$Project'."
                 }
                 $repositoryIdentifier = $matchedRepo.Id
             }
@@ -197,6 +223,7 @@ function New-PSUADOPullRequest {
             } else {
                 [uri]::EscapeDataString($Project)
             }
+            
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.0"
             $draftStatus = if ($Draft.IsPresent) { "draft " } else { "" }
             Write-Verbose "Creating ${draftStatus}pull request in project: $Project"
@@ -205,7 +232,15 @@ function New-PSUADOPullRequest {
             Write-Verbose "Target branch: $TargetBranch"
             Write-Verbose "API URI: $uri"
 
-            $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -ErrorAction Stop
+            $irmParams = @{
+                Method      = 'Post'
+                Uri         = $uri
+                Headers     = $headers
+                Body        = $body
+                ContentType = 'application/json'
+                ErrorAction = 'Stop'
+            }
+            $response = Invoke-RestMethod @irmParams
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$repositoryIdentifier/pullrequest/$($response.pullRequestId)"
             $draftText = if ($response.isDraft) { "Draft " } else { "" }
             Write-Host "${draftText}Pull Request created successfully. PR ID: $($response.pullRequestId)" -ForegroundColor Green
