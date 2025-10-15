@@ -123,10 +123,6 @@ function Get-PSUADOVariableGroupInventory {
     param (
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $env:ORGANIZATION,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string[]]$Project = '*',
 
         [Parameter()]
@@ -149,6 +145,10 @@ function Get-PSUADOVariableGroupInventory {
         [Parameter()]
         [ValidateRange(1, 20)]
         [int]$ThrottleLimit = 10,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]

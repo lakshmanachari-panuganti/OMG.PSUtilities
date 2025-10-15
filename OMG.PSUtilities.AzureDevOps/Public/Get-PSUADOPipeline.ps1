@@ -59,44 +59,47 @@ function Get-PSUADOPipeline {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
+        [int]$Id,
+
+        [Parameter()]
+        [switch]$AddDetails,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$PAT = $env:PAT,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [int]$Id,
-
-        [Parameter()]
-        [switch]$AddDetails
+        [string]$PAT = $env:PAT
     )
 
-    # Display parameters
-    Write-Verbose "Parameters:"
-    foreach ($param in $PSBoundParameters.GetEnumerator()) {
-        if ($param.Key -eq 'PAT') {
-            $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
-            Write-Verbose "  $($param.Key): $maskedPAT"
-        } else {
-            Write-Verbose "  $($param.Key): $($param.Value)"
+    begin {
+        # Display parameters
+        Write-Verbose "Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
         }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
     }
 
-    # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
-    if (-not $Organization) {
-        throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
-    }
-
-    # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
-    if (-not $PAT) {
-        throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
-    }
-
-    $headers = Get-PSUAdoAuthHeader -PAT $PAT
-
-    try {
+    process {
+        try {
         if ($Id) {
             $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
             $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get

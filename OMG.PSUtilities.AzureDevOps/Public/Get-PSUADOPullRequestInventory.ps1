@@ -44,30 +44,33 @@ function Get-PSUADOPullRequestInventory {
         [string]$PAT = $env:PAT
     )
 
-    # Display parameters
-    Write-Verbose "Parameters:"
-    foreach ($param in $PSBoundParameters.GetEnumerator()) {
-        if ($param.Key -eq 'PAT') {
-            $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
-            Write-Verbose "  $($param.Key): $maskedPAT"
-        } else {
-            Write-Verbose "  $($param.Key): $($param.Value)"
+    begin {
+        # Display parameters
+        Write-Verbose "Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
         }
     }
 
-    # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
-    if (-not $Organization) {
-        throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
-    }
-
-    # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
-    if (-not $PAT) {
-        throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
-    }
-
-    $PullRequests = [System.Collections.Generic.List[PSCustomObject]]::new()
-    Write-Verbose "Fetching project list for organization [$Organization]..."
-    $ProjectList = Get-PSUADOProjectList -Organization $Organization -PAT $PAT
+    process {
+        $PullRequests = [System.Collections.Generic.List[PSCustomObject]]::new()
+        Write-Verbose "Fetching project list for organization [$Organization]..."
+        $ProjectList = Get-PSUADOProjectList -Organization $Organization -PAT $PAT
     
     $projectCount = $ProjectList.Count
     $projectIndex = 0
@@ -106,8 +109,10 @@ function Get-PSUADOPullRequestInventory {
             }
         }
     }
+    } # End of process block
     
-    Write-Verbose "Completed pull request inventory collection."
-    $PullRequests.ToArray() | Select-Object *
-    
+    end {
+        Write-Verbose "Completed pull request inventory collection."
+        $PullRequests.ToArray() | Select-Object *
+    }
 }

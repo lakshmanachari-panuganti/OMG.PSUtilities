@@ -58,10 +58,6 @@ function Invoke-PSUADORepoClone {
     [CmdletBinding()]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Console UX: colorized status for user-facing output')]
     param (
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string]$Organization = $env:ORGANIZATION,
-        
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Project,
@@ -82,17 +78,22 @@ function Invoke-PSUADORepoClone {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$PAT = $env:PAT,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$RepositoryFilter,
 
         [Parameter()]
-        [switch]$Force
+        [switch]$Force,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$Organization = $env:ORGANIZATION,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$PAT = $env:PAT
     )
 
-    process {
+
+    begin {
         # Display parameters
         Write-Verbose "Parameters:"
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
@@ -114,11 +115,14 @@ function Invoke-PSUADORepoClone {
             throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
         }
 
-        $repoResults = @()
-        Set-Location $TargetPath
-        Write-Host "Setting the target path: $TargetPath"
-
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
+    process {
         try {
+            $repoResults = @()
+            Set-Location $TargetPath
+            Write-Host "Setting the target path: $TargetPath"
+
             if (-not (Get-Command git -ErrorAction SilentlyContinue)) {
                 throw 'Git CLI not found. Please install Git and ensure it is available in PATH.'
             }
@@ -208,17 +212,7 @@ function Invoke-PSUADORepoClone {
             return $repoResults
         }
         catch {
-            $repoResults += [PSCustomObject]@{
-                Organization = $Organization
-                Project      = $Project
-                Repository   = $null
-                isCloned     = $false
-                PathCloned   = $null
-                Error        = $_.Exception.Message
-                PSTypeName   = 'PSU.ADO.RepoCloneSummary'
-            }
-
-            return $repoResults
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }
