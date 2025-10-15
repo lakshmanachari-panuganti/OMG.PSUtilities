@@ -125,10 +125,6 @@ function Get-PSUADOVariableGroupInventory {
         [ValidateNotNullOrEmpty()]
         [string]$Organization,
 
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PAT,
-
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string[]]$Project = '*',
@@ -152,20 +148,15 @@ function Get-PSUADOVariableGroupInventory {
 
         [Parameter()]
         [ValidateRange(1, 20)]
-        [int]$ThrottleLimit = 10
+        [int]$ThrottleLimit = 10,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$PAT = $env:PAT
     )
 
     begin {
-        Write-Verbose "Starting Azure DevOps Variable Group inventory process"
-
-        # Initialize PAT from environment if not provided
-        if (-not $PAT) {
-            $PAT = $env:ADO_PAT ?? $env:PAT
-            if (-not $PAT) {
-                throw "Personal Access Token is required. Provide via -PAT parameter or set `$env:ADO_PAT environment variable."
-            }
-            Write-Verbose "Using Personal Access Token from environment variable"
-        }
+        Write-Host "Starting Azure DevOps Variable Group inventory process"
 
         # Setup authentication headers
         $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
@@ -178,10 +169,19 @@ function Get-PSUADOVariableGroupInventory {
         # Initialize results collection
         $variableGroupInventory = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-        Write-Verbose "Authentication configured for organization: $Organization"
-        Write-Verbose "Project filter: $Project"
-        Write-Verbose "Include variable details: $IncludeVariableDetails"
-        Write-Verbose "Throttle limit: $ThrottleLimit"
+         # Display parameters
+            Write-Host "Parameters:" -ForegroundColor Green
+            foreach ($param in $PSBoundParameters.GetEnumerator()) {
+                if ($param.Key -eq 'PAT') {
+                    $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                    Write-Host "  $($param.Key): $maskedPAT" -ForegroundColor Cyan
+                } elseif ($param.Value -is [array]) {
+                    $displayValue = $param.Value -join ', '
+                    Write-Host "  $($param.Key): $displayValue" -ForegroundColor Cyan
+                } else {
+                    Write-Host "  $($param.Key): $($param.Value)" -ForegroundColor Cyan
+                }
+            }
 
         # Check if ThreadJob module is available
         $useThreadJobs = $false
@@ -204,20 +204,6 @@ function Get-PSUADOVariableGroupInventory {
 
     process {
         try {
-            # Display parameters
-            Write-Verbose "Parameters:"
-            foreach ($param in $PSBoundParameters.GetEnumerator()) {
-                if ($param.Key -eq 'PAT') {
-                    $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
-                    Write-Verbose "  $($param.Key): $maskedPAT"
-                } elseif ($param.Value -is [array]) {
-                    $displayValue = $param.Value -join ', '
-                    Write-Verbose "  $($param.Key): $displayValue"
-                } else {
-                    Write-Verbose "  $($param.Key): $($param.Value)"
-                }
-            }
-
             # Get filtered projects
             Write-Verbose "Retrieving projects from Azure DevOps..."
             $projectsApiUrl = "https://dev.azure.com/$Organization/_apis/projects" +
@@ -250,7 +236,7 @@ function Get-PSUADOVariableGroupInventory {
 
             Write-Verbose "Found $($filteredProjects.Count) matching projects"
             $processingMethod = if ($useThreadJobs -and $filteredProjects.Count -gt 1) { "parallel ($ThrottleLimit threads)" } else { "sequential" }
-            Write-Information "Processing $($filteredProjects.Count) projects matching filter '$Project' using $processingMethod processing" -InformationAction Continue
+            Write-Host "Processing $($filteredProjects.Count) projects matching filter '$Project' using $processingMethod processing" -ForegroundColor Cyan
 
             if ($useThreadJobs -and $filteredProjects.Count -gt 1) {
                 # Parallel processing
@@ -558,11 +544,11 @@ function Get-PSUADOVariableGroupInventory {
                     TotalVariables             = $totalVariables
                 }
 
-                Write-Information "Inventory Summary:" -InformationAction Continue
-                Write-Information "  - Total Variable Groups: $($summary.TotalVariableGroups)" -InformationAction Continue
-                Write-Information "  - Projects Processed: $($summary.ProjectsProcessed)" -InformationAction Continue
-                Write-Information "  - Projects with Variable Groups: $($summary.ProjectsWithVariableGroups)" -InformationAction Continue
-                Write-Information "  - Total Variables: $($summary.TotalVariables)" -InformationAction Continue
+                Write-Host "Inventory Summary:" -ForegroundColor Green
+                Write-Host "  - Total Variable Groups: $($summary.TotalVariableGroups)" -ForegroundColor Cyan
+                Write-Host "  - Projects Processed: $($summary.ProjectsProcessed)" -ForegroundColor Cyan
+                Write-Host "  - Projects with Variable Groups: $($summary.ProjectsWithVariableGroups)" -ForegroundColor Cyan
+                Write-Host "  - Total Variables: $($summary.TotalVariables)" -ForegroundColor Cyan
 
                 # Export to file if specified
                 if ($OutputFilePath) {
