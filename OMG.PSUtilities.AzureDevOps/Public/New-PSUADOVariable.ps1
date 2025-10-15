@@ -101,7 +101,7 @@ function New-PSUADOVariable {
 
     begin {
         # Display parameters
-        Write-Verbose "Parameters:"
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             if ($param.Key -eq 'PAT') {
                 $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }

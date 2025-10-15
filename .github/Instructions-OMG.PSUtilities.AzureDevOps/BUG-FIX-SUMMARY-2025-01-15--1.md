@@ -93,7 +93,7 @@ For each affected function, the following duplicate code was **removed** from pr
 ### Removed from process{}:
 ```powershell
 # Parameter display code
-Write-Verbose "Parameters:"
+Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
 foreach ($param in $PSBoundParameters.GetEnumerator()) {
     if ($param.Key -eq 'PAT') {
         $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { 

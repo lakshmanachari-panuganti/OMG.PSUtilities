@@ -43,7 +43,7 @@ function Verb-PSUADONoun {
 
     begin {
         # 1. Display parameters (mask PAT)
-        Write-Verbose "Parameters:"
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             if ($param.Key -eq 'PAT') {
                 $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { 
@@ -164,7 +164,7 @@ Add runtime validation in the `begin{}` block:
 process {
     try {
         # Display parameters (for verbose logging)
-        Write-Verbose "Parameters:"
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             if ($param.Key -eq 'PAT') {
                 $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { 

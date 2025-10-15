@@ -195,7 +195,7 @@ All runtime validation **MUST** be in the `begin{}` block:
 ```powershell
 begin {
     # 1. Display parameters (mask PAT)
-    Write-Verbose "Parameters:"
+    Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
     foreach ($param in $PSBoundParameters.GetEnumerator()) {
         if ($param.Key -eq 'PAT') {
             $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { 

@@ -173,7 +173,7 @@ function New-PSUADOPullRequest {
 
     begin {
         # Display parameters
-        Write-Verbose "Parameters:"
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             if ($param.Key -eq 'PAT') {
                 $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
@@ -225,12 +225,6 @@ function New-PSUADOPullRequest {
             }
             
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.0"
-            $draftStatus = if ($Draft.IsPresent) { "draft " } else { "" }
-            Write-Verbose "Creating ${draftStatus}pull request in project: $Project"
-            Write-Verbose "Repository: $repositoryIdentifier"
-            Write-Verbose "Source branch: $SourceBranch"
-            Write-Verbose "Target branch: $TargetBranch"
-            Write-Verbose "API URI: $uri"
 
             $irmParams = @{
                 Method      = 'Post'
@@ -240,11 +234,21 @@ function New-PSUADOPullRequest {
                 ContentType = 'application/json'
                 ErrorAction = 'Stop'
             }
-            $response = Invoke-RestMethod @irmParams
+            
+            # Create safe version for verbose output (mask Authorization header)
+            $verboseParams = $irmParams.Clone()
+            if ($verboseParams.Headers -and $verboseParams.Headers['Authorization']) {
+                $verboseParams.Headers = $verboseParams.Headers.Clone()
+                $verboseParams.Headers['Authorization'] = 'Basic ***MASKED***'
+                $verboseParams.Body = $verboseParams.Body | ConvertFrom-Json -Depth 10
+            }
+            Write-Verbose  "Invoke-RestMethod parameters: $($verboseParams | Out-String)"
+            
+            $response = Invoke-RestMethod @irmParams -Verbose:$false
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$repositoryIdentifier/pullrequest/$($response.pullRequestId)"
             $draftText = if ($response.isDraft) { "Draft " } else { "" }
-            Write-Host "${draftText}Pull Request created successfully. PR ID: $($response.pullRequestId)" -ForegroundColor Green
-            Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan
+            Write-Verbose "  ${draftText}Pull Request created successfully. PR ID: $($response.pullRequestId)"
+            Write-Verbose "  PR URL: $WebUrl"
 
             # Enable auto-completion if specified
             if ($CompleteOnApproval) {
@@ -262,10 +266,12 @@ function New-PSUADOPullRequest {
                     } | ConvertTo-Json -Depth 10
 
                     $autoCompleteUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests/$($response.pullRequestId)?api-version=7.0"
-                    Write-Verbose "Setting auto-completion for PR ID: $($response.pullRequestId)"
+                    Write-Verbose "  Setting auto-completion for PR ID: $($response.pullRequestId)"
 
-                    Invoke-RestMethod -Method Patch -Uri $autoCompleteUri -Headers $headers -Body $autoCompleteBody -ContentType "application/json" -ErrorAction Stop
-                    Write-Host "Auto-completion enabled. PR will complete automatically when all policies and approvals are satisfied." -ForegroundColor Yellow
+                    $response = Invoke-RestMethod -Method Patch -Uri $autoCompleteUri -Headers $headers -Body $autoCompleteBody -ContentType "application/json" -ErrorAction Stop
+                    if($response.completionOptions.mergeStrategy -eq "noFastForward") {
+                        Write-Verbose "  Auto-completion options set: MergeStrategy=$($response.completionOptions.mergeStrategy), DeleteSourceBranch=$($response.completionOptions.deleteSourceBranch), SquashMerge=$($response.completionOptions.squashMerge)"
+                    }
                 } catch {
                     Write-Warning "Failed to enable auto-completion: $($_.Exception.Message)"
                 }
