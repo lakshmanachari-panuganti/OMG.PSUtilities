@@ -481,3 +481,45 @@ This codebase prioritizes **consistency, automation, and enterprise-grade qualit
 ✅ Run `Reset-OMGModuleManifests` after changes  
 
 **When in doubt, examine existing functions in the target module and follow their patterns exactly.**
+
+---
+
+## Troubleshooting & Common Pitfalls
+
+| Symptom | Likely Cause | Fix | Preventive Practice |
+|---------|--------------|-----|---------------------|
+| `PAT parameter is required` error thrown immediately | `$env:PAT` not set and parameter omitted | Set PAT: `Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<token>'` | Always run Validation test first (`Run-MasterTest.ps1 -TestType Validation`) |
+| `Organization parameter is required` | `$env:ORGANIZATION` missing | Set organization env var similarly | Keep a dev profile script exporting these vars |
+| New function file not loaded / not exported | Forgot to run `Reset-OMGModuleManifests` after adding file | Run `Reset-OMGModuleManifests -ModuleName 'OMG.PSUtilities.AzureDevOps'` then rebuild | Add a git pre-commit hook to diff `Public/` vs manifest |
+| Function loads but missing in `Get-Command` | Name mismatch or file named `*-wip.ps1` | Rename file without `--wip` suffix, re-run reset | Only append `--wip` while drafting |
+| Duplicate validation logic in `process{}` | Copied from template incorrectly | Move all validation to `begin{}` and remove from `process{}` | Use template snippet exactly; do not improvise |
+| Test suite shows 404 for repository branches | Repo not initialized with branch data | Initialize repo/ push at least one commit/branch | Add a setup script to seed test repo |
+| Variable Group update test fails (name/description unchanged) | Azure DevOps API limitation (documented) | Accept as known limitation | Keep note in CHANGELOG Known Issues |
+| PR creation 400 (same branch) | Source == Target branch | Supply distinct source branch | Enhance test data generator to create feature branch |
+| Work item state update 400 | Invalid transition for process template | Query allowed states first, then reattempt | Implement helper (future) to map valid transitions |
+| PAT value printed in logs | Not masking custom logging | Use provided PAT masking pattern; never write PAT directly | Centralize all verbose parameter echoing in `begin{}` |
+| Style drift (brace placement) | Non K&R formatting applied manually | Reformat to one-line open brace | Add formatting linter/pre-commit check |
+
+### Quick Diagnostic Script
+Run this lightweight checklist before deeper debugging:
+```powershell
+Write-Host '== OMG.PSUtilities Quick Diagnostic ==' -ForegroundColor Cyan
+$required = 'ORGANIZATION','PAT'
+$required | ForEach-Object { Write-Host ("$_=`"{0}`"" -f ($env:$_ ?? '<NOT SET>')) }
+Import-Module .\OMG.PSUtilities.AzureDevOps\OMG.PSUtilities.AzureDevOps.psd1 -Force
+Write-Host "Exported Functions:" (Get-Command -Module OMG.PSUtilities.AzureDevOps | Measure-Object).Count
+Get-ChildItem .\OMG.PSUtilities.AzureDevOps\Public -Filter *.ps1 | Select-Object -First 5 | ForEach-Object { $_.BaseName }
+```
+
+### Escalation Flow
+1. Re-run Validation test
+2. Check env vars
+3. Rebuild module (`Build-OMGModuleLocally`)
+4. Reset manifests
+5. Re-run Comprehensive test with `-VerboseOutput`
+6. Inspect latest `TestResults-*.json`
+7. Open HTML report (if `-ExportReport` used)
+8. Consult known issues list above
+
+If still unresolved, compare the function with the template in `Instructions-Validation-Pattern.md` line-by-line.
+
