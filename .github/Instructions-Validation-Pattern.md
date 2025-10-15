@@ -259,6 +259,75 @@ process {
 - 🔄 **Pipeline Optimized**: Designed for efficient pipeline processing
 - 📊 **Clean Separation**: Setup in begin{}, business logic in process{}
 
+### ⚠️ CRITICAL: Common Migration Mistake
+
+**DO NOT duplicate code in process{}!**
+
+During migration from single-block to begin{}/process{} pattern, a common error is to **copy validation code to begin{} without removing it from process{}**. This defeats the entire purpose of the pattern.
+
+#### ❌ WRONG (Duplicated Code)
+```powershell
+begin {
+    # Validation in begin{} ✅
+    if (-not $Organization) { throw "..." }
+    if (-not $PAT) { throw "..." }
+    $headers = Get-PSUAdoAuthHeader -PAT $PAT
+}
+
+process {
+    try {
+        # DUPLICATE validation in process{} ❌❌❌
+        if (-not $Organization) { throw "..." }
+        if (-not $PAT) { throw "..." }
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT  # ❌ Created again!
+        
+        # Business logic
+        $uri = "https://dev.azure.com/$Organization/..."
+        $response = Invoke-RestMethod -Uri $uri -Headers $headers
+    }
+    catch { $PSCmdlet.ThrowTerminatingError($_) }
+}
+```
+
+**Why This Is Critical:**
+- 🐛 Validation runs per pipeline item (defeats performance optimization)
+- 🐛 Headers created multiple times (wasteful)
+- 🐛 Violates begin{}/process{} separation of concerns
+- 🐛 Code duplication increases maintenance burden
+
+#### ✅ CORRECT (No Duplication)
+```powershell
+begin {
+    # ALL validation and setup here ✅
+    if (-not $Organization) { throw "..." }
+    if (-not $PAT) { throw "..." }
+    $headers = Get-PSUAdoAuthHeader -PAT $PAT
+}
+
+process {
+    try {
+        # ONLY business logic here ✅
+        # NO validation, NO header creation
+        $uri = "https://dev.azure.com/$Organization/..."
+        $response = Invoke-RestMethod -Uri $uri -Headers $headers
+    }
+    catch { $PSCmdlet.ThrowTerminatingError($_) }
+}
+```
+
+**Migration Checklist:**
+- [ ] Move parameter display to begin{}
+- [ ] Move Organization validation to begin{}
+- [ ] Move PAT validation to begin{}
+- [ ] Move $headers creation to begin{}
+- [ ] **DELETE all of the above from process{}** ⚠️
+- [ ] Verify process{} contains ONLY business logic
+
+**Bug History:**
+- **October 2025**: All 22 functions correctly implemented with begin{}/process{}
+- **January 2025**: Bug discovered - 18 of 22 functions had duplicate validation in process{}
+- **January 2025**: All 18 functions fixed - duplicate code removed from process{}
+
 ---
 
 
@@ -365,10 +434,15 @@ When creating or modifying Azure DevOps functions, verify:
 - [ ] Organization validation
 - [ ] PAT validation
 - [ ] Authentication header creation (`$headers`)
+- [ ] **VERIFY: All setup code exists ONLY in begin{}, not duplicated in process{}**
 
 #### process{} Block
 - [ ] try-catch wrapper with `$PSCmdlet.ThrowTerminatingError($_)`
 - [ ] Business logic only (no validation or setup)
+- [ ] **VERIFY: NO parameter display code**
+- [ ] **VERIFY: NO Organization validation**
+- [ ] **VERIFY: NO PAT validation**
+- [ ] **VERIFY: NO $headers creation (use $headers from begin{})**
 - [ ] Uses `$headers` from begin{} block
 - [ ] Returns appropriate results
 
@@ -420,8 +494,10 @@ When creating or modifying Azure DevOps functions, verify:
 | Date | Change |
 |------|--------|
 | October 2025 | Initial validation pattern implemented |
-| January 2025 | Migration to begin{}/process{} pattern completed |
-| January 2025 | Documentation optimized and restructured |
+| October 2025 | Migration to begin{}/process{} pattern completed for all 22 functions |
+| January 2025 | **BUG FIX**: Discovered and fixed critical bug - 18 functions had duplicate validation code in process{} block |
+| January 2025 | Documentation enhanced with "Common Migration Mistake" section and verification checklist |
+| January 2025 | Documentation optimized and restructured with Table of Contents |
 
 ---
 

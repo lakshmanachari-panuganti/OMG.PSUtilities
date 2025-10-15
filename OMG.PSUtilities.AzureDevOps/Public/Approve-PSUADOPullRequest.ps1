@@ -6,6 +6,8 @@ function Approve-PSUADOPullRequest {
     .DESCRIPTION
         This function approves a pull request in Azure DevOps by its ID. It can approve with different vote values
         and optional comments. You can specify the repository details or use auto-detection from git remote.
+    
+        Requires: Azure DevOps Personal Access Token with appropriate permissions
 
     .PARAMETER Organization
         (Optional) The Azure DevOps organization name under which the project resides.
@@ -57,7 +59,6 @@ function Approve-PSUADOPullRequest {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 19th August 2025
-        Requires: Azure DevOps Personal Access Token with appropriate permissions
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps

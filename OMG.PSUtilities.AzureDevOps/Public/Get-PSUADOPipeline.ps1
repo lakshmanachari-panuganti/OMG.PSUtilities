@@ -80,7 +80,8 @@ function Get-PSUADOPipeline {
             if ($param.Key -eq 'PAT') {
                 $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
                 Write-Verbose "  $($param.Key): $maskedPAT"
-            } else {
+            }
+            else {
                 Write-Verbose "  $($param.Key): $($param.Value)"
             }
         }
@@ -100,64 +101,65 @@ function Get-PSUADOPipeline {
 
     process {
         try {
-        if ($Id) {
-            $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
-            $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
+            if ($Id) {
+                $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
+                $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
 
-            $webUrl = "https://dev.azure.com/$Organization/$Project/_build?definitionId=$Id"
-
-            [PSCustomObject]@{
-                Name           = $pipelineDetails.name
-                ID             = $pipelineDetails.id
-                URL            = $pipelineDetails._links.web.href
-                WebUrl         = $webUrl
-                Folder         = $pipelineDetails.folder
-                YamlPath       = $pipelineDetails.configuration.path
-                RepositoryType = $pipelineDetails.configuration.repository.type
-            }
-        }
-        else {
-            $listUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines?api-version=7.1-preview.1"
-            $pipelineList = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get
-
-            if (-not $pipelineList.value) {
-                Write-Verbose "No pipelines found."
-                return
-            }
-
-            $results = foreach ($pipeline in $pipelineList.value) {
-                $Id = $pipeline.id
                 $webUrl = "https://dev.azure.com/$Organization/$Project/_build?definitionId=$Id"
 
-                if ($AddDetails) {
-                    $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
-                    $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
-
-                    [PSCustomObject]@{
-                        Name           = $pipeline.name
-                        ID             = $pipeline.id
-                        URL            = $pipeline._links.web.href
-                        WebUrl         = $webUrl
-                        Folder         = $pipeline.folder
-                        YamlPath       = $pipelineDetails.configuration.path
-                        RepositoryType = $pipelineDetails.configuration.repository.type
-                    }
-                }
-                else {
-                    [PSCustomObject]@{
-                        Name   = $pipeline.name
-                        ID     = $pipeline.id
-                        URL    = $pipeline._links.web.href
-                        WebUrl = $webUrl
-                        Folder = $pipeline.folder
-                    }
+                [PSCustomObject]@{
+                    Name           = $pipelineDetails.name
+                    ID             = $pipelineDetails.id
+                    URL            = $pipelineDetails._links.web.href
+                    WebUrl         = $webUrl
+                    Folder         = $pipelineDetails.folder
+                    YamlPath       = $pipelineDetails.configuration.path
+                    RepositoryType = $pipelineDetails.configuration.repository.type
                 }
             }
+            else {
+                $listUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines?api-version=7.1-preview.1"
+                $pipelineList = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get
 
-            return $results
+                if (-not $pipelineList.value) {
+                    Write-Verbose "No pipelines found."
+                    return
+                }
+
+                $results = foreach ($pipeline in $pipelineList.value) {
+                    $Id = $pipeline.id
+                    $webUrl = "https://dev.azure.com/$Organization/$Project/_build?definitionId=$Id"
+
+                    if ($AddDetails) {
+                        $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
+                        $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
+
+                        [PSCustomObject]@{
+                            Name           = $pipeline.name
+                            ID             = $pipeline.id
+                            URL            = $pipeline._links.web.href
+                            WebUrl         = $webUrl
+                            Folder         = $pipeline.folder
+                            YamlPath       = $pipelineDetails.configuration.path
+                            RepositoryType = $pipelineDetails.configuration.repository.type
+                        }
+                    }
+                    else {
+                        [PSCustomObject]@{
+                            Name   = $pipeline.name
+                            ID     = $pipeline.id
+                            URL    = $pipeline._links.web.href
+                            WebUrl = $webUrl
+                            Folder = $pipeline.folder
+                        }
+                    }
+                }
+
+                return $results
+            }
         }
-    }
-    catch {
-        $PSCmdlet.ThrowTerminatingError($_)
+        catch {
+            $PSCmdlet.ThrowTerminatingError($_)
+        }
     }
 }

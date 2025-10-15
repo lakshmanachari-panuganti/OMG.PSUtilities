@@ -184,9 +184,6 @@ function New-PSUADOPullRequest {
                 $repositoryIdentifier = $matchedRepo.Id
             }
 
-            # Compose authentication header
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
-
             $body = @{
                 sourceRefName = $SourceBranch
                 targetRefName = $TargetBranch

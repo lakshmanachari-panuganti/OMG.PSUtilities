@@ -127,8 +127,6 @@ function Invoke-PSUADORepoClone {
                 throw 'Git CLI not found. Please install Git and ensure it is available in PATH.'
             }
 
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT -ErrorAction Stop
-
             # Get Project ID
             $projUri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
             $projectsResp = Invoke-RestMethod -Uri $projUri -Headers $headers -Method Get -ErrorAction Stop
