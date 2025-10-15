@@ -50,21 +50,23 @@ function New-PSUADOUserStory {
         Comma-separated tags to apply to the work item (optional).
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name where the user story will be created.
 
     .PARAMETER Organization
-        The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable (optional).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable (optional).
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOUserStory -Title "Implement user authentication" -Description "As a user, I want to log in securely" -Project "MyProject"
+        New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "Implement user authentication" -Description "As a user, I want to log in securely"
 
         Creates a basic user story with title and description.
 
     .EXAMPLE
-        New-PSUADOUserStory -Title "Add search functionality" -Description "Users need to search products" -AcceptanceCriteria "Search returns relevant results" -Priority 1 -StoryPoints 5 -AssignedTo "user@company.com" -Project "MyProject"
+        New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "Add search functionality" -Description "Users need to search products" -AcceptanceCriteria "Search returns relevant results" -Priority 1 -StoryPoints 5 -AssignedTo "user@company.com"
 
         Creates a detailed user story with all properties specified.
 

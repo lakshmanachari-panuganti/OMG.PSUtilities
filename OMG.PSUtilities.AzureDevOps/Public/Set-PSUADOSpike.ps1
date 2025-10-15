@@ -45,35 +45,30 @@ function Set-PSUADOSpike {
         (Optional) The acceptance criteria or success criteria for the spike.
 
     .PARAMETER Organization
-        (Optional) The Azure DevOps organization name.
-        Auto-detected from git remote origin URL, or uses $env:ORGANIZATION when set.
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER Project
-        (Optional) The Azure DevOps project name.
-        Auto-detected from git remote origin URL.
-
-    .PARAMETER Repository
-        (Optional) The repository name.
-        Auto-detected from git remote origin URL.
+        (Mandatory) The Azure DevOps project name containing the work item.
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default is $env:PAT
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Set-PSUADOSpike -Id 12345 -State "Active" -Priority 1
+        Set-PSUADOSpike -Organization "omg" -Project "psutilities" -Id 12345 -State "Active" -Priority 1
 
-        Updates the state and priority of spike 12345 using auto-detected Organization/Project.
+        Updates the state and priority of spike 12345.
 
     .EXAMPLE
-        Set-PSUADOSpike -Id 12345 -Title "Research Cloud Architecture Options" -Effort 5 -AssignedTo "user@company.com"
+        Set-PSUADOSpike -Organization "omg" -Project "psutilities" -Id 12345 -Title "Research Cloud Architecture Options" -Effort 5 -AssignedTo "user@company.com"
 
         Updates multiple properties of the spike.
 
     .EXAMPLE
-        Set-PSUADOSpike -Organization "myorg" -Project "myproject" -Id 12345 -State "Resolved" -Tags "research,architecture"
+        Set-PSUADOSpike -Organization "omg" -Project "psutilities" -Id 12345 -State "Resolved" -Tags "research,architecture"
 
-        Marks a spike as resolved and adds tags with explicit organization and project parameters.
+        Marks a spike as resolved and adds tags.
 
     .OUTPUTS
         [PSCustomObject]
@@ -127,19 +122,13 @@ function Set-PSUADOSpike {
         [Parameter()]
         [string]$AcceptanceCriteria,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $(if ($env:ORGANIZATION) { $env:ORGANIZATION } else {
-            git remote get-url origin 2>$null | ForEach-Object {
-                if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
-            }
-        }),
+        [string]$Project,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Project = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match 'dev\.azure\.com/[^/]+/([^/]+)/_git/') { $matches[1] }
-        }),
+        [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]

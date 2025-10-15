@@ -10,18 +10,16 @@ function New-PSUADOPullRequest {
 
     .PARAMETER Organization
         (Optional) The Azure DevOps organization name under which the project resides.
-        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER Project
-        (Optional) The Azure DevOps project name containing the repository.
-        Default value is auto-detected from git remote origin URL.
+        (Mandatory) The Azure DevOps project name containing the repository.
 
     .PARAMETER RepoId
         (Mandatory - ParameterSet: ByRepoId) The repository GUID in which to create the pull request.
 
     .PARAMETER Repository
-        (Optional - ParameterSet: ByRepoName) The repository name in which to create the pull request.
-        Default value is auto-detected from git remote origin URL.
+        (Mandatory - ParameterSet: ByRepoName) The repository name in which to create the pull request.
 
     .PARAMETER SourceBranch
         (Optional) The full name of the source branch (e.g., 'refs/heads/feature-branch').
@@ -46,42 +44,33 @@ function New-PSUADOPullRequest {
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOPullRequest -Organization "myOrganization" -Project "MyProject" -RepoId "12345678-1234-1234-1234-123456789012" `
+        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -RepoId "12345678-1234-1234-1234-123456789012" `
             -SourceBranch "refs/heads/feature-x" -TargetBranch "refs/heads/main" `
             -Title "Feature X Implementation" -Description "This PR adds feature X."
 
         Creates a pull request using repository ID.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Project "MyProject" -Repository "MyRepo" `
+        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "AzureDevOps" `
+            -SourceBranch "refs/heads/feature-branch" -TargetBranch "refs/heads/main" `
             -Title "Bug fix for login" -Description "Fixed authentication issue"
 
-        Creates a pull request using repository name with default source/target branches.
+        Creates a pull request using repository name with specific branches.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Title "Auto-detected PR" -Description "Uses auto-detection for org, project, and repo"
-
-        Creates a pull request using auto-detected organization, project, and repository from git remote URL.
-
-    .EXAMPLE
-        New-PSUADOPullRequest -Project "MyProject" -Repository "MyRepo" `
+        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Ai" `
             -Title "Bug fix for login" -Description "Fixed authentication issue" -Draft
 
-        Creates a draft pull request using repository name with default source/target branches.
+        Creates a draft pull request using repository name with git-detected source/target branches.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Title "Auto-complete feature" -Description "This will auto-complete when approved" `
-            -CompleteOnApproval
+        New-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Core" `
+            -Title "Auto-complete feature" -Description "This will auto-complete when approved" -CompleteOnApproval
 
         Creates a pull request that will automatically complete when all approvals and policies are satisfied.
-
-    .EXAMPLE
-        New-PSUADOPullRequest -Organization "myOrganization" -Project "MyProject" -Repository "MyRepo" `
-            -SourceBranch "refs/heads/feature-branch" -TargetBranch "refs/heads/develop" `
-            -Title "New Feature" -Description "Added new functionality" -PAT $env:AZDO_PAT
 
         Creates a pull request using repository name with specific branches and PAT.
 
@@ -106,21 +95,13 @@ function New-PSUADOPullRequest {
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
     param (
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $(if ($env:ORGANIZATION) { $env:ORGANIZATION } else {
-            git remote get-url origin 2>$null | ForEach-Object {
-                if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
-            }
-        }),
+        [string]$Project,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Project = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match 'dev\.azure\.com/[^/]+/([^/]+)/_git/') { 
-                $matches[1]
-            }
-        }),
+        [string]$Organization = $env:ORGANIZATION,
 
         [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
         [ValidateNotNullOrEmpty()]
@@ -128,23 +109,21 @@ function New-PSUADOPullRequest {
 
         [Parameter(ParameterSetName = 'ByRepoName')]
         [ValidateNotNullOrEmpty()]
-        [string]$Repository = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match '/_git/([^/]+?)(?:\.git)?/?$') { $matches[1] }
-        }),
+        [string]$Repository,
         
         [Parameter()]
         [ValidateScript({
             if ($_ -match '^refs/heads/.+') { $true }
             else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
         })]
-        [string]$SourceBranch = $("refs/heads/$((git branch --show-current).Trim())"),
+        [string]$SourceBranch,
 
         [Parameter()]
         [ValidateScript({
             if ($_ -match '^refs/heads/.+') { $true }
             else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
         })]
-        [string]$TargetBranch = $("refs/heads/$((git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf).Trim())"),
+        [string]$TargetBranch,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]

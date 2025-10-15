@@ -42,21 +42,23 @@ function New-PSUADOBug {
         Comma-separated tags to apply to the work item (optional).
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name where the bug will be created.
 
     .PARAMETER Organization
-        The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable (optional).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable (optional).
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOBug -Title "Login button not working" -Description "Users cannot click the login button on Chrome" -Project "MyProject"
+        New-PSUADOBug -Organization "omg" -Project "psutilities" -Title "Login button not working" -Description "Users cannot click the login button on Chrome"
 
-        Creates a basic bug report.
+        Creates a basic bug report in the psutilities project.
 
     .EXAMPLE
-        New-PSUADOBug -Title "Database connection timeout" -Description "Application crashes when database is slow" -ReproductionSteps "1. Start app 2. Wait 30 seconds 3. Click save" -SystemInfo "Windows 10, Chrome 91" -Severity 1 -Priority 1 -AssignedTo "dev@company.com" -Project "MyProject"
+        New-PSUADOBug -Organization "omg" -Project "psutilities" -Title "Database connection timeout" -Description "Application crashes when database is slow" -ReproductionSteps "1. Start app 2. Wait 30 seconds 3. Click save" -SystemInfo "Windows 10, Chrome 91" -Severity 1 -Priority 1 -AssignedTo "dev@company.com"
 
         Creates a detailed bug report with all fields specified.
 

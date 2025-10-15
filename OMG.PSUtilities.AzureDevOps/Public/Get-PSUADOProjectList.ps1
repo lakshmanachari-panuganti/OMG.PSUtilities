@@ -8,13 +8,22 @@ function Get-PSUADOProjectList {
         Leverages environment variables if parameters are not supplied.
 
     .PARAMETER Organization
-        The Azure DevOps organization name. If not provided, uses $env:ORGANIZATION.
+        (Optional) The Azure DevOps organization name under which the projects reside.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
+
+    .PARAMETER PAT
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADOProjectList -Organization 'omgitsolutions'
+        Get-PSUADOProjectList -Organization "omg"
+
+        Retrieves all projects from the "omg" organization.
 
     .EXAMPLE
         Get-PSUADOProjectList
+
+        Retrieves all projects using the organization from $env:ORGANIZATION.
 
     .OUTPUTS
         [PSCustomObject[]]

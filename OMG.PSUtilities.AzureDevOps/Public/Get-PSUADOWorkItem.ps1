@@ -14,27 +14,26 @@ function Get-PSUADOWorkItem {
     .PARAMETER Id
         (Mandatory) The ID of the work item to retrieve.
 
-    .PARAMETER Organization
-        (Optional) The Azure DevOps organization name.
-        Auto-detected from git remote origin URL, or uses $env:ORGANIZATION when set.
-
     .PARAMETER Project
-        (Optional) The Azure DevOps project name.
-        Auto-detected from git remote origin URL.
+        (Mandatory) The Azure DevOps project name containing the work item.
+
+    .PARAMETER Organization
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default is $env:PAT
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADOWorkItem -Id 12345
+        Get-PSUADOWorkItem -Organization "omg" -Project "psutilities" -Id 12345
 
-        Uses auto-detected Organization/Project to retrieve work item with ID 12345.
+        Retrieves work item with ID 12345 from the psutilities project.
 
     .EXAMPLE
-        Get-PSUADOWorkItem -Organization "psutilities" -Project "AI" -Id 12345
+        Get-PSUADOWorkItem -Organization "omg" -Project "psutilities" -Id 67890
 
-        Uses explicit Organization and Project parameters to retrieve the work item.
+        Retrieves work item with ID 67890 from the psutilities project.
 
     .OUTPUTS
         [PSCustomObject]
@@ -55,22 +54,13 @@ function Get-PSUADOWorkItem {
         [ValidateNotNullOrEmpty()]
         [int]$Id,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $(
-            if ($env:ORGANIZATION) { $env:ORGANIZATION }
-            else {
-                git remote get-url origin 2>$null | ForEach-Object {
-                    if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
-                }
-            }
-        ),
+        [string]$Project,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Project = $(git remote get-url origin 2>$null | ForEach-Object {
-                if ($_ -match 'dev\.azure\.com/[^/]+/([^/]+)/_git/') { $matches[1] }
-            }),
+        [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -92,9 +82,6 @@ function Get-PSUADOWorkItem {
 
             if (-not $Organization) {
                 throw "Organization is required. Set env var: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or ensure git remote is an Azure DevOps URL."
-            }
-            if (-not $Project) {
-                throw "Project is required. Provide -Project or ensure the git remote contains the project segment."
             }
 
             $headers = Get-PSUAdoAuthHeader -PAT $PAT

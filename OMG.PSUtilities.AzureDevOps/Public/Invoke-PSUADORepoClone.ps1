@@ -12,7 +12,8 @@ function Invoke-PSUADORepoClone {
         This helper is intended for automation scripts and CI tasks where bulk cloning of project repositories is required.
 
     .PARAMETER Organization
-        (Optional) The Azure DevOps organization name. Auto-detected from git remote origin URL, or uses $env:ORGANIZATION when set.
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER Project
         (Mandatory) The Azure DevOps project name containing repositories to clone.
@@ -21,7 +22,8 @@ function Invoke-PSUADORepoClone {
         (Mandatory) Local folder to clone into. Will create a subdirectory named "{Project}-Repos" under this path.
 
     .PARAMETER PAT
-        (Optional) Personal Access Token used for HTTPS authentication. Default is $env:PAT. Do NOT hardcode secrets.
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .PARAMETER RepositoryFilter
         (Optional) Wildcard pattern to filter repository names to clone, e.g. 'API-*'.
@@ -30,14 +32,14 @@ function Invoke-PSUADORepoClone {
         (Optional) Switch to remove existing target folder before cloning.
 
     .EXAMPLE
-        Invoke-PSUADORepoClone -Organization "myorg" -Project "MyProject" -TargetPath "C:\repos" -PAT $env:PAT
+        Invoke-PSUADORepoClone -Organization "omg" -Project "psutilities" -TargetPath "C:\repos"
 
-        Clones all repositories from MyProject into C:\repos\MyProject-Repos folder using PAT for authentication.
+        Clones all repositories from psutilities into C:\repos\psutilities-Repos folder using PAT for authentication.
 
     .EXAMPLE
-        Invoke-PSUADORepoClone -Project "MyProject" -TargetPath "D:\code" -RepositoryFilter 'API-*'
+        Invoke-PSUADORepoClone -Organization "omg" -Project "psutilities" -TargetPath "D:\code" -RepositoryFilter "AzureDevOps"
 
-        Auto-detects organization and clones only repositories matching the filter into D:\code\MyProject-Repos.
+        Clones only the "AzureDevOps" repository into D:\code\psutilities-Repos.
 
     .OUTPUTS
         [PSCustomObject]

@@ -14,16 +14,21 @@ function Get-PSUADOPipelineBuild {
 
     .PARAMETER Organization
         (Optional) The Azure DevOps organization name under which the project resides.
-        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADOPipelineBuild -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'OmgItSolutions' -Project 'PSUtilities'
+        Get-PSUADOPipelineBuild -Organization "omg" -Project "psutilities" -BuildId 12345
 
-        This example gets details for build ID 12345 in the given organization and project.
+        Retrieves details for build ID 12345 in the psutilities project.
+
+    .EXAMPLE
+        Get-PSUADOPipelineBuild -Organization "omg" -Project "psutilities" -BuildId 67890
+
+        Retrieves details for build ID 67890 in the psutilities project.
 
     .OUTPUTS
         [PSCustomObject]

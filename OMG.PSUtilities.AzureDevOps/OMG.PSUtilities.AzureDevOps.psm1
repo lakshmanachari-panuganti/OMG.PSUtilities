@@ -36,10 +36,14 @@ $PublicFunctions = @(
     'New-PSUADOSpike',
     'New-PSUADOTask',
     'New-PSUADOUserStory',
+    'New-PSUADOVariable',
+    'New-PSUADOVariableGroup',
     'Set-PSUADOBug',
     'Set-PSUADOSpike',
     'Set-PSUADOTask',
-    'Set-PSUADOUserStory'
+    'Set-PSUADOUserStory',
+    'Set-PSUADOVariable',
+    'Set-PSUADOVariableGroup'
 )
 
 $AliasesToExport = @(

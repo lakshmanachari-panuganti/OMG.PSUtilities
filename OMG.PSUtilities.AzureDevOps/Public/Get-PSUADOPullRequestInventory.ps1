@@ -9,15 +9,17 @@ function Get-PSUADOPullRequestInventory {
         Permission errors are handled gracefully to skip projects the user cannot access.
 
     .PARAMETER Organization
-        The name of the Azure DevOps organization. If not specified, the value from the ORGANIZATION environment variable is used.
+        (Optional) The Azure DevOps organization name under which the projects reside.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        The Personal Access Token used for authentication. If not specified, the value from the PAT environment variable is used.
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        PS> $PRInventory = Get-PSUADOPullRequestInventory -Organization 'omgitsolutions' -PAT 'your-pat-token'
+        $PRInventory = Get-PSUADOPullRequestInventory -Organization "omg"
 
-        Retrieves all active pull requests across all repositories and projects under 'omgitsolutions'.
+        Retrieves all active pull requests across all repositories and projects under the "omg" organization.
 
     .OUTPUTS
         System.Object[] 

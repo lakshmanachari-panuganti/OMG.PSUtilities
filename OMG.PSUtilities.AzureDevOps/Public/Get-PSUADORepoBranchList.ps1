@@ -8,33 +8,37 @@
     Supports lookup by RepositoryId (GUID) or Repository (name).
 
 .PARAMETER Project
-    The name of the Azure DevOps project containing the repository.
+    (Mandatory) The Azure DevOps project name containing the repository.
 
 .PARAMETER RepositoryId
-    The unique identifier (GUID) of the repository to retrieve branches from.
+    (Mandatory - ParameterSet: ByRepositoryId) The unique identifier (GUID) of the repository to retrieve branches from.
 
 .PARAMETER Repository
-    The name of the repository to retrieve branches from.
+    (Mandatory - ParameterSet: ByRepositoryName) The name of the repository to retrieve branches from.
 
 .PARAMETER Organization
-    The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable if not specified.
+    (Optional) The Azure DevOps organization name under which the project resides.
+    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
 .PARAMETER PAT
-    Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable if not specified.
-    The PAT must have read permissions for Code (Git repositories).
+    (Optional) Personal Access Token for Azure DevOps authentication.
+    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
 .EXAMPLE
-    Get-PSUADORepoBranchList -Project "PSUtilities" -RepositoryId "12345678-1234-1234-1234-123456789abc"
+    Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -RepositoryId "12345678-1234-1234-1234-123456789abc"
+
     Retrieves all branches for the specified repository using RepositoryId.
 
 .EXAMPLE
-    Get-PSUADORepoBranchList -Project "PSUtilities" -Repository "MyRepo"
-    Retrieves all branches for the specified repository using Repository name.
+    Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -Repository "AzureDevOps"
+
+    Retrieves all branches for the "AzureDevOps" repository using Repository name.
 
 .EXAMPLE
-    $branches = Get-PSUADORepoBranchList -Project "PSUtilities" -Repository "WebRepo"
+    $branches = Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -Repository "Core"
     $branches | Where-Object { $_.Name -like "*feature*" }
-    Retrieves all branches and filters for feature branches.
+
+    Retrieves all branches from the "Core" repository and filters for feature branches.
 
 .OUTPUTS
     [PSCustomObject]

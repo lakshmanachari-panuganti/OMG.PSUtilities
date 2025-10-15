@@ -36,16 +36,16 @@ function Get-PSUADOVariableGroupInventory {
         - PSTypeName: Custom type name for formatting
 
     .PARAMETER Organization
-        The name of the Azure DevOps organization. This is the part that appears in your Azure DevOps URL
-        (e.g., 'omg' in https://dev.azure.com/omg).
+        (Optional) The Azure DevOps organization name under which the projects reside.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Azure DevOps Personal Access Token with appropriate permissions. If not provided, the function
-        will attempt to use the $env:ADO_PAT or $env:PAT environment variable. The PAT must have at least
-        'Variable Groups (read)' and 'Project and Team (read)' permissions.
+        (Optional) Personal Access Token for Azure DevOps authentication with appropriate permissions.
+        Default value is $env:PAT or $env:ADO_PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
+        The PAT must have at least 'Variable Groups (read)' and 'Project and Team (read)' permissions.
 
     .PARAMETER $project
-        Optional wildcard filter for project names. Supports standard PowerShell wildcard patterns.
+        (Optional) Wildcard filter for project names. Supports standard PowerShell wildcard patterns.
         Examples: '*Services*', 'Prod-*', '*API*'
         Default: '*' (all projects)
 
@@ -63,32 +63,32 @@ function Get-PSUADOVariableGroupInventory {
         Range: 1-20
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG'
+        Get-PSUADOVariableGroupInventory
 
-        Retrieves variable group inventory for all projects in the 'OMG' organization.
+        Retrieves variable group inventory for all projects in the organization specified by $env:ORGANIZATION.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Project @('ProjectA', 'ProjectB')
+        Get-PSUADOVariableGroupInventory -Project @('psutilities', 'AzureDevOps')
 
         Retrieves variable group inventory for specific projects only.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Project @('*-Prod', '*-Dev') -OutputFilePath 'C:\Reports\VarGroups.csv'
+        Get-PSUADOVariableGroupInventory -Project @('*-Prod', '*-Dev') -OutputFilePath 'C:\Reports\VarGroups.csv'
 
         Retrieves variable groups from projects matching wildcard patterns and exports to CSV.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Filter 'VariableGroupName -like "*prod*"'
+        Get-PSUADOVariableGroupInventory -Organization 'omg' -Filter 'VariableGroupName -like "*prod*"'
 
-        Retrieves variable groups with names containing 'prod'.
+        Retrieves variable groups with names containing 'prod' from a specific organization.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -ThrottleLimit 15
+        Get-PSUADOVariableGroupInventory -ThrottleLimit 15
 
         Retrieves variable group inventory with higher concurrency (15 parallel threads) for faster processing of large organizations.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -IncludeVariableDetails -Verbose
+        Get-PSUADOVariableGroupInventory -IncludeVariableDetails -Verbose
 
         Retrieves detailed variable group inventory with verbose logging and additional variable metadata.
 
@@ -121,9 +121,9 @@ function Get-PSUADOVariableGroupInventory {
     [CmdletBinding(DefaultParameterSetName = 'Default')]
     [OutputType([PSCustomObject[]])]
     param (
-        [Parameter(Mandatory)]
+        [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization,
+        [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -157,6 +157,11 @@ function Get-PSUADOVariableGroupInventory {
 
     begin {
         Write-Host "Starting Azure DevOps Variable Group inventory process"
+
+        # Validate Organization parameter
+        if (-not $Organization) {
+            throw "Organization is required. Set env var: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
 
         # Setup authentication headers
         $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))

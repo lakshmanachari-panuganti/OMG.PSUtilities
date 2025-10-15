@@ -7,26 +7,25 @@ function Get-PSUADORepositories {
         This function queries the Azure DevOps REST API to get all repositories in the specified organization and project.
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name containing the repositories.
 
     .PARAMETER Organization
-        The Azure DevOps organization. If not provided, defaults to the ORGANIZATION environment variable.
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        The Personal Access Token for authentication. If not provided, defaults to the PAT environment variable.
-
-    .OUTPUTS
-        [PSCustomObject]
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADORepositories -Project "PSUtilities"
+        Get-PSUADORepositories -Organization "omg" -Project "psutilities"
 
-        Retrieves all repositories in the "PSUtilities" project under the organization specified in $env:ORGANIZATION.
+        Retrieves all repositories in the "psutilities" project.
 
     .EXAMPLE
-        Get-PSUADORepositories -Project "PSUtilities" -Organization "omgitsolutions" -PAT "<YourPAT>"
+        Get-PSUADORepositories -Project "psutilities"
 
-        Retrieves all repositories explicitly using provided organization and PAT.
+        Retrieves all repositories using the organization from $env:ORGANIZATION.
 
     .NOTES
         Author: Lakshmanachari Panuganti

@@ -9,37 +9,39 @@ function Get-PSUADOPullRequest {
     either Repository ID or Repository Name.
 
 .PARAMETER RepositoryId
-    Optional. The ID of the specific repository to get pull requests from.
+    (Optional) The ID of the specific repository to get pull requests from.
 
 .PARAMETER RepositoryName
-    Optional. The name of the specific repository to get pull requests from.
+    (Optional) The name of the specific repository to get pull requests from.
 
 .PARAMETER Project
-    The name of the Azure DevOps project.
+    (Mandatory) The Azure DevOps project name containing the repository.
 
 .PARAMETER State
-    The state of pull requests to retrieve. Default is 'Active'. Other valid values: 'Completed', 'Abandoned'.
+    (Optional) The state of pull requests to retrieve. Default is 'Active'. Other valid values: 'Completed', 'Abandoned'.
 
 .PARAMETER Organization
-    The name of the Azure DevOps organization. Defaults to the environment variable ORGANIZATION if not specified.
+    (Optional) The Azure DevOps organization name under which the project resides.
+    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
 .PARAMETER PAT
-    The Personal Access Token used for authentication. Defaults to the environment variable PAT if not specified.
+    (Optional) Personal Access Token for Azure DevOps authentication.
+    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
 .EXAMPLE
-    Get-PSUADOPullRequest -Project "MyProject"
+    Get-PSUADOPullRequest -Organization "omg" -Project "psutilities"
 
-    Retrieves all active pull requests from all repositories in the "MyProject" project.
-
-.EXAMPLE
-    Get-PSUADOPullRequest -Project "MyProject" -RepositoryName "MyRepo" -State "Completed"
-
-    Retrieves all completed pull requests from the "MyRepo" repository in "MyProject".
+    Retrieves all active pull requests from all repositories in the "psutilities" project.
 
 .EXAMPLE
-    Get-PSUADOPullRequest -Organization "omgitsolutions" -Project "PSUtilities" -PAT $env:PAT
+    Get-PSUADOPullRequest -Organization "omg" -Project "psutilities" -RepositoryName "AzureDevOps" -State "Completed"
 
-    Retrieves all active pull requests from all repositories in the project using specific organization and PAT.
+    Retrieves all completed pull requests from the "AzureDevOps" repository in "psutilities".
+
+.EXAMPLE
+    Get-PSUADOPullRequest -Organization "omg" -Project "psutilities" -RepositoryName "Ai"
+
+    Retrieves all active pull requests from the "Ai" repository in the project.
 
 .OUTPUTS
     [PSCustomObject]

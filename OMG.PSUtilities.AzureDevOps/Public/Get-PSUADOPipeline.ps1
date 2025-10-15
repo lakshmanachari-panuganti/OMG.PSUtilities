@@ -9,15 +9,15 @@
     You can also retrieve a specific pipeline by its ID.
 
 .PARAMETER Project
-    (Mandatory) The Azure DevOps project name against which the pipeline should be retrieved.
+    (Mandatory) The Azure DevOps project name containing the pipelines.
 
 .PARAMETER Organization
     (Optional) The Azure DevOps organization name under which the project resides.
-    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
+    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
 .PARAMETER PAT
     (Optional) Personal Access Token for Azure DevOps authentication.
-    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
 .PARAMETER Id
     (Optional) The ID of a specific pipeline to retrieve.
@@ -28,10 +28,14 @@
     If specified, fetches additional details for each pipeline (may be slower).
 
 .EXAMPLE
-    Get-PSUADOPipeline -Organization "OmgITSolutions" -Project "PSUtilities" -PAT $env:PAT
+    Get-PSUADOPipeline -Organization "omg" -Project "psutilities"
+
+    Retrieves all pipelines from the "psutilities" project.
 
 .EXAMPLE
-    Get-PSUADOPipeline -Organization "OmgITSolutions" -Project "PSUtilities" -PAT $env:PAT -Id 1234 -AddDetails
+    Get-PSUADOPipeline -Organization "omg" -Project "psutilities" -Id 1234 -AddDetails
+
+    Retrieves detailed information for pipeline ID 1234.
 
 .OUTPUTS
     [PSCustomObject]

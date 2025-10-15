@@ -36,21 +36,23 @@ function New-PSUADOSpike {
         Comma-separated tags to apply to the work item (optional).
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name where the spike will be created.
 
     .PARAMETER Organization
-        The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable (optional).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable (optional).
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOSpike -Title "Research OAuth integration options" -Description "Investigate different OAuth providers for user authentication" -Project "MyProject"
+        New-PSUADOSpike -Organization "omg" -Project "psutilities" -Title "Research OAuth integration options" -Description "Investigate different OAuth providers for user authentication"
 
         Creates a basic spike for OAuth research.
 
     .EXAMPLE
-        New-PSUADOSpike -Title "Performance testing spike" -Description "Test database query performance with large datasets" -TimeBox "2 days" -Priority 1 -StoryPoints 3 -AssignedTo "researcher@company.com" -Project "MyProject"
+        New-PSUADOSpike -Organization "omg" -Project "psutilities" -Title "Performance testing spike" -Description "Test database query performance with large datasets" -TimeBox "2 days" -Priority 1 -StoryPoints 3 -AssignedTo "researcher@company.com"
 
         Creates a detailed spike with time-box and assignment.
 
@@ -126,6 +128,10 @@ function New-PSUADOSpike {
             }
 
             if (-not $Organization) {
+                throw "Organization is required. Set env var: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+            }
+
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT
             $headers['Content-Type'] = 'application/json-patch+json'
 
             # Build the work item fields

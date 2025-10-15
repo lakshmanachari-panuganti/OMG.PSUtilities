@@ -13,35 +13,32 @@ function Get-PSUADOPipelineLatestRun {
         - This function uses Azure DevOps REST API version 7.1-preview.1.
 
     .PARAMETER PipelineId
-        The numeric ID of the Azure DevOps pipeline. Use this when you know the pipeline ID directly.
+        (Optional - ParameterSet: ByPipelineId) The numeric ID of the Azure DevOps pipeline.
 
     .PARAMETER PipelineUrl
-        The full URL of the Azure DevOps pipeline. Use this if you don't know the ID but have the URL.
+        (Optional - ParameterSet: ByPipelineUrl) The full URL of the Azure DevOps pipeline.
         The function will extract the pipeline ID automatically.
 
-    .PARAMETER PAT
-        Your Azure DevOps Personal Access Token. This is used for authentication to make API calls.
+    .PARAMETER Project
+        (Mandatory) The Azure DevOps project name containing the pipeline.
 
     .PARAMETER Organization
-        The name of your Azure DevOps organization (i.e., the part before `.visualstudio.com` or `.dev.azure.com`).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
-    .PARAMETER Project
-        The name of the Azure DevOps project containing the pipeline.
-
-    .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineId 2323 -Pat "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
-
-        This command fetches the latest run for pipeline ID 2323 in the mentioned project under the mentioned organization.
+    .PARAMETER PAT
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build?definitionId=23" -PAT "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
+        Get-PSUADOPipelineLatestRun -Organization "omg" -Project "psutilities" -PipelineId 2323
 
-        This command extracts the pipeline ID from the given URL and fetches the latest run details.
+        Fetches the latest run for pipeline ID 2323 in the psutilities project.
 
     .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build/results?buildId=456&view=results" -PAT "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
+        Get-PSUADOPipelineLatestRun -Organization "omg" -Project "psutilities" -PipelineUrl "https://dev.azure.com/omg/psutilities/_build?definitionId=23"
 
-        This command works with build results URLs that contain pipeline information.
+        Extracts the pipeline ID from the URL and fetches the latest run details.
 
     .OUTPUTS
         [PSCustomObject]

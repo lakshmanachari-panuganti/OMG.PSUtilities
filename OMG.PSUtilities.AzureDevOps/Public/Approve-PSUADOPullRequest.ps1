@@ -9,15 +9,13 @@ function Approve-PSUADOPullRequest {
 
     .PARAMETER Organization
         (Optional) The Azure DevOps organization name under which the project resides.
-        Default value is auto-detected from git remote origin URL or $env:ORGANIZATION.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER Project
-        (Optional) The Azure DevOps project name containing the repository.
-        Default value is auto-detected from git remote origin URL.
+        (Mandatory) The Azure DevOps project name containing the repository.
 
     .PARAMETER Repository
-        (Optional) The repository name containing the pull request.
-        Default value is auto-detected from git remote origin URL.
+        (Mandatory) The repository name containing the pull request.
 
     .PARAMETER PullRequestId
         (Mandatory) The ID of the pull request to approve.
@@ -36,20 +34,20 @@ function Approve-PSUADOPullRequest {
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Approve-PSUADOPullRequest -PullRequestId 123
+        Approve-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "AzureDevOps" -PullRequestId 123
 
-        Approves pull request with ID 123 using auto-detected organization, project, and repository.
-
-    .EXAMPLE
-        Approve-PSUADOPullRequest -Organization "myorg" -Project "myproject" -Repository "myrepo" -PullRequestId 123 -Vote 5 -Comment "Looks good with minor suggestions"
-
-        Approves pull request with ID 123 with suggestions and a comment.
+        Approves pull request with ID 123 with default vote (10 - Approved).
 
     .EXAMPLE
-        Approve-PSUADOPullRequest -PullRequestId 123 -Vote -5 -Comment "Please address the unit test failures"
+        Approve-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Ai" -PullRequestId 456 -Vote 5 -Comment "Looks good with minor suggestions"
+
+        Approves pull request with ID 456 with suggestions and a comment.
+
+    .EXAMPLE
+        Approve-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Core" -PullRequestId 789 -Vote -5 -Comment "Please address the unit test failures"
 
         Sets pull request to "Waiting for author" status with a comment.
 
@@ -74,27 +72,17 @@ function Approve-PSUADOPullRequest {
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
     param (
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $(if ($env:ORGANIZATION) { $env:ORGANIZATION } else {
-            git remote get-url origin 2>$null | ForEach-Object {
-                if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
-            }
-        }),
+        [string]$Project,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Project = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match 'dev\.azure\.com/[^/]+/([^/]+)/_git/') { 
-                $matches[1]
-            }
-        }),
+        [string]$Organization = $env:ORGANIZATION,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Repository = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match '/_git/([^/]+?)(?:\.git)?/?$') { $matches[1] }
-        }),
+        [string]$Repository,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -128,14 +116,6 @@ function Approve-PSUADOPullRequest {
             # Validate required parameters that have auto-detection
             if (-not $Organization) {
                 throw "Organization parameter is required. Set it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value 'your-org' or ensure you're in a git repository with Azure DevOps remote."
-            }
-            
-            if (-not $Project) {
-                throw "Project parameter is required. Either specify it explicitly or ensure you're in a git repository with Azure DevOps remote URL."
-            }
-            
-            if (-not $Repository) {
-                throw "Repository parameter is required. Either specify it explicitly or ensure you're in a git repository with Azure DevOps remote URL."
             }
 
             # Get repository ID
