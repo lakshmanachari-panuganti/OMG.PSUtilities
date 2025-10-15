@@ -136,9 +136,31 @@ function Approve-PSUADOPullRequest {
             }
             $repositoryId = $matchedRepo.Id
 
-            # Get current user information for the reviewer
-            $userUri = "https://dev.azure.com/$Organization/_apis/profile/profiles/me?api-version=7.0"
-            $userProfile = Invoke-RestMethod -Method Get -Uri $userUri -Headers $headers -ErrorAction Stop
+            # Get current user information for the reviewer.
+            # NOTE: Profile APIs are hosted under vssps.dev.azure.com (or app.vssps.visualstudio.com) not dev.azure.com.
+            # The original implementation used dev.azure.com which can return a branded HTML 404 page (as observed by user).
+            $userProfile = $null
+            $profileError = $null
+            $profileEndpointsTried = @()
+            $profileBaseUris = @(
+                "https://vssps.dev.azure.com/$Organization/_apis/profile/profiles/me?api-version=7.0",
+                "https://dev.azure.com/$Organization/_apis/profile/profiles/me?api-version=7.0" # fallback to previous (legacy / misconfigured) just in case
+            )
+            foreach($endpoint in $profileBaseUris) {
+                $profileEndpointsTried += $endpoint
+                try {
+                    Write-Verbose "Attempting profile lookup: $endpoint"
+                    $userProfile = Invoke-RestMethod -Method Get -Uri $endpoint -Headers $headers -ErrorAction Stop
+                    if($userProfile){ break }
+                } catch {
+                    $profileError = $_
+                    Write-Verbose "Profile lookup failed at $endpoint : $($profileError.Exception.Message)"
+                }
+            }
+            if(-not $userProfile) {
+                $msg = "Unable to resolve current user profile from endpoints: `n - " + ($profileEndpointsTried -join "`n - ") + "`nLast error: $($profileError.Exception.Message)" + "`nVerify PAT has 'vso.profile' scope or try passing reviewer user id explicitly (future enhancement)."
+                throw $msg
+            }
 
             # Prepare the reviewer body
             $body = @{

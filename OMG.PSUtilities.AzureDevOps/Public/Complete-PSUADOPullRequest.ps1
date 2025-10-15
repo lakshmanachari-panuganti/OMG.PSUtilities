@@ -142,8 +142,8 @@ function Complete-PSUADOPullRequest {
 
             $currentPr = Invoke-RestMethod -Method Get -Uri $getPrUri -Headers $headers -ErrorAction Stop
 
-            # Prepare completion options
-            $completionOptions = @{}
+            # Prepare completion options (use a fresh ordered hashtable to avoid any collection mutation issues later)
+            $completionOptions = [ordered]@{}
 
             if ($MergeStrategy -eq 'merge') {
                 $completionOptions.mergeStrategy = 'noFastForward'
@@ -159,21 +159,36 @@ function Complete-PSUADOPullRequest {
                 $completionOptions.deleteSourceBranch = $true
             }
 
-            # Add any additional completion options
+            # Add any additional completion options (snapshot keys first to avoid 'collection modified' issues if caller mutates outside)
             if ($CompletionOptions) {
-                foreach ($key in $CompletionOptions.Keys) {
-                    $completionOptions[$key] = $CompletionOptions[$key]
+                $additional = @{}
+                foreach ($entry in @($CompletionOptions.GetEnumerator())) { # snapshot enumeration safely
+                    $additional[$entry.Key] = $entry.Value
+                }
+                foreach ($k in $additional.Keys) {
+                    $completionOptions[$k] = $additional[$k]
                 }
             }
 
-            # Prepare the update body
-            $body = @{
-                status                = "completed"
-                lastMergeSourceCommit = @{
-                    commitId = $currentPr.lastMergeSourceCommit.commitId
-                }
-                completionOptions     = $completionOptions
-            } | ConvertTo-Json -Depth 10
+            # Determine source commit id; fall back defensively if property missing
+            $sourceCommitId = $null
+            if ($currentPr.PSObject.Properties.Name -contains 'lastMergeSourceCommit' -and $currentPr.lastMergeSourceCommit.commitId) {
+                $sourceCommitId = $currentPr.lastMergeSourceCommit.commitId
+            } elseif ($currentPr.PSObject.Properties.Name -contains 'lastMergeCommit' -and $currentPr.lastMergeCommit.commitId) {
+                $sourceCommitId = $currentPr.lastMergeCommit.commitId
+            } else {
+                Write-Verbose "Source commit id not found on PR object; proceeding without lastMergeSourceCommit optimistic concurrency check."            
+            }
+
+            $bodyObject = [ordered]@{
+                status = 'completed'
+                completionOptions = $completionOptions
+            }
+            if ($sourceCommitId) {
+                $bodyObject.lastMergeSourceCommit = @{ commitId = $sourceCommitId }
+            }
+            $body = $bodyObject | ConvertTo-Json -Depth 10
+            Write-Verbose "Completion payload: $body"
 
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
@@ -187,7 +202,19 @@ function Complete-PSUADOPullRequest {
             Write-Verbose "Merge strategy: $MergeStrategy"
             Write-Verbose "API URI: $uri"
 
-            $response = Invoke-RestMethod -Method Patch -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -ErrorAction Stop
+            try {
+                $response = Invoke-RestMethod -Method Patch -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -ErrorAction Stop
+            } catch {
+                Write-Verbose "Raw failure body (if any) following completion attempt."            
+                if ($_.Exception.Response) {
+                    try {
+                        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+                        $raw = $reader.ReadToEnd()
+                        Write-Verbose $raw
+                    } catch {}
+                }
+                throw
+            }
 
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$Repository/pullrequest/$PullRequestId"
             Write-Host "Pull Request ID $PullRequestId completed successfully!" -ForegroundColor Green
