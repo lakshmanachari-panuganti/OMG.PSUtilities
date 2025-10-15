@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## [1.0.9] - 15th January 2025
+## [1.0.9] - 15th October 2025
 ### Fixed
 - **CRITICAL**: Fixed 18 functions with duplicate validation code in process{} blocks
   - Removed performance-degrading duplicate validations that ran per pipeline item

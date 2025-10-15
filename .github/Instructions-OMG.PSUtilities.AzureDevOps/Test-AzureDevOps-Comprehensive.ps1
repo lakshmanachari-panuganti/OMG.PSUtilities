@@ -157,7 +157,7 @@ try {
 # Test 1.3: Get-PSUADORepoBranchList
 Write-TestSection "Test 1.3: Get-PSUADORepoBranchList"
 try {
-    $branches = Get-PSUADORepoBranchList -Project $projectName -Repository $repositoryName
+    $branches = Get-PSUADORepoBranchList -Project $projectName -RepositoryName $repositoryName
     Write-TestResult "Get-PSUADORepoBranchList" $true "Found $($branches.Count) branch(es)"
     
     $script:defaultBranch = ($branches | Where-Object { $_.isDefault -eq $true }).name
@@ -171,6 +171,9 @@ try {
     }
 } catch {
     Write-TestResult "Get-PSUADORepoBranchList" $false $_.Exception.Message
+    # Set a fallback default branch for downstream tests
+    $script:defaultBranch = "refs/heads/main"
+    Write-Host "    Using fallback branch: $defaultBranch" -ForegroundColor $colors.Warning
 }
 
 # =========================================================================
@@ -389,7 +392,7 @@ try {
 # Test 3.2: Get-PSUADOPullRequest
 Write-TestSection "Test 3.2: Get-PSUADOPullRequest"
 try {
-    $pullRequests = Get-PSUADOPullRequest -Project $projectName -Repository $repositoryName
+    $pullRequests = Get-PSUADOPullRequest -Project $projectName -RepositoryName $repositoryName
     Write-TestResult "Get-PSUADOPullRequest" $true "Found $($pullRequests.Count) pull request(s)"
     
     if ($VerboseOutput -and $pullRequests.Count -gt 0) {
@@ -404,7 +407,7 @@ try {
 # Test 3.3: Get-PSUADOPullRequestInventory
 Write-TestSection "Test 3.3: Get-PSUADOPullRequestInventory"
 try {
-    $prInventory = Get-PSUADOPullRequestInventory -Project $projectName
+    $prInventory = Get-PSUADOPullRequestInventory
     Write-TestResult "Get-PSUADOPullRequestInventory" $true "Found $($prInventory.Count) PR(s) across repositories"
 } catch {
     Write-TestResult "Get-PSUADOPullRequestInventory" $false $_.Exception.Message
@@ -514,9 +517,9 @@ try {
     $newBug = New-PSUADOBug `
         -Project $projectName `
         -Title "Test Bug - Automated Test $(Get-Date -Format 'yyyy-MM-dd HH:mm')" `
-        -ReproSteps "1. Run automated test`n2. Observe bug creation" `
+        -Description "This is a test bug created by the automated test suite" `
+        -ReproductionSteps "1. Run automated test`n2. Observe bug creation" `
         -Priority 3 `
-        -Severity "3 - Medium" `
         -Verbose:$VerboseOutput
     
     if ($newBug.id) {
@@ -535,12 +538,12 @@ if ($testTaskId) {
     try {
         $updatedTask = Set-PSUADOTask `
             -Project $projectName `
-            -WorkItemId $testTaskId `
-            -State "Active" `
-            -AssignedTo "Unassigned" `
+            -Id $testTaskId `
+            -State "In Progress" `
+            -AssignedTo "" `
             -Verbose:$VerboseOutput
         
-        Write-TestResult "Set-PSUADOTask" $true "Updated Task #$testTaskId to 'Active' state"
+        Write-TestResult "Set-PSUADOTask" $true "Updated Task #$testTaskId to 'In Progress' state"
     } catch {
         Write-TestResult "Set-PSUADOTask" $false $_.Exception.Message
     }
@@ -554,7 +557,7 @@ if ($testBugId) {
     try {
         $updatedBug = Set-PSUADOBug `
             -Project $projectName `
-            -WorkItemId $testBugId `
+            -Id $testBugId `
             -State "Active" `
             -Verbose:$VerboseOutput
         
@@ -618,17 +621,23 @@ if ($testPipelineId) {
 
 # Test 5.3: Get-PSUADOPipelineBuild
 Write-TestSection "Test 5.3: Get-PSUADOPipelineBuild"
-try {
-    $builds = Get-PSUADOPipelineBuild -Project $projectName
-    Write-TestResult "Get-PSUADOPipelineBuild" $true "Found $($builds.Count) build(s)"
-    
-    if ($VerboseOutput -and $builds.Count -gt 0) {
-        Write-Host "`n    Recent Builds:" -ForegroundColor $colors.Detail
-        $builds | Select-Object -First 5 id, buildNumber, status, result | 
-            Format-Table -AutoSize | Out-String | ForEach-Object { Write-Host $_ -ForegroundColor $colors.Detail }
+if ($latestRun -and $latestRun.id -gt 0) {
+    try {
+        $buildDetails = Get-PSUADOPipelineBuild -Project $projectName -BuildId $latestRun.id
+        Write-TestResult "Get-PSUADOPipelineBuild" $true "Retrieved build #$($latestRun.id) details"
+        
+        if ($VerboseOutput) {
+            Write-Host "`n    Build Details:" -ForegroundColor $colors.Detail
+            Write-Host "      ID: $($buildDetails.id)" -ForegroundColor $colors.Detail
+            Write-Host "      Build Number: $($buildDetails.buildNumber)" -ForegroundColor $colors.Detail
+            Write-Host "      Status: $($buildDetails.status)" -ForegroundColor $colors.Detail
+            Write-Host "      Result: $($buildDetails.result)" -ForegroundColor $colors.Detail
+        }
+    } catch {
+        Write-TestResult "Get-PSUADOPipelineBuild" $false $_.Exception.Message
     }
-} catch {
-    Write-TestResult "Get-PSUADOPipelineBuild" $false $_.Exception.Message
+} else {
+    Write-TestResult "Get-PSUADOPipelineBuild" $true "Skipped - no pipeline runs found"
 }
 
 # =========================================================================

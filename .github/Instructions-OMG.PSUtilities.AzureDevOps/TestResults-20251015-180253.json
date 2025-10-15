@@ -1,0 +1,212 @@
+[
+  {
+    "TestName": "Environment: ORGANIZATION",
+    "Success": true,
+    "Message": "lakshmanachari",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:34.7852064+05:30"
+  },
+  {
+    "TestName": "Environment: PAT",
+    "Success": true,
+    "Message": "Length: 84 characters",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:34.7864331+05:30"
+  },
+  {
+    "TestName": "Module Import",
+    "Success": true,
+    "Message": "Version 0.0, 26 functions",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:35.0192482+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOProjectList",
+    "Success": true,
+    "Message": "Found project 'OMG.PSUtilities' (ID: 260618a0-c49b-4299-9198-9db8fb624d97)",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:35.4172175+05:30"
+  },
+  {
+    "TestName": "Get-PSUADORepositories",
+    "Success": true,
+    "Message": "Found repository 'Test-Repo1' (ID: da09be4a-d672-4622-bfdf-01045ed97212)",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:35.7952775+05:30"
+  },
+  {
+    "TestName": "Get-PSUADORepoBranchList",
+    "Success": false,
+    "Message": "Response status code does not indicate success: 404 (Not Found).",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:36.1738532+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariableGroup",
+    "Success": true,
+    "Message": "Created variable group ID: 7",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:37.0893059+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariable (Regular)",
+    "Success": true,
+    "Message": "Added variable 'TestVar1'",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:38.2512203+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariable (Secret)",
+    "Success": true,
+    "Message": "Added secret variable 'SecretVar1'",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:39.5486792+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariable (Environment)",
+    "Success": true,
+    "Message": "Added variable 'Environment'",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:40.7462851+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariable (Update)",
+    "Success": true,
+    "Message": "Updated TestVar1 to 'UpdatedValue1'",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:41.5493117+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariable (Add)",
+    "Success": true,
+    "Message": "Added new variable 'NewVarViaSet'",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:42.2949735+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariableGroup (Name)",
+    "Success": false,
+    "Message": "Name not updated correctly",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:43.0931791+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariableGroup (Description)",
+    "Success": false,
+    "Message": "Description not updated correctly",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:43.0942246+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOVariableGroupInventory (Basic)",
+    "Success": true,
+    "Message": "Found 7 variable group(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:44.3966965+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOVariableGroupInventory (Detailed)",
+    "Success": true,
+    "Message": "Found test group with 4 variable(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:45.4567088+05:30"
+  },
+  {
+    "TestName": "New-PSUADOPullRequest",
+    "Success": false,
+    "Message": "Response status code does not indicate success: 400 (Bad Request).",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:46.2830578+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPullRequest",
+    "Success": true,
+    "Message": "Found 0 pull request(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:47.0666867+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPullRequestInventory",
+    "Success": true,
+    "Message": "Found 0 PR(s) across repositories",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:49.254892+05:30"
+  },
+  {
+    "TestName": "Approve-PSUADOPullRequest",
+    "Success": true,
+    "Message": "Skipped - no test PR created",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:49.2589695+05:30"
+  },
+  {
+    "TestName": "Complete-PSUADOPullRequest",
+    "Success": true,
+    "Message": "Skipped - no test PR or cleanup disabled",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:49.2632887+05:30"
+  },
+  {
+    "TestName": "New-PSUADOUserStory",
+    "Success": true,
+    "Message": "Created User Story #13",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:49.7626083+05:30"
+  },
+  {
+    "TestName": "New-PSUADOTask",
+    "Success": true,
+    "Message": "Created Task #14 (linked to User Story #13)",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:50.22541+05:30"
+  },
+  {
+    "TestName": "New-PSUADOBug",
+    "Success": true,
+    "Message": "Created Bug #15",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:50.6845461+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOTask",
+    "Success": false,
+    "Message": "Response status code does not indicate success: 400 (Bad Request).",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:51.1907554+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOBug",
+    "Success": false,
+    "Message": "Response status code does not indicate success: 400 (Bad Request).",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:51.576996+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOSpike",
+    "Success": true,
+    "Message": "Skipped - requires existing spike work item",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:51.5828115+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPipeline",
+    "Success": true,
+    "Message": "Found 1 pipeline(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:52.4923964+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPipelineLatestRun",
+    "Success": true,
+    "Message": "Found latest run for pipeline #1",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:53.273187+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPipelineBuild",
+    "Success": true,
+    "Message": "Skipped - no pipeline runs found",
+    "Data": null,
+    "Timestamp": "2025-10-15T18:02:53.2793375+05:30"
+  }
+]

@@ -97,7 +97,7 @@ function Set-PSUADOTask {
         [string]$Description,
 
         [Parameter()]
-        [ValidateSet('To Do', 'In Progress', 'Done', 'Removed')]
+        [ValidateSet('New', 'Active', 'To Do', 'In Progress', 'Done', 'Removed', 'Closed', 'Resolved', 'Approved', 'Committed')]
         [string]$State,
 
         [Parameter()]

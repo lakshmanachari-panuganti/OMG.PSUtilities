@@ -81,7 +81,7 @@ Get-PSUADOProjectList -Organization "OmgItSolutions" -PAT $token
 Get-PSUADORepositories -Organization "OmgItSolutions" -Project "PSUtilities Azure DevOps" -PAT $token
 
 # List repository branches
-Get-PSUADORepoBranchList -Organization "OmgItSolutions" -Project "PSUtilities Azure DevOps" -Repository "myrepo" -PAT $token
+Get-PSUADORepoBranchList -Organization "OmgItSolutions" -Project "PSUtilities Azure DevOps" -RepositoryName "myrepo" -PAT $token
 
 # Clone a repository
 Invoke-PSUADORepoClone -Organization "OmgItSolutions" -Project "PSUtilities Azure DevOps" -Repository "myrepo" -DestinationPath "C:\Code\myrepo" -PAT $token

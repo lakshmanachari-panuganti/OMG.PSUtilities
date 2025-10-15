@@ -1,0 +1,212 @@
+[
+  {
+    "TestName": "Environment: ORGANIZATION",
+    "Success": true,
+    "Message": "lakshmanachari",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:37:57.5582498+05:30"
+  },
+  {
+    "TestName": "Environment: PAT",
+    "Success": true,
+    "Message": "Length: 84 characters",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:37:57.5621171+05:30"
+  },
+  {
+    "TestName": "Module Import",
+    "Success": true,
+    "Message": "Version 1.0.9 0.0 0.0, 3 functions",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:37:57.7965883+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOProjectList",
+    "Success": true,
+    "Message": "Found project 'OMG.PSUtilities' (ID: 260618a0-c49b-4299-9198-9db8fb624d97)",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:37:58.3703837+05:30"
+  },
+  {
+    "TestName": "Get-PSUADORepositories",
+    "Success": true,
+    "Message": "Found repository 'Test-Repo1' (ID: da09be4a-d672-4622-bfdf-01045ed97212)",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:37:58.7441444+05:30"
+  },
+  {
+    "TestName": "Get-PSUADORepoBranchList",
+    "Success": false,
+    "Message": "Response status code does not indicate success: 404 (Not Found).",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:37:59.1370327+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariableGroup",
+    "Success": true,
+    "Message": "Created variable group ID: 3",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:00.2712239+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariable (Regular)",
+    "Success": true,
+    "Message": "Added variable 'TestVar1'",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:01.4003473+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariable (Secret)",
+    "Success": true,
+    "Message": "Added secret variable 'SecretVar1'",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:02.801989+05:30"
+  },
+  {
+    "TestName": "New-PSUADOVariable (Environment)",
+    "Success": true,
+    "Message": "Added variable 'Environment'",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:03.9910881+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariable (Update)",
+    "Success": true,
+    "Message": "Updated TestVar1 to 'UpdatedValue1'",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:04.8329996+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariable (Add)",
+    "Success": true,
+    "Message": "Added new variable 'NewVarViaSet'",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:05.6963983+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariableGroup (Name)",
+    "Success": false,
+    "Message": "Name not updated correctly",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:06.4892231+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOVariableGroup (Description)",
+    "Success": false,
+    "Message": "Description not updated correctly",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:06.4906035+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOVariableGroupInventory (Basic)",
+    "Success": true,
+    "Message": "Found 3 variable group(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:07.4730723+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOVariableGroupInventory (Detailed)",
+    "Success": true,
+    "Message": "Found test group with 4 variable(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:08.482562+05:30"
+  },
+  {
+    "TestName": "New-PSUADOPullRequest",
+    "Success": false,
+    "Message": "Cannot validate argument on parameter 'SourceBranch'. SourceBranch must be in the format 'refs/heads/branch-name'.",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:08.5030249+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPullRequest",
+    "Success": false,
+    "Message": "Parameter cannot be processed because the parameter name 'Repository' is ambiguous. Possible matches include: -RepositoryId -RepositoryName.",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:08.5215983+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPullRequestInventory",
+    "Success": false,
+    "Message": "A parameter cannot be found that matches parameter name 'Project'.",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:08.5277423+05:30"
+  },
+  {
+    "TestName": "Approve-PSUADOPullRequest",
+    "Success": true,
+    "Message": "Skipped - no test PR created",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:08.5305595+05:30"
+  },
+  {
+    "TestName": "Complete-PSUADOPullRequest",
+    "Success": true,
+    "Message": "Skipped - no test PR or cleanup disabled",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:08.5324779+05:30"
+  },
+  {
+    "TestName": "New-PSUADOUserStory",
+    "Success": true,
+    "Message": "Created User Story #3",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:09.444559+05:30"
+  },
+  {
+    "TestName": "New-PSUADOTask",
+    "Success": true,
+    "Message": "Created Task #4 (linked to User Story #3)",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:10.2025125+05:30"
+  },
+  {
+    "TestName": "New-PSUADOBug",
+    "Success": false,
+    "Message": "A parameter cannot be found that matches parameter name 'ReproSteps'.",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:10.2054675+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOTask",
+    "Success": false,
+    "Message": "Cannot validate argument on parameter 'State'. The argument \"Active\" does not belong to the set \"To Do,In Progress,Done,Removed\" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:10.2123251+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOBug",
+    "Success": true,
+    "Message": "Skipped - no test bug created",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:10.2163482+05:30"
+  },
+  {
+    "TestName": "Set-PSUADOSpike",
+    "Success": true,
+    "Message": "Skipped - requires existing spike work item",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:10.2197302+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPipeline",
+    "Success": true,
+    "Message": "Found 1 pipeline(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:10.7551524+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPipelineLatestRun",
+    "Success": true,
+    "Message": "Found latest run for pipeline #1",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:11.5147324+05:30"
+  },
+  {
+    "TestName": "Get-PSUADOPipelineBuild",
+    "Success": true,
+    "Message": "Found 1 build(s)",
+    "Data": null,
+    "Timestamp": "2025-10-15T17:38:18.8920472+05:30"
+  }
+]

@@ -13,7 +13,7 @@
 .PARAMETER RepositoryId
     (Mandatory - ParameterSet: ByRepositoryId) The unique identifier (GUID) of the repository to retrieve branches from.
 
-.PARAMETER Repository
+.PARAMETER RepositoryName
     (Mandatory - ParameterSet: ByRepositoryName) The name of the repository to retrieve branches from.
 
 .PARAMETER Organization
@@ -30,12 +30,12 @@
     Retrieves all branches for the specified repository using RepositoryId.
 
 .EXAMPLE
-    Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -Repository "AzureDevOps"
+    Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -RepositoryName "AzureDevOps"
 
-    Retrieves all branches for the "AzureDevOps" repository using Repository name.
+    Retrieves all branches for the "AzureDevOps" repository using RepositoryName.
 
 .EXAMPLE
-    $branches = Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -Repository "Core"
+    $branches = Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -RepositoryName "Core"
     $branches | Where-Object { $_.Name -like "*feature*" }
 
     Retrieves all branches from the "Core" repository and filters for feature branches.
@@ -68,7 +68,7 @@ function Get-PSUADORepoBranchList {
 
         [Parameter(Mandatory, ParameterSetName = 'ByRepositoryName')]
         [ValidateNotNullOrEmpty()]
-        [string]$Repository,
+        [string]$RepositoryName,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -111,18 +111,18 @@ function Get-PSUADORepoBranchList {
 
             # Resolve Repository Name to ID if needed
             if ($PSCmdlet.ParameterSetName -eq 'ByRepositoryName') {
-                Write-Verbose "Resolving repository name '$Repository' to ID..."
-                $escapedRepo = [uri]::EscapeDataString($Repository)
+                Write-Verbose "Resolving repository name '$RepositoryName' to ID..."
+                $escapedRepo = [uri]::EscapeDataString($RepositoryName)
                 $repoUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$escapedRepo?api-version=7.1"
 
                 $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get -ErrorAction Stop
 
                 if (-not $repoResponse.id) {
-                    throw "Repository '$Repository' not found in project '$Project'."
+                    throw "Repository '$RepositoryName' not found in project '$Project'."
                 }
 
                 $RepositoryId = $repoResponse.id
-                Write-Verbose "Resolved repository '$Repository' to ID: $RepositoryId"
+                Write-Verbose "Resolved repository '$RepositoryName' to ID: $RepositoryId"
             }
 
             # Fetch branches
