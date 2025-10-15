@@ -92,20 +92,15 @@ function Invoke-PSUADORepoClone {
 
     process {
         # Display parameters
-        Write-Host "Parameters:" -ForegroundColor Cyan
+        Write-Verbose "Parameters:"
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
             if ($param.Key -eq 'PAT') {
                 $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
-                Write-Host "  $($param.Key): $maskedPAT" -ForegroundColor Cyan
+                Write-Verbose "  $($param.Key): $maskedPAT"
             } else {
-                $displayValue = $param.Value.ToString()
-                if ($displayValue.Length -gt 30) {
-                    $displayValue = $displayValue.Substring(0, 27) + "..."
-                }
-                Write-Host "  $($param.Key): $displayValue" -ForegroundColor Cyan
+                Write-Verbose "  $($param.Key): $($param.Value)"
             }
         }
-        Write-Host ""
 
         $repoResults = @()
         Set-Location $TargetPath
