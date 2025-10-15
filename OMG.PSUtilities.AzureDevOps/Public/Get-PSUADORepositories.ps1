@@ -97,8 +97,7 @@ function Get-PSUADORepositories {
                     PSTypeName      = 'PSU.ADO.Repository'
                 }
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

@@ -214,8 +214,7 @@ function New-PSUADOSpike {
             $body = $fields | ConvertTo-Json -Depth 3
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$Spike?api-version=7.1-preview.3"
@@ -226,25 +225,24 @@ function New-PSUADOSpike {
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
 
             [PSCustomObject]@{
-                Id               = $response.id
-                Title            = $response.fields.'System.Title'
-                Description      = $response.fields.'System.Description'
-                State            = $response.fields.'System.State'
-                Priority         = $response.fields.'Microsoft.VSTS.Common.Priority'
-                StoryPoints      = $response.fields.'Microsoft.VSTS.Scheduling.StoryPoints'
-                TimeBox          = $response.fields.'Microsoft.VSTS.Common.TimeCriticality'
-                AssignedTo       = $response.fields.'System.AssignedTo'.displayName
-                CreatedDate      = $response.fields.'System.CreatedDate'
-                CreatedBy        = $response.fields.'System.CreatedBy'.displayName
-                WorkItemType     = $response.fields.'System.WorkItemType'
-                AreaPath         = $response.fields.'System.AreaPath'
-                IterationPath    = $response.fields.'System.IterationPath'
-                Url              = $response.url
-                WebUrl           = $response._links.html.href
-                PSTypeName       = 'PSU.ADO.Spike'
+                Id            = $response.id
+                Title         = $response.fields.'System.Title'
+                Description   = $response.fields.'System.Description'
+                State         = $response.fields.'System.State'
+                Priority      = $response.fields.'Microsoft.VSTS.Common.Priority'
+                StoryPoints   = $response.fields.'Microsoft.VSTS.Scheduling.StoryPoints'
+                TimeBox       = $response.fields.'Microsoft.VSTS.Common.TimeCriticality'
+                AssignedTo    = $response.fields.'System.AssignedTo'.displayName
+                CreatedDate   = $response.fields.'System.CreatedDate'
+                CreatedBy     = $response.fields.'System.CreatedBy'.displayName
+                WorkItemType  = $response.fields.'System.WorkItemType'
+                AreaPath      = $response.fields.'System.AreaPath'
+                IterationPath = $response.fields.'System.IterationPath'
+                Url           = $response.url
+                WebUrl        = $response._links.html.href
+                PSTypeName    = 'PSU.ADO.Spike'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

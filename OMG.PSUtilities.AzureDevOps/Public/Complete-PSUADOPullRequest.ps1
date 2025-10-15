@@ -168,17 +168,16 @@ function Complete-PSUADOPullRequest {
 
             # Prepare the update body
             $body = @{
-                status = "completed"
+                status                = "completed"
                 lastMergeSourceCommit = @{
                     commitId = $currentPr.lastMergeSourceCommit.commitId
                 }
-                completionOptions = $completionOptions
+                completionOptions     = $completionOptions
             } | ConvertTo-Json -Depth 10
 
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId" + "?api-version=7.0"
@@ -201,24 +200,23 @@ function Complete-PSUADOPullRequest {
 
             # Return structured result
             [PSCustomObject]@{
-                Id                    = $response.pullRequestId
-                Status                = $response.status
-                Title                 = $response.title
-                MergeStrategy         = $MergeStrategy
-                SourceBranch          = $response.sourceRefName
-                TargetBranch          = $response.targetRefName
-                CompletedBy           = $response.closedBy.displayName
-                CompletionDate        = $response.closedDate
-                MergeId               = $response.mergeId
-                DeletedSourceBranch   = $DeleteSourceBranch.IsPresent
-                Organization          = $Organization
-                Project               = $Project
-                Repository            = $Repository
-                WebUrl                = $WebUrl
-                PSTypeName            = 'PSU.ADO.PullRequestCompletion'
+                Id                  = $response.pullRequestId
+                Status              = $response.status
+                Title               = $response.title
+                MergeStrategy       = $MergeStrategy
+                SourceBranch        = $response.sourceRefName
+                TargetBranch        = $response.targetRefName
+                CompletedBy         = $response.closedBy.displayName
+                CompletionDate      = $response.closedDate
+                MergeId             = $response.mergeId
+                DeletedSourceBranch = $DeleteSourceBranch.IsPresent
+                Organization        = $Organization
+                Project             = $Project
+                Repository          = $Repository
+                WebUrl              = $WebUrl
+                PSTypeName          = 'PSU.ADO.PullRequestCompletion'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

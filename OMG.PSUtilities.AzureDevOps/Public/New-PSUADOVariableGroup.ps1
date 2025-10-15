@@ -109,23 +109,23 @@ function New-PSUADOVariableGroup {
             
             # Build variable group payload
             $variableGroupBody = @{
-                name = $VariableGroupName
-                description = $Description
-                type = "Vsts"
-                variables = @{
+                name                           = $VariableGroupName
+                description                    = $Description
+                type                           = "Vsts"
+                variables                      = @{
                     "_placeholder" = @{
-                        value = "This is a placeholder variable. You can delete it after adding your variables."
+                        value    = "This is a placeholder variable. You can delete it after adding your variables."
                         isSecret = $false
                     }
                 }
                 variableGroupProjectReferences = @(
                     @{
                         projectReference = @{
-                            id = $projectId
+                            id   = $projectId
                             name = $Project
                         }
-                        name = $VariableGroupName
-                        description = $Description
+                        name             = $VariableGroupName
+                        description      = $Description
                     }
                 )
             } | ConvertTo-Json -Depth 10
@@ -137,16 +137,15 @@ function New-PSUADOVariableGroup {
             Write-Verbose "Variable group '$VariableGroupName' created successfully with ID: $($variableGroup.id)"
             
             return [PSCustomObject]@{
-                Id = $variableGroup.id
-                Name = $variableGroup.name
-                Description = $variableGroup.description
-                Type = $variableGroup.type
-                VariableCount = $variableGroup.variables.PSObject.Properties.Count
+                Id               = $variableGroup.id
+                Name             = $variableGroup.name
+                Description      = $variableGroup.description
+                Type             = $variableGroup.type
+                VariableCount    = $variableGroup.variables.PSObject.Properties.Count
                 ProjectReference = $variableGroup.variableGroupProjectReferences[0].projectReference.name
-                PSTypeName = 'PSU.ADO.VariableGroup'
+                PSTypeName       = 'PSU.ADO.VariableGroup'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

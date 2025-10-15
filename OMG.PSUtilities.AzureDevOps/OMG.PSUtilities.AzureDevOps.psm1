@@ -1,5 +1,5 @@
 # Load private functions
-Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse | Where-Object{$_.name -notlike "*--wip.ps1"} | ForEach-Object {
+Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse | Where-Object { $_.name -notlike "*--wip.ps1" } | ForEach-Object {
     try {
         . $($_.FullName)
     } catch {
@@ -8,7 +8,7 @@ Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse | Where-Object{$_.nam
 }
 
 # Load public functions
-Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name -notlike "*--wip.ps1"} | ForEach-Object {
+Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object { $_.name -notlike "*--wip.ps1" } | ForEach-Object {
     try {
         . $($_.FullName)
     } catch {

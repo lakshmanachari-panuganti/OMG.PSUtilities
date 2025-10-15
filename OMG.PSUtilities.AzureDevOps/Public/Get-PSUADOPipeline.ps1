@@ -80,8 +80,7 @@ function Get-PSUADOPipeline {
             if ($param.Key -eq 'PAT') {
                 $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
                 Write-Verbose "  $($param.Key): $maskedPAT"
-            }
-            else {
+            } else {
                 Write-Verbose "  $($param.Key): $($param.Value)"
             }
         }
@@ -116,8 +115,7 @@ function Get-PSUADOPipeline {
                     YamlPath       = $pipelineDetails.configuration.path
                     RepositoryType = $pipelineDetails.configuration.repository.type
                 }
-            }
-            else {
+            } else {
                 $listUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines?api-version=7.1-preview.1"
                 $pipelineList = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get
 
@@ -143,8 +141,7 @@ function Get-PSUADOPipeline {
                             YamlPath       = $pipelineDetails.configuration.path
                             RepositoryType = $pipelineDetails.configuration.repository.type
                         }
-                    }
-                    else {
+                    } else {
                         [PSCustomObject]@{
                             Name   = $pipeline.name
                             ID     = $pipeline.id
@@ -157,8 +154,7 @@ function Get-PSUADOPipeline {
 
                 return $results
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

@@ -136,8 +136,7 @@ function Get-PSUADOPipelineLatestRun {
             Write-Verbose "Escaping project name for URL..."
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
 
@@ -164,13 +163,11 @@ function Get-PSUADOPipelineLatestRun {
                 $result = if ($previousRun -and $previousRun.result) {
                     Write-Verbose "Latest run in progress, using previous run result: $($previousRun.result)"
                     $previousRun.result
-                }
-                else {
+                } else {
                     Write-Verbose "No previous run available, result set to N/A"
                     "N/A"
                 }
-            }
-            else {
+            } else {
                 $state = $latestRun.state
                 $result = $latestRun.result
             }
@@ -185,8 +182,7 @@ function Get-PSUADOPipelineLatestRun {
 
             try {
                 $Build = Get-PSUADOPipelineBuild @buildParams
-            }
-            catch {
+            } catch {
                 Write-Warning "Could not retrieve detailed build information: $($_.Exception.Message)"
                 $Build = [PSCustomObject]@{ TriggeredBy = "Unknown" }
             }
@@ -204,8 +200,7 @@ function Get-PSUADOPipelineLatestRun {
                 HasPreviousRun = $null -ne $previousRun
                 PSTypeName     = 'PSU.ADO.PipelineRun'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

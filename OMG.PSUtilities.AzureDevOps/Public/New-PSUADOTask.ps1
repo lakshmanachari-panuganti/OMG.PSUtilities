@@ -161,8 +161,7 @@ function New-PSUADOTask {
             
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
             # Build the work item fields
@@ -257,26 +256,25 @@ function New-PSUADOTask {
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
 
             [PSCustomObject]@{
-                Id               = $response.id
-                Title            = $response.fields.'System.Title'
-                Description      = $response.fields.'System.Description'
-                State            = $response.fields.'System.State'
-                Priority         = $response.fields.'Microsoft.VSTS.Common.Priority'
-                EstimatedHours   = $response.fields.'Microsoft.VSTS.Scheduling.OriginalEstimate'
-                RemainingHours   = $response.fields.'Microsoft.VSTS.Scheduling.RemainingWork'
-                AssignedTo       = $response.fields.'System.AssignedTo'.displayName
-                CreatedDate      = $response.fields.'System.CreatedDate'
-                CreatedBy        = $response.fields.'System.CreatedBy'.displayName
-                WorkItemType     = $response.fields.'System.WorkItemType'
-                AreaPath         = $response.fields.'System.AreaPath'
-                IterationPath    = $response.fields.'System.IterationPath'
-                ParentId         = $ParentWorkItemId
-                Url              = $response.url
-                WebUrl           = $response._links.html.href
-                PSTypeName       = 'PSU.ADO.Task'
+                Id             = $response.id
+                Title          = $response.fields.'System.Title'
+                Description    = $response.fields.'System.Description'
+                State          = $response.fields.'System.State'
+                Priority       = $response.fields.'Microsoft.VSTS.Common.Priority'
+                EstimatedHours = $response.fields.'Microsoft.VSTS.Scheduling.OriginalEstimate'
+                RemainingHours = $response.fields.'Microsoft.VSTS.Scheduling.RemainingWork'
+                AssignedTo     = $response.fields.'System.AssignedTo'.displayName
+                CreatedDate    = $response.fields.'System.CreatedDate'
+                CreatedBy      = $response.fields.'System.CreatedBy'.displayName
+                WorkItemType   = $response.fields.'System.WorkItemType'
+                AreaPath       = $response.fields.'System.AreaPath'
+                IterationPath  = $response.fields.'System.IterationPath'
+                ParentId       = $ParentWorkItemId
+                Url            = $response.url
+                WebUrl         = $response._links.html.href
+                PSTypeName     = 'PSU.ADO.Task'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

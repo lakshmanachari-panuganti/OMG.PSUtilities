@@ -230,8 +230,7 @@ function Set-PSUADOVariable {
                 ModifiedOn        = $response.modifiedOn
                 PSTypeName        = 'PSU.ADO.Variable'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

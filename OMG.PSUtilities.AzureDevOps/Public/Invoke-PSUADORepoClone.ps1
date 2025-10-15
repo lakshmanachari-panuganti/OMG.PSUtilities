@@ -151,8 +151,7 @@ function Invoke-PSUADORepoClone {
             # Apply filter if needed
             $repos = if ($RepositoryFilter) {
                 $allRepos | Where-Object { $_.name -like $RepositoryFilter }
-            }
-            else {
+            } else {
                 $allRepos
             }
 
@@ -165,8 +164,7 @@ function Invoke-PSUADORepoClone {
             if (Test-Path $projectFolder) {
                 if ($Force) {
                     Remove-Item -LiteralPath $projectFolder -Recurse -Force -ErrorAction Stop
-                }
-                else {
+                } else {
                     throw "Target path '$projectFolder' already exists. Use -Force to remove it."
                 }
             }
@@ -182,15 +180,13 @@ function Invoke-PSUADORepoClone {
 
                 if ($repo.isDisabled) {
                     $errorMsg = "Repo disabled"
-                }
-                else {
+                } else {
                     Write-Host "Cloning $repoName..." -ForegroundColor Green
                     Set-Location $projectFolder
                     $gitOutput = & git clone $cloneUrl 2>&1
                     if ($LASTEXITCODE -eq 0) {
                         $isCloned = $true
-                    }
-                    else {
+                    } else {
                         $errorMsg = "Git clone failed. Output: $gitOutput"
                         $clonedPath = $null
                     }
@@ -208,8 +204,7 @@ function Invoke-PSUADORepoClone {
             }
 
             return $repoResults
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

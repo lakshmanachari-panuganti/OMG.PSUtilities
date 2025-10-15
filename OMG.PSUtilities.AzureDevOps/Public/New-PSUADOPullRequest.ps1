@@ -109,16 +109,16 @@ function New-PSUADOPullRequest {
         
         [Parameter()]
         [ValidateScript({
-            if ($_ -match '^refs/heads/.+') { $true }
-            else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
-        })]
+                if ($_ -match '^refs/heads/.+') { $true }
+                else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
+            })]
         [string]$SourceBranch,
 
         [Parameter()]
         [ValidateScript({
-            if ($_ -match '^refs/heads/.+') { $true }
-            else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
-        })]
+                if ($_ -match '^refs/heads/.+') { $true }
+                else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
+            })]
         [string]$TargetBranch,
 
         [Parameter(Mandatory)]
@@ -194,8 +194,7 @@ function New-PSUADOPullRequest {
 
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.0"
@@ -221,9 +220,9 @@ function New-PSUADOPullRequest {
                             id = $response.createdBy.id
                         }
                         completionOptions = @{
-                            mergeStrategy = "noFastForward"
+                            mergeStrategy      = "noFastForward"
                             deleteSourceBranch = $false
-                            squashMerge = $false
+                            squashMerge        = $false
                         }
                     } | ConvertTo-Json -Depth 10
 
@@ -232,33 +231,31 @@ function New-PSUADOPullRequest {
                     
                     Invoke-RestMethod -Method Patch -Uri $autoCompleteUri -Headers $headers -Body $autoCompleteBody -ContentType "application/json" -ErrorAction Stop
                     Write-Host "Auto-completion enabled. PR will complete automatically when all policies and approvals are satisfied." -ForegroundColor Yellow
-                }
-                catch {
+                } catch {
                     Write-Warning "Failed to enable auto-completion: $($_.Exception.Message)"
                 }
             }
 
             [PSCustomObject]@{
-                Id                  = $response.pullRequestId
-                Title               = $response.title
-                Description         = $response.description
-                Status              = $response.status
-                IsDraft             = $response.isDraft
-                SourceBranch        = $response.sourceRefName
-                TargetBranch        = $response.targetRefName
-                CreatedBy           = $response.createdBy.displayName
-                CreatorEmail        = $response.createdBy.uniqueName
-                CreationDate        = $response.creationDate
-                RepositoryId        = $response.repository.id
-                RepositoryName      = $response.repository.name
-                ProjectName         = $response.repository.project.name
-                WebUrl              = $WebUrl
-                ApiUrl              = $response.url
-                CompleteOnApproval  = $CompleteOnApproval.IsPresent
-                PSTypeName          = 'PSU.ADO.PullRequest'
+                Id                 = $response.pullRequestId
+                Title              = $response.title
+                Description        = $response.description
+                Status             = $response.status
+                IsDraft            = $response.isDraft
+                SourceBranch       = $response.sourceRefName
+                TargetBranch       = $response.targetRefName
+                CreatedBy          = $response.createdBy.displayName
+                CreatorEmail       = $response.createdBy.uniqueName
+                CreationDate       = $response.creationDate
+                RepositoryId       = $response.repository.id
+                RepositoryName     = $response.repository.name
+                ProjectName        = $response.repository.project.name
+                WebUrl             = $WebUrl
+                ApiUrl             = $response.url
+                CompleteOnApproval = $CompleteOnApproval.IsPresent
+                PSTypeName         = 'PSU.ADO.PullRequest'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

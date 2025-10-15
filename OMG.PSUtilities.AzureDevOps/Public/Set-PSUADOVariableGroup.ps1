@@ -137,8 +137,8 @@ function Set-PSUADOVariableGroup {
                 foreach ($ref in $existingGroup.variableGroupProjectReferences) {
                     $updatedRefs += @{
                         projectReference = $ref.projectReference
-                        name            = if ($VariableGroupName) { $VariableGroupName } else { $ref.name }
-                        description     = if ($PSBoundParameters.ContainsKey('Description')) { $Description } else { $ref.description }
+                        name             = if ($VariableGroupName) { $VariableGroupName } else { $ref.name }
+                        description      = if ($PSBoundParameters.ContainsKey('Description')) { $Description } else { $ref.description }
                     }
                 }
                 $updateBody.variableGroupProjectReferences = $updatedRefs
@@ -175,8 +175,7 @@ function Set-PSUADOVariableGroup {
                 ModifiedOn  = $response.modifiedOn
                 PSTypeName  = 'PSU.ADO.VariableGroup'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

@@ -93,8 +93,7 @@ function Get-PSUADOProjectList {
                     PSTypeName     = 'PSU.ADO.Project'
                 }
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

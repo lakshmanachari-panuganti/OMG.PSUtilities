@@ -141,7 +141,7 @@ function Get-PSUADORepoBranchList {
                     
                     foreach ($property in $item.PSObject.Properties) {
                         # Simple capitalization - preserve rest of the name
-                        $capitalizedName = $property.Name.Substring(0,1).ToUpper() + $property.Name.Substring(1)
+                        $capitalizedName = $property.Name.Substring(0, 1).ToUpper() + $property.Name.Substring(1)
                         $properties[$capitalizedName] = $property.Value
                     }
                     
@@ -156,8 +156,7 @@ function Get-PSUADORepoBranchList {
             }
 
             return $formattedResults
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

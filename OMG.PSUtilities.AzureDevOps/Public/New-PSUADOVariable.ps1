@@ -183,18 +183,18 @@ function New-PSUADOVariable {
             
             # Build clean update payload
             $updatePayload = @{
-                id = $variableGroup.id
-                name = $variableGroup.name
-                description = $variableGroup.description
-                type = "Vsts"
-                variables = $variableGroup.variables
+                id                             = $variableGroup.id
+                name                           = $variableGroup.name
+                description                    = $variableGroup.description
+                type                           = "Vsts"
+                variables                      = $variableGroup.variables
                 variableGroupProjectReferences = @(
                     @{
                         projectReference = @{
                             id = $projectId
                         }
-                        name = $variableGroup.name
-                        description = $variableGroup.description
+                        name             = $variableGroup.name
+                        description      = $variableGroup.description
                     }
                 )
             }
@@ -211,15 +211,14 @@ function New-PSUADOVariable {
             Write-Verbose "Variable '$VariableName' added/updated successfully: $displayValue$secretLabel"
             
             return [PSCustomObject]@{
-                VariableGroupId = $updatedGroup.id
+                VariableGroupId   = $updatedGroup.id
                 VariableGroupName = $updatedGroup.name
-                VariableName = $VariableName
-                VariableValue = $displayValue
-                IsSecret = $IsSecret.IsPresent
-                PSTypeName = 'PSU.ADO.Variable'
+                VariableName      = $VariableName
+                VariableValue     = $displayValue
+                IsSecret          = $IsSecret.IsPresent
+                PSTypeName        = 'PSU.ADO.Variable'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

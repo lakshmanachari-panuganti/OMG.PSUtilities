@@ -153,8 +153,7 @@ function Approve-PSUADOPullRequest {
 
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
             $reviewerId = $userProfile.id
@@ -187,22 +186,21 @@ function Approve-PSUADOPullRequest {
 
             # Return structured result
             [PSCustomObject]@{
-                Id              = $PullRequestId
-                Vote            = $response.vote
-                VoteText        = $voteText
-                Comment         = $Comment
-                ReviewerId      = $response.id
-                ReviewerName    = $response.displayName
-                ReviewerEmail   = $response.uniqueName
-                IsRequired      = $response.isRequired
-                Organization    = $Organization
-                Project         = $Project
-                Repository      = $Repository
-                WebUrl          = $WebUrl
-                PSTypeName      = 'PSU.ADO.PullRequestApproval'
+                Id            = $PullRequestId
+                Vote          = $response.vote
+                VoteText      = $voteText
+                Comment       = $Comment
+                ReviewerId    = $response.id
+                ReviewerName  = $response.displayName
+                ReviewerEmail = $response.uniqueName
+                IsRequired    = $response.isRequired
+                Organization  = $Organization
+                Project       = $Project
+                Repository    = $Repository
+                WebUrl        = $WebUrl
+                PSTypeName    = 'PSU.ADO.PullRequestApproval'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

@@ -257,8 +257,7 @@ function Set-PSUADOUserStory {
             # Construct API URI
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/$Id" + "?api-version=7.1-preview.3"
@@ -291,8 +290,7 @@ function Set-PSUADOUserStory {
                 WebUrl             = $response._links.html.href
                 PSTypeName         = 'PSU.ADO.UserStory'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

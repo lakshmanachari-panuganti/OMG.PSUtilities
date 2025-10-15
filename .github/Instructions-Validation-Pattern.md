@@ -12,8 +12,9 @@
 2. [Parameter Ordering Standard](#parameter-ordering-standard)
 3. [Validation Pattern](#validation-pattern)
 4. [Performance Pattern (begin/process)](#performance-pattern)
-5. [Testing Guide](#testing-guide)
-6. [Migration Status](#migration-status)
+5. [Code Formatting Standard](#code-formatting-standard)
+6. [Testing Guide](#testing-guide)
+7. [Migration Status](#migration-status)
 
 ---
 
@@ -330,6 +331,111 @@ process {
 
 ---
 
+## Code Formatting Standard
+
+### Brace Placement Rules
+
+All Azure DevOps functions **MUST** follow consistent brace placement for readability and maintainability.
+
+#### Opening Braces: Same Line (K&R Style)
+```powershell
+# ✅ CORRECT - Opening brace on same line
+if ($condition) {
+    # code
+}
+
+function Get-Something {
+    # code
+}
+
+foreach ($item in $collection) {
+    # code
+}
+```
+
+```powershell
+# ❌ INCORRECT - Opening brace on new line (Allman style)
+if ($condition)
+{
+    # code
+}
+```
+
+#### Closing Braces with else/elseif: Same Line
+```powershell
+# ✅ CORRECT - } else { on same line
+if ($x -gt 0) {
+    Write-Host "Positive"
+} else {
+    Write-Host "Negative or zero"
+}
+
+if ($state -eq 'Active') {
+    # code
+} elseif ($state -eq 'Pending') {
+    # code
+} else {
+    # code
+}
+```
+
+```powershell
+# ❌ INCORRECT - else on new line
+if ($x -gt 0) {
+    Write-Host "Positive"
+}
+else {
+    Write-Host "Negative or zero"
+}
+```
+
+### Formatting Configuration
+
+The workspace includes VS Code settings (`.vscode/settings.json`) that enforce these rules:
+
+```json
+{
+    "powershell.codeFormatting.openBraceOnSameLine": true,
+    "powershell.codeFormatting.newLineAfterCloseBrace": false,
+    "powershell.codeFormatting.preset": "Custom"
+}
+```
+
+### Automated Formatting
+
+Use the provided script to format all files consistently:
+
+```powershell
+# Format all Azure DevOps functions
+.\Tools\Format-AllPowerShellFiles.ps1
+
+# Format specific path
+.\Tools\Format-AllPowerShellFiles.ps1 -Path "C:\repos\OMG.PSUtilities"
+```
+
+The script:
+- ✅ Finds all `.ps1` and `.psm1` files recursively
+- ✅ Applies consistent brace placement
+- ✅ Maintains proper indentation (4 spaces)
+- ✅ Preserves `} else {` on same line
+- ✅ Aligns assignment operators in hashtables
+
+### Manual Formatting in VS Code
+
+**Keyboard Shortcut**: `Shift + Alt + F` (Format Document)
+
+This will format the active file according to workspace settings.
+
+### Why This Matters
+
+- **Consistency**: All 22 functions look uniform
+- **Readability**: Easier to scan control flow
+- **Diff Quality**: Git diffs are cleaner
+- **Professional**: Follows PowerShell community standards
+- **Automation**: Formatting script prevents manual errors
+
+---
+
 
 ## Testing Guide
 
@@ -446,6 +552,13 @@ When creating or modifying Azure DevOps functions, verify:
 - [ ] Uses `$headers` from begin{} block
 - [ ] Returns appropriate results
 
+#### Code Formatting
+- [ ] Opening braces on same line (K&R style): `if ($x) {`
+- [ ] Closing braces with else on same line: `} else {`
+- [ ] Consistent indentation (4 spaces)
+- [ ] Run `.\Tools\Format-AllPowerShellFiles.ps1` to auto-format
+- [ ] Or use VS Code Format Document (`Shift+Alt+F`)
+
 #### Testing
 - [ ] Test with missing environment variables (should fail with clear message)
 - [ ] Test with environment variables set (should succeed)
@@ -474,6 +587,13 @@ When creating or modifying Azure DevOps functions, verify:
 - ✅ **Early Failure**: Errors before processing any data
 - ✅ **Clean Code**: Clear separation of concerns
 
+### Code Formatting
+- ✅ **Consistency**: Uniform brace placement across all functions
+- ✅ **Readability**: K&R style improves code scanning
+- ✅ **Automation**: Format-AllPowerShellFiles.ps1 prevents manual errors
+- ✅ **Standards Compliance**: Follows PowerShell community best practices
+- ✅ **Git-Friendly**: Clean diffs with consistent formatting
+
 ---
 
 ## Related Resources
@@ -498,6 +618,9 @@ When creating or modifying Azure DevOps functions, verify:
 | January 2025 | **BUG FIX**: Discovered and fixed critical bug - 18 functions had duplicate validation code in process{} block |
 | January 2025 | Documentation enhanced with "Common Migration Mistake" section and verification checklist |
 | January 2025 | Documentation optimized and restructured with Table of Contents |
+| January 2025 | **Code Formatting Standard** added - K&R brace style with `} else {` on same line |
+| January 2025 | Added Format-AllPowerShellFiles.ps1 script for automated formatting |
+| January 2025 | VS Code workspace settings configured for consistent formatting |
 
 ---
 

@@ -65,7 +65,7 @@ function Get-PSUADOPipelineBuild {
         [string]$PAT = $env:PAT
 
     )
-    begin{
+    begin {
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
     }
     process {
@@ -95,8 +95,7 @@ function Get-PSUADOPipelineBuild {
             
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
 
@@ -128,8 +127,7 @@ function Get-PSUADOPipelineBuild {
                 RepositoryUrl = $build.repository.url
                 PSTypeName    = 'PSU.ADO.BuildDetails'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

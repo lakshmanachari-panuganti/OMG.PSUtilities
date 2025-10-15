@@ -179,19 +179,19 @@ function Get-PSUADOVariableGroupInventory {
         # Initialize results collection
         $variableGroupInventory = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-         # Display parameters
-            Write-Host "Parameters:" -ForegroundColor Green
-            foreach ($param in $PSBoundParameters.GetEnumerator()) {
-                if ($param.Key -eq 'PAT') {
-                    $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
-                    Write-Host "  $($param.Key): $maskedPAT" -ForegroundColor Cyan
-                } elseif ($param.Value -is [array]) {
-                    $displayValue = $param.Value -join ', '
-                    Write-Host "  $($param.Key): $displayValue" -ForegroundColor Cyan
-                } else {
-                    Write-Host "  $($param.Key): $($param.Value)" -ForegroundColor Cyan
-                }
+        # Display parameters
+        Write-Host "Parameters:" -ForegroundColor Green
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Host "  $($param.Key): $maskedPAT" -ForegroundColor Cyan
+            } elseif ($param.Value -is [array]) {
+                $displayValue = $param.Value -join ', '
+                Write-Host "  $($param.Key): $displayValue" -ForegroundColor Cyan
+            } else {
+                Write-Host "  $($param.Key): $($param.Value)" -ForegroundColor Cyan
             }
+        }
 
         # Check if ThreadJob module is available
         $useThreadJobs = $false
@@ -200,13 +200,11 @@ function Get-PSUADOVariableGroupInventory {
                 Import-Module ThreadJob -Force -ErrorAction Stop
                 $useThreadJobs = $true
                 Write-Verbose "ThreadJob module loaded successfully - parallel processing enabled"
-            }
-            else {
+            } else {
                 Write-Warning "ThreadJob module not found. Install it with: Install-Module ThreadJob"
                 Write-Information "Falling back to sequential processing..." -InformationAction Continue
             }
-        }
-        catch {
+        } catch {
             Write-Warning "Failed to load ThreadJob module: $($_.Exception.Message)"
             Write-Information "Falling back to sequential processing..." -InformationAction Continue
         }
@@ -232,8 +230,7 @@ function Get-PSUADOVariableGroupInventory {
                 }
                 # Remove duplicates if any
                 $filteredProjects = $filteredProjects | Sort-Object id -Unique
-            }
-            else {
+            } else {
                 # Process all projects if no Project filter specified
                 $filteredProjects = $projectsResponse.value
             }
@@ -282,12 +279,10 @@ function Get-PSUADOVariableGroupInventory {
                                 }
                                 $KeyVaultName = if ($variableGroup.providerData -and $variableGroup.providerData.vault) {
                                     $variableGroup.providerData.vault
-                                }
-                                elseif ($variableGroup.providerData -and $variableGroup.providerData.serviceEndpointId) {
+                                } elseif ($variableGroup.providerData -and $variableGroup.providerData.serviceEndpointId) {
                                     # Sometimes Key Vault name is in serviceEndpointId or requires additional API call
                                     "ServiceEndpoint:$($variableGroup.providerData.serviceEndpointId)"
-                                }
-                                else {
+                                } else {
                                     $null
                                 }
                                 # Create inventory object
@@ -317,8 +312,7 @@ function Get-PSUADOVariableGroupInventory {
                                         $varName = $property.Name
                                         $varValue = if ($property.Value.isSecret -eq $true) {
                                             '********'
-                                        }
-                                        else {
+                                        } else {
                                             $property.Value.value
                                         }
 
@@ -343,8 +337,7 @@ function Get-PSUADOVariableGroupInventory {
                             VariableGroupCount = $results.Count
                             ErrorMessage       = $null
                         }
-                    }
-                    catch {
+                    } catch {
                         return @{
                             Success            = $false
                             ProjectName        = $projectObj.name
@@ -402,24 +395,20 @@ function Get-PSUADOVariableGroupInventory {
                                 $variableGroupInventory.AddRange($jobResult.Results)
                             }
                             $successfulProjects++
-                        }
-                        else {
+                        } else {
                             Write-Warning "Failed to process project '$($jobResult.ProjectName)': $($jobResult.ErrorMessage)"
                             $failedProjects++
                         }
-                    }
-                    catch {
+                    } catch {
                         Write-Warning "Error receiving job results for project: $($_.Exception.Message)"
                         $failedProjects++
-                    }
-                    finally {
+                    } finally {
                         Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
                     }
                 }
 
                 Write-Verbose "ThreadJob processing completed. Successful: $successfulProjects, Failed: $failedProjects"
-            }
-            else {
+            } else {
                 # Sequential processing
                 Write-Verbose "Using sequential processing (ThreadJobs not available or single project)"
 
@@ -490,8 +479,7 @@ function Get-PSUADOVariableGroupInventory {
                                         $varName = $property.Name
                                         $varValue = if ($property.Value.isSecret -eq $true) {
                                             '********'
-                                        }
-                                        else {
+                                        } else {
                                             $property.Value.value
                                         }
 
@@ -508,12 +496,10 @@ function Get-PSUADOVariableGroupInventory {
 
                                 $variableGroupInventory.Add($inventoryItem)
                             }
-                        }
-                        else {
+                        } else {
                             Write-Verbose "No variable groups found in project '$($projectObj.name)'"
                         }
-                    }
-                    catch {
+                    } catch {
                         $errorMessage = "Failed to retrieve variable groups for project '$($projectObj.name)': $($_.Exception.Message)"
                         Write-Warning $errorMessage
                         Write-Verbose "Full error details: $($_.Exception | Format-List * | Out-String)"
@@ -528,8 +514,7 @@ function Get-PSUADOVariableGroupInventory {
             if ($variableGroupInventory.Count -eq 0) {
                 Write-Information "No variable groups found in the specified projects." -InformationAction Continue
                 return @()
-            }
-            else {
+            } else {
                 # Apply Filter if specified (similar to Get-ADUser -Filter)
                 $finalResults = $variableGroupInventory
 
@@ -541,8 +526,7 @@ function Get-PSUADOVariableGroupInventory {
                     $count = $item.VariableCount
                     if ($count -is [array]) {
                         $totalVariables += [int]$count[0]
-                    }
-                    else {
+                    } else {
                         $totalVariables += [int]$count
                     }
                 }
@@ -579,8 +563,7 @@ function Get-PSUADOVariableGroupInventory {
                             }
                         }
                         Write-Information "Results exported to: $OutputFilePath" -InformationAction Continue
-                    }
-                    catch {
+                    } catch {
                         Write-Warning "Failed to export results to '$OutputFilePath': $($_.Exception.Message)"
                     }
                 }
@@ -590,8 +573,7 @@ function Get-PSUADOVariableGroupInventory {
                 # Return the inventory
                 return $finalResults.ToArray()
             }
-        }
-        catch {
+        } catch {
             Write-Progress -Activity "Azure DevOps Variable Group Inventory" -Status "Error occurred" -PercentComplete 100 -Completed
             $errorMessage = "Failed to retrieve variable group inventory: $($_.Exception.Message)"
             Write-Error $errorMessage

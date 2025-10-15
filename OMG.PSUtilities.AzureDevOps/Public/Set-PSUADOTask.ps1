@@ -256,8 +256,7 @@ function Set-PSUADOTask {
             # Construct API URI
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
-            }
-            else {
+            } else {
                 [uri]::EscapeDataString($Project)
             }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/$Id" + "?api-version=7.1-preview.3"
@@ -290,8 +289,7 @@ function Set-PSUADOTask {
                 WebUrl        = $response._links.html.href
                 PSTypeName    = 'PSU.ADO.Task'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }
