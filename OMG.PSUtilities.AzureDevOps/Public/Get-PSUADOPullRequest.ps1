@@ -157,9 +157,17 @@ function Get-PSUADOPullRequest {
                 foreach ($repo in $repositoriesToProcess) {
                     Write-Verbose "Fetching $State pull requests for repository '$($repo.Name)' (ID: $($repo.Id))"
                     $Project = $repo.Project
+                    
+                    # Escape project name for URI
+                    $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                        $Project
+                    } else {
+                        [uri]::EscapeDataString($Project)
+                    }
+                    
                     try {
                         $stateParam = $State.ToLower()
-                        $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$($repo.Id)/pullrequests?searchCriteria.status=$stateParam&api-version=7.0"
+                        $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$($repo.Id)/pullrequests?searchCriteria.status=$stateParam&api-version=7.0"
 
                         $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
                         Write-Verbose "Found $($response.value.Count) pull requests in repository '$($repo.Name)'"

@@ -128,6 +128,13 @@ function Complete-PSUADOPullRequest {
 
     process {
         try {
+            # Escape project name for URI
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
+            
             # Get repository ID
             $repos = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
             $matchedRepo = $repos | Where-Object { $_.Name -eq $Repository }
@@ -137,7 +144,7 @@ function Complete-PSUADOPullRequest {
             $repositoryId = $matchedRepo.Id
 
             # First, get the current PR details
-            $getPrUri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId" + "?api-version=7.0"
+            $getPrUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId" + "?api-version=7.0"
             Write-Verbose "Getting pull request details from: $getPrUri"
 
             $currentPr = Invoke-RestMethod -Method Get -Uri $getPrUri -Headers $headers -ErrorAction Stop

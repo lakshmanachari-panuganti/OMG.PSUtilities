@@ -100,11 +100,18 @@ function Get-PSUADOPipeline {
 
     process {
         try {
+            # Escape project name for URI
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
+            
             if ($Id) {
-                $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
+                $detailsUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$Id`?api-version=7.1-preview.1"
                 $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
 
-                $webUrl = "https://dev.azure.com/$Organization/$Project/_build?definitionId=$Id"
+                $webUrl = "https://dev.azure.com/$Organization/$escapedProject/_build?definitionId=$Id"
 
                 [PSCustomObject]@{
                     Name           = $pipelineDetails.name
@@ -116,7 +123,7 @@ function Get-PSUADOPipeline {
                     RepositoryType = $pipelineDetails.configuration.repository.type
                 }
             } else {
-                $listUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines?api-version=7.1-preview.1"
+                $listUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines?api-version=7.1-preview.1"
                 $pipelineList = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get
 
                 if (-not $pipelineList.value) {
@@ -126,10 +133,10 @@ function Get-PSUADOPipeline {
 
                 $results = foreach ($pipeline in $pipelineList.value) {
                     $Id = $pipeline.id
-                    $webUrl = "https://dev.azure.com/$Organization/$Project/_build?definitionId=$Id"
+                    $webUrl = "https://dev.azure.com/$Organization/$escapedProject/_build?definitionId=$Id"
 
                     if ($AddDetails) {
-                        $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
+                        $detailsUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$Id`?api-version=7.1-preview.1"
                         $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
 
                         [PSCustomObject]@{

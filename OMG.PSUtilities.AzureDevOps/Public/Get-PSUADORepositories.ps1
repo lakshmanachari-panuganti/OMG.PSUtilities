@@ -78,7 +78,14 @@ function Get-PSUADORepositories {
     }
     process {
         try {
-            $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.1-preview.1"
+            # Escape project name for URI
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
+            
+            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
 
             $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
             $response.value | ForEach-Object {
