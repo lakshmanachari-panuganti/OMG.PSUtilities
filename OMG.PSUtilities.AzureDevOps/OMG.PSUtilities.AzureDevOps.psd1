@@ -91,10 +91,14 @@ FunctionsToExport = @(
     'New-PSUADOSpike',
     'New-PSUADOTask',
     'New-PSUADOUserStory',
+    'New-PSUADOVariable',
+    'New-PSUADOVariableGroup',
     'Set-PSUADOBug',
     'Set-PSUADOSpike',
     'Set-PSUADOTask',
-    'Set-PSUADOUserStory'
+    'Set-PSUADOUserStory',
+    'Set-PSUADOVariable',
+    'Set-PSUADOVariableGroup'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
