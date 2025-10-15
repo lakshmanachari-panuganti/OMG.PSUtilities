@@ -131,13 +131,13 @@ if ($vg1Detailed -and $vg1Detailed.Variables) {
     Write-Host ""
     Write-Host "Variables:" -ForegroundColor Yellow
     $vg1Detailed.Variables | Format-Table @{
-        Label = 'Variable Name'
+        Label      = 'Variable Name'
         Expression = { $_.VariableName }
     }, @{
-        Label = 'Value'
+        Label      = 'Value'
         Expression = { $_.VariableValue }
     }, @{
-        Label = 'Secret'
+        Label      = 'Secret'
         Expression = { $_.IsSecret }
     } -AutoSize
 }

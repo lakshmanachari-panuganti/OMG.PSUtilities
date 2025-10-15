@@ -1,27 +1,27 @@
  
 # Mapping of functions to their destination modules
 $functionMap = @{
-    "Get-PSUInstalledSoftware"      = "Core"
-    "Uninstall-PSUInstalledSoftware"= "Core"
-    "Get-PSUUserSession"            = "Core"
-    "Remove-PSUUserSession"         = "Core"
-    "Set-PSUUserEnvironmentVariable"= "Core"
-    "Find-PSUFilesContainingText"   = "Core"
-    "Get-PSUConnectedWifiInfo"      = "Core"
-    "Test-PSUInternetConnection"    = "Core"
+    "Get-PSUInstalledSoftware"       = "Core"
+    "Uninstall-PSUInstalledSoftware" = "Core"
+    "Get-PSUUserSession"             = "Core"
+    "Remove-PSUUserSession"          = "Core"
+    "Set-PSUUserEnvironmentVariable" = "Core"
+    "Find-PSUFilesContainingText"    = "Core"
+    "Get-PSUConnectedWifiInfo"       = "Core"
+    "Test-PSUInternetConnection"     = "Core"
 
-    "Invoke-PSUPromptAI"            = "AI"
-    "Start-PSUAiChat"               = "AI"
+    "Invoke-PSUPromptAI"             = "AI"
+    "Start-PSUAiChat"                = "AI"
 
-    "Get-PSUAzToken"                = "AzureCore"
-    "Test-PSUAzConnection"          = "AzureCore"
+    "Get-PSUAzToken"                 = "AzureCore"
+    "Test-PSUAzConnection"           = "AzureCore"
 
-    "Get-PSUADOBuildDetails"        = "AzureDevOps"
-    "Get-PSUADOPipelineLatestRun"   = "AzureDevOps"
+    "Get-PSUADOBuildDetails"         = "AzureDevOps"
+    "Get-PSUADOPipelineLatestRun"    = "AzureDevOps"
 
-    "New-PSUHTMLReport"             = "Core" 
-    "Send-PSUHTMLReport"            = "Core"
-    "Send-PSUTeamsMessage"          = "Core"
+    "New-PSUHTMLReport"              = "Core" 
+    "Send-PSUHTMLReport"             = "Core"
+    "Send-PSUTeamsMessage"           = "Core"
 }
 
 # Source location of existing .ps1 function files (old flat layout)
@@ -39,7 +39,7 @@ foreach ($func in $functionMap.Keys) {
     }
 
     $sourceFile = Join-Path $sourcePublicFolder "$func.ps1"
-    $destFile   = Join-Path $targetPublic "$func.ps1"
+    $destFile = Join-Path $targetPublic "$func.ps1"
 
     if (Test-Path $sourceFile) {
         Move-Item -Path $sourceFile -Destination $destFile -Force
