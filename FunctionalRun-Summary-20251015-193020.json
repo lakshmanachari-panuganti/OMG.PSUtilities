@@ -1,0 +1,18 @@
+{
+  "Timestamp": "2025-10-15T20:20:54.8807966+05:30",
+  "Organization": "lakshmanachari",
+  "Project": "OMG.PSUtilities",
+  "Repository": "Test-Repo1",
+  "FeatureBranch": "psu/test-func-20251015-193020",
+  "PullRequestId": 2,
+  "PRStatus": "completed",
+  "MergeStrategy": "squash",
+  "UserStoryId": 16,
+  "BugId": 17,
+  "TaskId": 18,
+  "SpikeId": null,
+  "VariableGroupId": 8,
+  "VariableGroupName": "PSU-Test-VG-20251015-193449-Renamed",
+  "VariableName": "PSU_TEST_VAR_INIT",
+  "CloneValidated": null
+}
