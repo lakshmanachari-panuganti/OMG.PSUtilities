@@ -95,8 +95,14 @@ function Set-PSUADOVariableGroup {
                 }
             }
 
+            # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
             if (-not $Organization) {
-                throw "Organization is required. Set env var: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+                throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+            }
+
+            # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $PAT) {
+                throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
             }
 
             $headers = Get-PSUAdoAuthHeader -PAT $PAT
@@ -143,12 +149,17 @@ function Set-PSUADOVariableGroup {
             
             $bodyJson = $updateBody | ConvertTo-Json -Depth 10
             
+            Write-Verbose "Update payload:"
+            Write-Verbose $bodyJson
+            
             $updateUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/distributedtask/variablegroups/$($VariableGroupId)?api-version=7.1-preview.2"
             Write-Verbose "Updating variable group at: $updateUri"
             
             $response = Invoke-RestMethod -Uri $updateUri -Headers $headers -Method Put -Body $bodyJson -ContentType "application/json" -ErrorAction Stop
             
             Write-Verbose "Successfully updated variable group ID: $($response.id)"
+            Write-Verbose "Response name: $($response.name)"
+            Write-Verbose "Response description: $($response.description)"
             
             [PSCustomObject]@{
                 Id          = $response.id

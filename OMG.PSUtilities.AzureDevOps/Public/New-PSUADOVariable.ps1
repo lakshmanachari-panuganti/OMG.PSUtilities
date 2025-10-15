@@ -9,6 +9,11 @@ function New-PSUADOVariable {
 
     .PARAMETER VariableGroupName
         (Mandatory) The name of the variable group to add the variable to.
+        Use either VariableGroupName or VariableGroupId.
+
+    .PARAMETER VariableGroupId
+        (Mandatory) The ID of the variable group to add the variable to.
+        Use either VariableGroupName or VariableGroupId.
 
     .PARAMETER VariableName
         (Mandatory) The name of the variable to add or update.
@@ -59,11 +64,15 @@ function New-PSUADOVariable {
         https://learn.microsoft.com/en-us/rest/api/azure/devops/distributedtask/variablegroups
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(DefaultParameterSetName = 'ByName')]
     param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, ParameterSetName = 'ByName')]
         [ValidateNotNullOrEmpty()]
         [string]$VariableGroupName,
+        
+        [Parameter(Mandatory, ParameterSetName = 'ById')]
+        [ValidateNotNullOrEmpty()]
+        [int]$VariableGroupId,
         
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -104,22 +113,34 @@ function New-PSUADOVariable {
                 }
             }
 
+            # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
             if (-not $Organization) {
-                throw "Organization is required. Set env var: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or ensure git remote is an Azure DevOps URL."
+                throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+            }
+
+            # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $PAT) {
+                throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
             }
 
             $headers = Get-PSUAdoAuthHeader -PAT $PAT
 
-            Write-Verbose "Retrieving variable group: $VariableGroupName"
-            
-            # Get all variable groups for the project
-            $listUrl = "https://dev.azure.com/$Organization/$([uri]::EscapeDataString($Project))/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
-            $allGroups = Invoke-RestMethod -Uri $listUrl -Method Get -Headers $headers -ErrorAction Stop
-            
-            $variableGroup = $allGroups.value | Where-Object { $_.name -eq $VariableGroupName }
-            
-            if (-not $variableGroup) {
-                throw "Variable group '$VariableGroupName' not found in project '$Project'"
+            # Get variable group by ID or Name
+            if ($PSCmdlet.ParameterSetName -eq 'ById') {
+                Write-Verbose "Retrieving variable group by ID: $VariableGroupId"
+                $getUrl = "https://dev.azure.com/$Organization/$([uri]::EscapeDataString($Project))/_apis/distributedtask/variablegroups/$($VariableGroupId)?api-version=7.1-preview.2"
+                $variableGroup = Invoke-RestMethod -Uri $getUrl -Method Get -Headers $headers -ErrorAction Stop
+            } else {
+                Write-Verbose "Retrieving variable group by name: $VariableGroupName"
+                # Get all variable groups for the project
+                $listUrl = "https://dev.azure.com/$Organization/$([uri]::EscapeDataString($Project))/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
+                $allGroups = Invoke-RestMethod -Uri $listUrl -Method Get -Headers $headers -ErrorAction Stop
+                
+                $variableGroup = $allGroups.value | Where-Object { $_.name -eq $VariableGroupName }
+                
+                if (-not $variableGroup) {
+                    throw "Variable group '$VariableGroupName' not found in project '$Project'"
+                }
             }
 
             Write-Verbose "Found variable group with ID: $($variableGroup.id)"

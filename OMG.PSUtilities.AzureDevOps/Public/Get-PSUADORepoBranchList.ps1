@@ -92,39 +92,65 @@ function Get-PSUADORepoBranchList {
                 }
             }
 
-            # Validate required parameters
-            if ($Repository) {
-                # Get repository ID from repository name
-                $repoUri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$Repository?api-version=7.0"
-                $headers = Get-PSUAdoAuthHeader -PAT $PAT
-                $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get
-                if (-not $repoResponse.id) {
-                    Write-Error "Repository '$Repository' not found in project '$Project'."
-                    return
-                }
-                $RepositoryId = $repoResponse.id
+            # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $Organization) {
+                throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
             }
 
-            $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepositoryId/refs?filter=heads/&api-version=7.0"
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
+            # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $PAT) {
+                throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+            }
 
-            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
-            $formattedResults = @()
+            # Create authentication headers ONCE
+            $headers = Get-PSUAdoAuthHeader -PAT $PAT
+            
+            # Escape project name ONCE
+            $escapedProject = [uri]::EscapeDataString($Project)
+
+            # Resolve Repository Name to ID if needed
+            if ($PSCmdlet.ParameterSetName -eq 'ByRepositoryName') {
+                Write-Verbose "Resolving repository name '$Repository' to ID..."
+                $escapedRepo = [uri]::EscapeDataString($Repository)
+                $repoUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$escapedRepo?api-version=7.1"
+                
+                $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get -ErrorAction Stop
+                
+                if (-not $repoResponse.id) {
+                    throw "Repository '$Repository' not found in project '$Project'."
+                }
+                
+                $RepositoryId = $repoResponse.id
+                Write-Verbose "Resolved repository '$Repository' to ID: $RepositoryId"
+            }
+
+            # Fetch branches
+            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$RepositoryId/refs?filter=heads/&api-version=7.1"
+            Write-Verbose "Fetching branches from: $uri"
+
+            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -ErrorAction Stop
+            
+            # Build results efficiently using List
+            $formattedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
+            
             if ($response.value) {
                 foreach ($item in $response.value) {
-                    $formattedObject = [PSCustomObject]@{}
-
+                    # Build hashtable first, then create object once
+                    $properties = @{}
+                    
                     foreach ($property in $item.PSObject.Properties) {
-                        $originalName = $property.Name
-                        $originalValue = $property.Value
-
-                        # Capitalize the first letter of the property name
-                        $capitalizedName = ($originalName[0].ToString().ToUpper()) + ($originalName.Substring(1).ToLower())
-
-                        $formattedObject | Add-Member -MemberType NoteProperty -Name $capitalizedName -Value $originalValue
+                        # Simple capitalization - preserve rest of the name
+                        $capitalizedName = $property.Name.Substring(0,1).ToUpper() + $property.Name.Substring(1)
+                        $properties[$capitalizedName] = $property.Value
                     }
-
-                    $formattedResults += $formattedObject
+                    
+                    # Add computed property for clean branch name
+                    if ($properties.ContainsKey('Name')) {
+                        $properties['BranchName'] = $properties['Name'] -replace '^refs/heads/', ''
+                    }
+                    
+                    # Create object once and add to list
+                    $formattedResults.Add([PSCustomObject]$properties)
                 }
             }
 

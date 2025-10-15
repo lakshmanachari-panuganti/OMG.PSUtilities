@@ -148,9 +148,16 @@ function Set-PSUADOSpike {
                 }
             }
 
+            # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
             if (-not $Organization) {
-                throw "Organization is required. Set env var: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or ensure git remote is an Azure DevOps URL."
+                throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
             }
+
+            # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $PAT) {
+                throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+            }
+
             if (-not $Project) {
                 throw "Project is required. Provide -Project or ensure the git remote contains the project segment."
             }

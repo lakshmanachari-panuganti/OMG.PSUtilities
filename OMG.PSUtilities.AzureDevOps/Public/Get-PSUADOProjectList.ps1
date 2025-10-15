@@ -62,6 +62,16 @@ function Get-PSUADOProjectList {
             }
         }
 
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
         $uri = "https://dev.azure.com/$Organization/_apis/projects?api-version=7.1-preview.4"
 

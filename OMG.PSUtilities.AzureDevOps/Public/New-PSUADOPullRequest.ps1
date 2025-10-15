@@ -157,6 +157,16 @@ function New-PSUADOPullRequest {
                 }
             }
 
+            # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $Organization) {
+                throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+            }
+
+            # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $PAT) {
+                throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+            }
+
             # Validate required parameters that have auto-detection
             $repositoryIdentifier = $null
             if ($PSCmdlet.ParameterSetName -eq 'ByRepoId') {

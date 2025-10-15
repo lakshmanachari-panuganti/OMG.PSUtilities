@@ -113,9 +113,14 @@ function Approve-PSUADOPullRequest {
                 }
             }
 
-            # Validate required parameters that have auto-detection
+            # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
             if (-not $Organization) {
-                throw "Organization parameter is required. Set it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value 'your-org' or ensure you're in a git repository with Azure DevOps remote."
+                throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+            }
+
+            # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+            if (-not $PAT) {
+                throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
             }
 
             # Get repository ID

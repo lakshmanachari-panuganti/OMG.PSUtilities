@@ -158,9 +158,14 @@ function Get-PSUADOVariableGroupInventory {
     begin {
         Write-Host "Starting Azure DevOps Variable Group inventory process"
 
-        # Validate Organization parameter
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
         if (-not $Organization) {
-            throw "Organization is required. Set env var: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
         }
 
         # Setup authentication headers
