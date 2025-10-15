@@ -114,13 +114,13 @@ function Get-PSUADORepoBranchList {
                 Write-Verbose "Resolving repository name '$Repository' to ID..."
                 $escapedRepo = [uri]::EscapeDataString($Repository)
                 $repoUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$escapedRepo?api-version=7.1"
-                
+
                 $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get -ErrorAction Stop
-                
+
                 if (-not $repoResponse.id) {
                     throw "Repository '$Repository' not found in project '$Project'."
                 }
-                
+
                 $RepositoryId = $repoResponse.id
                 Write-Verbose "Resolved repository '$Repository' to ID: $RepositoryId"
             }
@@ -130,26 +130,26 @@ function Get-PSUADORepoBranchList {
             Write-Verbose "Fetching branches from: $uri"
 
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -ErrorAction Stop
-            
+
             # Build results efficiently using List
             $formattedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
-            
+
             if ($response.value) {
                 foreach ($item in $response.value) {
                     # Build hashtable first, then create object once
                     $properties = @{}
-                    
+
                     foreach ($property in $item.PSObject.Properties) {
                         # Simple capitalization - preserve rest of the name
                         $capitalizedName = $property.Name.Substring(0, 1).ToUpper() + $property.Name.Substring(1)
                         $properties[$capitalizedName] = $property.Value
                     }
-                    
+
                     # Add computed property for clean branch name
                     if ($properties.ContainsKey('Name')) {
                         $properties['BranchName'] = $properties['Name'] -replace '^refs/heads/', ''
                     }
-                    
+
                     # Create object once and add to list
                     $formattedResults.Add([PSCustomObject]$properties)
                 }

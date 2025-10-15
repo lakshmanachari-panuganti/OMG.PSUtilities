@@ -62,26 +62,26 @@ function Set-PSUADOVariableGroup {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [int]$VariableGroupId,
-        
+
         [Parameter()]
         [string]$VariableGroupName,
-        
+
         [Parameter()]
         [string]$Description,
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Project,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-    
+
 
     begin {
         # Display parameters
@@ -115,12 +115,12 @@ function Set-PSUADOVariableGroup {
             } else {
                 [uri]::EscapeDataString($Project)
             }
-            
+
             $getUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/distributedtask/variablegroups/$($VariableGroupId)?api-version=7.1-preview.2"
             Write-Verbose "Retrieving existing variable group from: $getUri"
-            
+
             $existingGroup = Invoke-RestMethod -Uri $getUri -Headers $headers -Method Get -ErrorAction Stop
-            
+
             # Build the update body with existing data
             $updateBody = @{
                 id          = $existingGroup.id
@@ -129,7 +129,7 @@ function Set-PSUADOVariableGroup {
                 description = if ($PSBoundParameters.ContainsKey('Description')) { $Description } else { $existingGroup.description }
                 variables   = $existingGroup.variables
             }
-            
+
             # Include variableGroupProjectReferences (required for update)
             if ($existingGroup.variableGroupProjectReferences) {
                 # Update the name and description in the project references
@@ -143,26 +143,26 @@ function Set-PSUADOVariableGroup {
                 }
                 $updateBody.variableGroupProjectReferences = $updatedRefs
             }
-            
+
             # Include providerData if it exists (for Azure Key Vault linked variable groups)
             if ($existingGroup.providerData) {
                 $updateBody.providerData = $existingGroup.providerData
             }
-            
+
             $bodyJson = $updateBody | ConvertTo-Json -Depth 10
-            
+
             Write-Verbose "Update payload:"
             Write-Verbose $bodyJson
-            
+
             $updateUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/distributedtask/variablegroups/$($VariableGroupId)?api-version=7.1-preview.2"
             Write-Verbose "Updating variable group at: $updateUri"
-            
+
             $response = Invoke-RestMethod -Uri $updateUri -Headers $headers -Method Put -Body $bodyJson -ContentType "application/json" -ErrorAction Stop
-            
+
             Write-Verbose "Successfully updated variable group ID: $($response.id)"
             Write-Verbose "Response name: $($response.name)"
             Write-Verbose "Response description: $($response.description)"
-            
+
             [PSCustomObject]@{
                 Id          = $response.id
                 Name        = $response.name

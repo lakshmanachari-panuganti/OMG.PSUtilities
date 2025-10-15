@@ -69,35 +69,35 @@ function Set-PSUADOVariable {
         [Parameter(Mandatory, ParameterSetName = 'ByName')]
         [ValidateNotNullOrEmpty()]
         [string]$VariableGroupName,
-        
+
         [Parameter(ParameterSetName = 'ById')]
         [ValidateNotNullOrEmpty()]
         [int]$VariableGroupId,
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$VariableName,
-        
+
         [Parameter(Mandatory)]
         [AllowEmptyString()]
         [string]$VariableValue,
-        
+
         [Parameter()]
         [switch]$IsSecret,
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Project,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-    
+
 
     begin {
         # Display parameters
@@ -130,32 +130,32 @@ function Set-PSUADOVariable {
             } else {
                 [uri]::EscapeDataString($Project)
             }
-            
+
             # If VariableGroupId not provided, look it up by name
             if (-not $VariableGroupId) {
                 Write-Verbose "Looking up variable group ID for: $VariableGroupName"
                 $listUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
                 $allGroups = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get -ErrorAction Stop
-                
+
                 $matchingGroup = $allGroups.value | Where-Object { $_.name -eq $VariableGroupName }
-                
+
                 if (-not $matchingGroup) {
                     throw "Variable group '$VariableGroupName' not found in project '$Project'."
                 }
-                
+
                 $VariableGroupId = $matchingGroup.id
                 Write-Verbose "Found variable group ID: $VariableGroupId"
             }
-            
+
             # Get the existing variable group
             $getUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/distributedtask/variablegroups/$($VariableGroupId)?api-version=7.1-preview.2"
             Write-Verbose "Retrieving variable group from: $getUri"
-            
+
             $existingGroup = Invoke-RestMethod -Uri $getUri -Headers $headers -Method Get -ErrorAction Stop
-            
+
             # Check if variable exists
             $variableExists = $existingGroup.variables.PSObject.Properties.Name -contains $VariableName
-            
+
             # Clone the existing variables into a new hashtable
             $updatedVariables = @{}
             foreach ($prop in $existingGroup.variables.PSObject.Properties) {
@@ -166,17 +166,17 @@ function Set-PSUADOVariable {
                     $updatedVariables[$prop.Name].isSecret = $prop.Value.isSecret
                 }
             }
-            
+
             # Add or update the target variable
             if ($variableExists) {
                 Write-Verbose "Updating existing variable: $VariableName"
                 # Preserve existing isSecret status unless explicitly provided
-                $secretStatus = if ($PSBoundParameters.ContainsKey('IsSecret')) { 
-                    $IsSecret.IsPresent 
-                } else { 
-                    $existingGroup.variables.$VariableName.isSecret -eq $true 
+                $secretStatus = if ($PSBoundParameters.ContainsKey('IsSecret')) {
+                    $IsSecret.IsPresent
+                } else {
+                    $existingGroup.variables.$VariableName.isSecret -eq $true
                 }
-                
+
                 $updatedVariables[$VariableName] = @{
                     value    = $VariableValue
                     isSecret = $secretStatus
@@ -188,7 +188,7 @@ function Set-PSUADOVariable {
                     isSecret = $IsSecret.IsPresent
                 }
             }
-            
+
             # Build the update body
             $updateBody = @{
                 id          = $existingGroup.id
@@ -197,27 +197,27 @@ function Set-PSUADOVariable {
                 description = $existingGroup.description
                 variables   = $updatedVariables
             }
-            
+
             # Include variableGroupProjectReferences (required for update)
             if ($existingGroup.variableGroupProjectReferences) {
                 $updateBody.variableGroupProjectReferences = $existingGroup.variableGroupProjectReferences
             }
-            
+
             # Include providerData if it exists (for Azure Key Vault linked variable groups)
             if ($existingGroup.providerData) {
                 $updateBody.providerData = $existingGroup.providerData
             }
-            
+
             $bodyJson = $updateBody | ConvertTo-Json -Depth 10
-            
+
             $updateUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/distributedtask/variablegroups/$($VariableGroupId)?api-version=7.1-preview.2"
             Write-Verbose "Updating variable group at: $updateUri"
-            
+
             $response = Invoke-RestMethod -Uri $updateUri -Headers $headers -Method Put -Body $bodyJson -ContentType "application/json" -ErrorAction Stop
-            
+
             $action = if ($variableExists) { "Updated" } else { "Added" }
             Write-Verbose "$action variable '$VariableName' in variable group '$($response.name)'"
-            
+
             # Return information about the updated/added variable
             [PSCustomObject]@{
                 VariableGroupId   = $response.id

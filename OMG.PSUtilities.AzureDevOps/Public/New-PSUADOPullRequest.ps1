@@ -106,7 +106,7 @@ function New-PSUADOPullRequest {
         [Parameter(ParameterSetName = 'ByRepoName')]
         [ValidateNotNullOrEmpty()]
         [string]$Repository,
-        
+
         [Parameter()]
         [ValidateScript({
                 if ($_ -match '^refs/heads/.+') { $true }
@@ -228,7 +228,7 @@ function New-PSUADOPullRequest {
 
                     $autoCompleteUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests/$($response.pullRequestId)?api-version=7.0"
                     Write-Verbose "Setting auto-completion for PR ID: $($response.pullRequestId)"
-                    
+
                     Invoke-RestMethod -Method Patch -Uri $autoCompleteUri -Headers $headers -Body $autoCompleteBody -ContentType "application/json" -ErrorAction Stop
                     Write-Host "Auto-completion enabled. PR will complete automatically when all policies and approvals are satisfied." -ForegroundColor Yellow
                 } catch {

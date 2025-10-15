@@ -53,23 +53,23 @@ function New-PSUADOVariableGroup {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$VariableGroupName,
-        
+
         [Parameter()]
         [string]$Description = "",
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Project,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-    
+
 
     begin {
         # Display parameters
@@ -98,7 +98,7 @@ function New-PSUADOVariableGroup {
     process {
         try {
             Write-Verbose "Retrieving project information for: $Project"
-            
+
             # Get project ID
             $projectUrl = "https://dev.azure.com/$Organization/_apis/projects/$([uri]::EscapeDataString($Project))?api-version=7.1"
             $projectInfo = Invoke-RestMethod -Uri $projectUrl -Method Get -Headers $headers -ErrorAction Stop
@@ -106,7 +106,7 @@ function New-PSUADOVariableGroup {
 
             Write-Verbose "Project ID: $projectId"
             Write-Verbose "Creating variable group: $VariableGroupName"
-            
+
             # Build variable group payload
             $variableGroupBody = @{
                 name                           = $VariableGroupName
@@ -129,13 +129,13 @@ function New-PSUADOVariableGroup {
                     }
                 )
             } | ConvertTo-Json -Depth 10
-            
+
             $createUrl = "https://dev.azure.com/$Organization/$([uri]::EscapeDataString($Project))/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
-            
+
             $variableGroup = Invoke-RestMethod -Uri $createUrl -Method Post -Headers $headers -Body $variableGroupBody -ErrorAction Stop
-            
+
             Write-Verbose "Variable group '$VariableGroupName' created successfully with ID: $($variableGroup.id)"
-            
+
             return [PSCustomObject]@{
                 Id               = $variableGroup.id
                 Name             = $variableGroup.name

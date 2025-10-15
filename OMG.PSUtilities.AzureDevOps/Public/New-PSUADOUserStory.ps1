@@ -4,7 +4,7 @@ function New-PSUADOUserStory {
         Creates a new user story in Azure DevOps.
 
     .DESCRIPTION
-        This function creates a new user story in Azure DevOps using the REST API. 
+        This function creates a new user story in Azure DevOps using the REST API.
         It allows you to specify the title, description, acceptance criteria, priority, and other properties.
         Returns the created user story details as follows.
             ID
@@ -156,7 +156,7 @@ function New-PSUADOUserStory {
     }
     process {
         try {
-            
+
             # Build the work item fields
             $fields = @(
                 @{

@@ -165,7 +165,7 @@ function Set-PSUADOBug {
     }
     process {
         try {
-           
+
 
             # Build the patch document
             $patchDocument = @()

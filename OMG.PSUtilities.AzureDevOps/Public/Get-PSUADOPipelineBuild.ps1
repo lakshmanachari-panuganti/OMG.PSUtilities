@@ -36,7 +36,7 @@ function Get-PSUADOPipelineBuild {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date  : 2025-06-16 : Initial development
-    
+
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
         https://www.linkedin.com/in/lakshmanachari-panuganti/
@@ -92,7 +92,7 @@ function Get-PSUADOPipelineBuild {
             }
 
             Write-Verbose "Escaping project name for the URL..."
-            
+
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
             } else {

@@ -6,7 +6,7 @@ function Approve-PSUADOPullRequest {
     .DESCRIPTION
         This function approves a pull request in Azure DevOps by its ID. It can approve with different vote values
         and optional comments. You can specify the repository details or use auto-detection from git remote.
-    
+
         Requires: Azure DevOps Personal Access Token with appropriate permissions
 
     .PARAMETER Organization
@@ -158,7 +158,7 @@ function Approve-PSUADOPullRequest {
             }
             $reviewerId = $userProfile.id
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId/reviewers/$reviewerId" + "?api-version=7.0"
-            
+
             # Determine vote text for display
             $voteText = switch ($Vote) {
                 10 { "Approved" }
@@ -175,7 +175,7 @@ function Approve-PSUADOPullRequest {
             Write-Verbose "API URI: $uri"
 
             $response = Invoke-RestMethod -Method Put -Uri $uri -Headers $headers -Body $bodyJson -ContentType "application/json" -ErrorAction Stop
-            
+
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$Repository/pullrequest/$PullRequestId"
             Write-Host "Pull Request ID $PullRequestId review submitted: $voteText" -ForegroundColor Green
             Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan

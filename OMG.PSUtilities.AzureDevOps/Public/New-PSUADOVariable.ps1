@@ -69,35 +69,35 @@ function New-PSUADOVariable {
         [Parameter(Mandatory, ParameterSetName = 'ByName')]
         [ValidateNotNullOrEmpty()]
         [string]$VariableGroupName,
-        
+
         [Parameter(Mandatory, ParameterSetName = 'ById')]
         [ValidateNotNullOrEmpty()]
         [int]$VariableGroupId,
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$VariableName,
-        
+
         [Parameter(Mandatory)]
         [AllowEmptyString()]
         [string]$VariableValue,
-        
+
         [Parameter()]
         [switch]$IsSecret,
-        
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Project,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
-        
+
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-    
+
 
     begin {
         # Display parameters
@@ -135,9 +135,9 @@ function New-PSUADOVariable {
                 # Get all variable groups for the project
                 $listUrl = "https://dev.azure.com/$Organization/$([uri]::EscapeDataString($Project))/_apis/distributedtask/variablegroups?api-version=7.1-preview.2"
                 $allGroups = Invoke-RestMethod -Uri $listUrl -Method Get -Headers $headers -ErrorAction Stop
-                
+
                 $variableGroup = $allGroups.value | Where-Object { $_.name -eq $VariableGroupName }
-                
+
                 if (-not $variableGroup) {
                     throw "Variable group '$VariableGroupName' not found in project '$Project'"
                 }
@@ -145,19 +145,19 @@ function New-PSUADOVariable {
 
             Write-Verbose "Found variable group with ID: $($variableGroup.id)"
             Write-Verbose "Adding/updating variable: $VariableName"
-            
+
             # Initialize variables hashtable if it doesn't exist
             if (-not $variableGroup.variables) {
                 $variableGroup.variables = @{}
             }
-            
+
             # Remove _placeholder if this is the first real variable
-            if ($variableGroup.variables.PSObject.Properties.Name -contains '_placeholder' -and 
+            if ($variableGroup.variables.PSObject.Properties.Name -contains '_placeholder' -and
                 $variableGroup.variables.PSObject.Properties.Count -eq 1) {
                 Write-Verbose "Removing placeholder variable"
                 $variableGroup.variables.PSObject.Properties.Remove('_placeholder')
             }
-            
+
             # Add or update the variable
             if ($variableGroup.variables.PSObject.Properties.Name -contains $VariableName) {
                 Write-Verbose "Updating existing variable: $VariableName"
@@ -175,12 +175,12 @@ function New-PSUADOVariable {
                 }
                 $variableGroup.variables | Add-Member -MemberType NoteProperty -Name $VariableName -Value $newVariable -Force
             }
-            
+
             # Get project ID for proper reference
             $projectUrl = "https://dev.azure.com/$Organization/_apis/projects/$([uri]::EscapeDataString($Project))?api-version=7.1"
             $projectInfo = Invoke-RestMethod -Uri $projectUrl -Method Get -Headers $headers -ErrorAction Stop
             $projectId = $projectInfo.id
-            
+
             # Build clean update payload
             $updatePayload = @{
                 id                             = $variableGroup.id
@@ -198,18 +198,18 @@ function New-PSUADOVariable {
                     }
                 )
             }
-            
+
             # Update the variable group
             $updateBody = $updatePayload | ConvertTo-Json -Depth 10
             $updateUrl = "https://dev.azure.com/$Organization/$([uri]::EscapeDataString($Project))/_apis/distributedtask/variablegroups/$($variableGroup.id)?api-version=7.1-preview.2"
-            
+
             $updatedGroup = Invoke-RestMethod -Uri $updateUrl -Method Put -Headers $headers -Body $updateBody -ErrorAction Stop
-            
+
             $displayValue = if ($IsSecret) { "***" } else { $VariableValue }
             $secretLabel = if ($IsSecret) { " (Secret)" } else { "" }
-            
+
             Write-Verbose "Variable '$VariableName' added/updated successfully: $displayValue$secretLabel"
-            
+
             return [PSCustomObject]@{
                 VariableGroupId   = $updatedGroup.id
                 VariableGroupName = $updatedGroup.name

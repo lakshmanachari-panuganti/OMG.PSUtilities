@@ -163,8 +163,7 @@ function Set-PSUADOSpike {
     }
     process {
         try {
-         
-            
+
 
             # Build the patch document
             $patchDocument = @()

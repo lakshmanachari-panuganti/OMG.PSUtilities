@@ -4,7 +4,7 @@ function New-PSUADOSpike {
         Creates a new spike work item in Azure DevOps.
 
     .DESCRIPTION
-        This function creates a new spike work item in Azure DevOps using the REST API. 
+        This function creates a new spike work item in Azure DevOps using the REST API.
         Spikes are used for research, investigation, or proof-of-concept work where the outcome is knowledge rather than working software.
         Returns the created work item details including the work item ID.
 

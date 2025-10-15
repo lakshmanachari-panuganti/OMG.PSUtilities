@@ -47,7 +47,7 @@ function Get-PSUADOPullRequest {
     [PSCustomObject]
 
 .NOTES
-    Author: Lakshmanachari Panuganti  
+    Author: Lakshmanachari Panuganti
     Date: 2nd August 2025
     Updated: 11th August 2025 - Made repository parameters optional
 

@@ -163,9 +163,7 @@ function Set-PSUADOUserStory {
     }
     process {
         try {
-           
 
-            
 
             # Build the patch document
             $patchDocument = @()

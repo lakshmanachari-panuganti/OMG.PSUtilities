@@ -4,7 +4,7 @@ function New-PSUADOBug {
         Creates a new bug work item in Azure DevOps.
 
     .DESCRIPTION
-        This function creates a new bug work item in Azure DevOps using the REST API. 
+        This function creates a new bug work item in Azure DevOps using the REST API.
         It allows you to specify bug-specific fields like reproduction steps, system info, severity, and priority.
         Returns the created work item details including the work item ID.
 
@@ -122,7 +122,7 @@ function New-PSUADOBug {
         [string]$PAT = $env:PAT
     )
 
-    
+
     begin {
         # Display parameters
         Write-Verbose "Parameters:"

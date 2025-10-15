@@ -139,12 +139,12 @@ function Complete-PSUADOPullRequest {
             # First, get the current PR details
             $getPrUri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId" + "?api-version=7.0"
             Write-Verbose "Getting pull request details from: $getPrUri"
-            
+
             $currentPr = Invoke-RestMethod -Method Get -Uri $getPrUri -Headers $headers -ErrorAction Stop
 
             # Prepare completion options
             $completionOptions = @{}
-            
+
             if ($MergeStrategy -eq 'merge') {
                 $completionOptions.mergeStrategy = 'noFastForward'
             } elseif ($MergeStrategy -eq 'squash') {
@@ -181,14 +181,14 @@ function Complete-PSUADOPullRequest {
                 [uri]::EscapeDataString($Project)
             }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId" + "?api-version=7.0"
-            
+
             Write-Verbose "Completing pull request ID: $PullRequestId in project: $Project"
             Write-Verbose "Repository: $Repository ($repositoryId)"
             Write-Verbose "Merge strategy: $MergeStrategy"
             Write-Verbose "API URI: $uri"
 
             $response = Invoke-RestMethod -Method Patch -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -ErrorAction Stop
-            
+
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$Repository/pullrequest/$PullRequestId"
             Write-Host "Pull Request ID $PullRequestId completed successfully!" -ForegroundColor Green
             Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan

@@ -158,7 +158,7 @@ function New-PSUADOTask {
     }
     process {
         try {
-            
+
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
             } else {
