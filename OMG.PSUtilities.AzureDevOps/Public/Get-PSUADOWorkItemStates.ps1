@@ -122,7 +122,7 @@ function Get-PSUADOWorkItemStates {
 
                 $workItemStateInfo = [PSCustomObject]@{
                     WorkItemType = $WorkItemType
-                    States       = $response.value.states | ForEach-Object {
+                    States       = $response.value | ForEach-Object {
                         [PSCustomObject]@{
                             Name        = $_.name
                             Category    = $_.category
@@ -156,7 +156,7 @@ function Get-PSUADOWorkItemStates {
                         $statesResponse = Invoke-RestMethod @invokeParams
 
                         $workItemStateInfo = [PSCustomObject]@{
-                            States       = $statesResponse.value.states | ForEach-Object {
+                            States       = $statesResponse.value | ForEach-Object {
                                 [PSCustomObject]@{
                                     Name        = $_.name
                                     Category    = $_.category

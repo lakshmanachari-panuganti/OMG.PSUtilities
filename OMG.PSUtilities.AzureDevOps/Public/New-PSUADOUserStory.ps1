@@ -65,11 +65,6 @@ function New-PSUADOUserStory {
 
         Creates a basic user story with title and description.
 
-    .EXAMPLE
-        New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "Add search functionality" -Description "Users need to search products" -AcceptanceCriteria "Search returns relevant results" -Priority 1 -StoryPoints 5 -AssignedTo "user@company.com"
-
-        Creates a detailed user story with all properties specified.
-
     .OUTPUTS
         [PSCustomObject]
 
@@ -141,7 +136,6 @@ function New-PSUADOUserStory {
             }
         }
 
-        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
         if (-not $Organization) {
             throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
         }
@@ -225,7 +219,7 @@ function New-PSUADOUserStory {
                 }
             }
 
-            $body = $fields | ConvertTo-Json -Depth 3
+            $body = $fields | ConvertTo-Json -Depth 3 -AsArray
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
                 $Project
             } else {
