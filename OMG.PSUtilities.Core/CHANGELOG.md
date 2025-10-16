@@ -1,3 +1,12 @@
+## [1.0.11] - 17th October 2025
+### Added
+- New `Update-PSUModuleVersion` (Public) cmdlet to update module version in `.psd1` and `plasterManifest.xml` files.
+
+### Changed
+- The `Update-PSUModuleVersion` cmdlet now validates module path and `.psd1` file existence.
+- The `Update-PSUModuleVersion` cmdlet now updates the version in `plasterManifest.xml` if it exists.
+- Improved error handling and output messages in `Update-PSUModuleVersion`.
+
 ## [1.0.10] - 8th October 2025
 
 ## [1.0.9] - 23rd August 2025
