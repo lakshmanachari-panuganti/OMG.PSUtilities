@@ -160,6 +160,7 @@ function Set-PSUADOUserStory {
         $headers['Content-Type'] = 'application/json-patch+json'
 
         # Validate State parameter if provided
+        <#
         if ($State) {
             try {
                 $availableStates = Get-PSUADOWorkItemStates -Project $Project -WorkItemType "User Story" -Organization $Organization -PAT $PAT
@@ -171,6 +172,7 @@ function Set-PSUADOUserStory {
                 Write-Warning "Could not validate state '$State' against available states: $($_.Exception.Message)"
             }
         }
+        #>
     }
     process {
         try {
