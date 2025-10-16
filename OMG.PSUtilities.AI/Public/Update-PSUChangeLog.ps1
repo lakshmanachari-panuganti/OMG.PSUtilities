@@ -21,8 +21,7 @@ function Update-PSUChangeLog {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias("aichangelog")]
     param(
-        [Parameter(Mandatory, Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [ValidateNotNullOrEmpty()]
+        [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [string]$ModuleName,
 
         [Parameter()]
@@ -36,37 +35,46 @@ function Update-PSUChangeLog {
         [string]$FeatureBranch = $(git branch --show-current 2>$null)
     )
     process {
-        Write-Host "Starting Update-PSUChangeLog for module [$ModuleName]"
-        try {
-            $moduleRoot = Join-Path $RootPath $ModuleName
-            $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
+        if ($null -eq $ModuleName) {
+            $ModuleName = Get-PSUGitFileChangeMetadata | 
+            Where-Object { 
+                $_.file -like 'OMG.PSUtilities.*/*/*.ps1' -and
+                $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
+            } |
+            ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique
+        }
+        foreach ($thisModuleName in $ModuleName) {
+            Write-Host "Starting Update-PSUChangeLog for module [$thisModuleName]"
+            try {
+                $moduleRoot = Join-Path $RootPath $thisModuleName
+                $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
 
-            if (-not (Test-Path $changelogPath)) {
-                Write-Error "CHANGELOG.md not found for $ModuleName at path [$changelogPath]."
-                return
-            }
-
-            # Detect changed files
-            Write-Verbose "Comparing changes between [$BaseBranch] and [$FeatureBranch]"
-            $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only |
-            Where-Object { ($_ -replace '\\', '/') -match "$ModuleName/(Public|Private)/.*\.ps1$" }
-
-            if (-not $files) {
-                Write-Warning "No .ps1 file changes detected between $BaseBranch and $FeatureBranch."
-                return
-            }
-
-            $diffs = foreach ($file in $files) {
-                Write-Verbose "Processing diff for file: $file"
-                [PSCustomObject]@{
-                    FileName    = $file
-                    DiffContent = (git -C $RootPath diff "$($BaseBranch)...$($FeatureBranch)" -- "$file")
+                if (-not (Test-Path $changelogPath)) {
+                    Write-Error "CHANGELOG.md not found for $thisModuleName at path [$changelogPath]."
+                    return
                 }
-            }
 
-            # Build prompt for AI
+                # Detect changed files
+                Write-Verbose "Comparing changes between [$BaseBranch] and [$FeatureBranch]"
+                $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only |
+                Where-Object { ($_ -replace '\\', '/') -match "$thisModuleName/(Public|Private)/.*\.ps1$" }
 
-            $prompt = @"
+                if (-not $files) {
+                    Write-Warning "No .ps1 file changes detected between $BaseBranch and $FeatureBranch."
+                    return
+                }
+
+                $diffs = foreach ($file in $files) {
+                    Write-Verbose "Processing diff for file: $file"
+                    [PSCustomObject]@{
+                        FileName    = $file
+                        DiffContent = (git -C $RootPath diff "$($BaseBranch)...$($FeatureBranch)" -- "$file")
+                    }
+                }
+
+                # Build prompt for AI
+
+                $prompt = @"
 You are a master in reviewing and analyzing git logs.
 
 Strictly follow the output rules below:
@@ -125,35 +133,36 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
 #------[ Generate a changelog entry summary for the following file changes: ]------#
 "@
 
-            foreach ($diff in $diffs) {
-                $prompt += "`n### File: $($diff.FileName)`n"
-                $prompt += "`nDiff: `n$($diff.DiffContent | Out-String)`n"
-                $prompt += "#------[ End of this file changes ]------#`n`n"
-            }
-
-            if ($PSCmdlet.ShouldProcess($ModuleName, "Update CHANGELOG.md")) {
-                Write-Verbose "Invoking AI summarization..."
-                $ChangeLogSummary = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
-
-                Write-Verbose "Fetching module metadata..."
-                $psd1Path = Get-PSUModule -ScriptPath $changelogPath | Select-Object -ExpandProperty ManifestPath
-                $psDataFile = Import-PowerShellDataFile -Path $psd1Path
-                $currentChangelog = (Get-Content -Path $changelogPath -Raw).Trim()
-
-                if ($currentChangelog.StartsWith("## [$($psDataFile.ModuleVersion)]")) {
-                    Write-Host "Already found existing changelog entry for version $($psDataFile.ModuleVersion)" -ForegroundColor Green
-                } else {
-
-                    $entry = "## [$($psDataFile.ModuleVersion)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
-                    $newChangelog = $entry + $currentChangelog
-                    Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8
-
-                    Write-Host "CHANGELOG.md updated successfully for $ModuleName." -ForegroundColor Green
+                foreach ($diff in $diffs) {
+                    $prompt += "`n### File: $($diff.FileName)`n"
+                    $prompt += "`nDiff: `n$($diff.DiffContent | Out-String)`n"
+                    $prompt += "#------[ End of this file changes ]------#`n`n"
                 }
+
+                if ($PSCmdlet.ShouldProcess($thisModuleName, "Update CHANGELOG.md")) {
+                    Write-Verbose "Invoking AI summarization..."
+                    $ChangeLogSummary = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
+
+                    Write-Verbose "Fetching module metadata..."
+                    $psd1Path = Get-PSUModule -ScriptPath $changelogPath | Select-Object -ExpandProperty ManifestPath
+                    $psDataFile = Import-PowerShellDataFile -Path $psd1Path
+                    $currentChangelog = (Get-Content -Path $changelogPath -Raw).Trim()
+
+                    if ($currentChangelog.StartsWith("## [$($psDataFile.ModuleVersion)]")) {
+                        Write-Host "Already found existing changelog entry for version $($psDataFile.ModuleVersion)" -ForegroundColor Green
+                    } else {
+
+                        $entry = "## [$($psDataFile.ModuleVersion)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
+                        $newChangelog = $entry + $currentChangelog
+                        Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8
+
+                        Write-Host "CHANGELOG.md updated successfully for $thisModuleName." -ForegroundColor Green
+                    }
+                }
+            } catch {
+                $PSCmdlet.ThrowTerminatingError( "Failed to update changelog for $thisModuleName. Error: $_")
             }
         }
-        catch {
-            Write-Error "Failed to update changelog for $ModuleName. Error: $_"
-        }
+        
     }
 }
