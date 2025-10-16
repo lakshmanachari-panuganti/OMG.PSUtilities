@@ -64,7 +64,7 @@ function Update-PSUChangeLog {
         }
 
         foreach ($thisModuleName in $ModuleName) {
-            Write-Host "Starting Update-PSUChangeLog for module [$thisModuleName]" -ForegroundColor Cyan
+            Write-Host " [$thisModuleName] Starting Update-PSUChangeLog:" -ForegroundColor Cyan
             try {
                 $moduleRoot = Join-Path $RootPath $thisModuleName
                 $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
@@ -170,16 +170,27 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                     $psd1Path = Get-PSUModule -ScriptPath $changelogPath | Select-Object -ExpandProperty ManifestPath
                     $psDataFile = Import-PowerShellDataFile -Path $psd1Path
                     $currentChangelog = (Get-Content -Path $changelogPath -Raw).Trim()
-
-                    if ($currentChangelog.StartsWith("## [$($psDataFile.ModuleVersion)]")) {
-                        Write-Host "Already found existing changelog entry for version $($psDataFile.ModuleVersion)" -ForegroundColor Green
-                    } else {
-                        $entry = "## [$($psDataFile.ModuleVersion)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
-                        $newChangelog = $entry + $currentChangelog
-                        Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8
-
-                        Write-Host "CHANGELOG.md updated successfully for $thisModuleName." -ForegroundColor Green
+                    $moduleVersion = $psDataFile.ModuleVersion
+                    if ($currentChangelog.StartsWith("## [$moduleVersion]")) { #TODO: write better logic to detect latest change log version is less than or equals to current module version
+                        Write-Host " [$thisModuleName] Already found existing changelog entry for version $moduleVersion" -ForegroundColor Green
+                        Write-Host " [$thisModuleName] CHANGELOG.md path: $changelogPath" -ForegroundColor Green
+                        $moduleIncrease = Read-Host " [$thisModuleName] Do you want me to bump module version? [Y/N]"
+                        if($moduleIncrease -eq "Y") {
+                           $versionbump = Update-PSUModuleVersion -ModuleName $thisModuleName -Increment Patch
+                           if($versionbump.NewVersion -le $moduleVersion){
+                                Write-Warning " [$thisModuleName] There is a version conflict with CHANGELOG.md and .\$thisModuleName.psd1. Skipping CHANGELOG update!"
+                                continue
+                           }
+                           $moduleVersion = $versionbump.NewVersion
+                        } else {
+                            Write-Host " [$thisModuleName] Skipping version bump and changelog update." -ForegroundColor Yellow
+                            continue
+                        }
                     }
+                    $entry = "## [$moduleVersion] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
+                    $newChangelog = $entry + $currentChangelog
+                    Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8 -ErrorAction Stop
+                    Write-Host "CHANGELOG.md updated successfully for $thisModuleName." -ForegroundColor Green
                 }
             } catch {
                 $PSCmdlet.ThrowTerminatingError("Failed to update changelog for $thisModuleName. Error: $_")
