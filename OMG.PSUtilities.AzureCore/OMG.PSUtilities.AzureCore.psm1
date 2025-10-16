@@ -20,8 +20,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name
 $PublicFunctions = @(
     'Get-PSUAzToken',
     'Get-PSUk8sPodLabel',
-    'Test-PSUAzConnection',
-    'Update-PSUModuleVersion'
+    'Test-PSUAzConnection'
 )
 
 $AliasesToExport = @(

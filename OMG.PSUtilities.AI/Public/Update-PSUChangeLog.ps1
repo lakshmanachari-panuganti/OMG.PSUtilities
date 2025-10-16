@@ -76,11 +76,14 @@ function Update-PSUChangeLog {
 
                 # Detect changed files
                 Write-Verbose "Comparing changes between [$BaseBranch] and [$FeatureBranch]"
-                $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only |
-                Where-Object { ($_ -replace '\\', '/') -match "$thisModuleName/(Public|Private)/.*\.ps1$" }
-
+                $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only 
+                if (-not $AllGitChanges.IsPresent) {
+                    $filteredfiles = '.PS1 '
+                    $files = $files | Where-Object { ($_ -replace '\\', '/') -match "$thisModuleName/(Public|Private)/.*\.ps1$" }
+                }
+                
                 if (-not $files) {
-                    Write-Warning "No .ps1 file changes detected between $BaseBranch and $FeatureBranch."
+                    Write-Warning "No $($filteredfiles)file changes detected between $BaseBranch and $FeatureBranch."
                     return
                 }
 
