@@ -85,7 +85,7 @@ function Set-PSUADOUserStory {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$Id,
 
         [Parameter()]

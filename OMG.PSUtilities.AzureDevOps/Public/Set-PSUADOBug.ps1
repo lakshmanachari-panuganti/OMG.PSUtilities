@@ -88,19 +88,23 @@ function Set-PSUADOBug {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$Id,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Title,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Description,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$ReproSteps,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$State,
 
         [Parameter()]
@@ -112,15 +116,19 @@ function Set-PSUADOBug {
         [string]$Severity,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AssignedTo,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AreaPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$IterationPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Tags,
 
         [Parameter(Mandatory)]

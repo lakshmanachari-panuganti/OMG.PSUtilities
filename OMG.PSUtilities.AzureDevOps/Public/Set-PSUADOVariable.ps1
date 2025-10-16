@@ -71,7 +71,7 @@ function Set-PSUADOVariable {
         [string]$VariableGroupName,
 
         [Parameter(ParameterSetName = 'ById')]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$VariableGroupId,
 
         [Parameter(Mandatory)]

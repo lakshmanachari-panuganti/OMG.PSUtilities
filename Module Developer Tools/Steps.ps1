@@ -63,12 +63,12 @@ function omgpublishmodule {
     ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique
     $ModulesUpdated | Update-OMGModuleVersion -Increment Patch
     $ModulesUpdated | Reset-OMGModuleManifests
-    aigitcommit
     $updateChangeLog = Read-Host "Do you want to update the CHANGELOG.md for the updated modules? (Y/N)"
     if ($updateChangeLog -eq 'Y') {
         $ModulesUpdated | Update-PSUChangeLog -ErrorAction Continue
     }
     $publishModule = Read-Host "Do you want to publish the updated modules to PSGallery? (Y/N)"
+    aigitcommit
     if ($publishModule -eq 'Y') {
         $ModulesUpdated | ForEach-Object { 
             $module = "$env:BASE_MODULE_PATH\$_"

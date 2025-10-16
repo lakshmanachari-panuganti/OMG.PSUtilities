@@ -41,6 +41,7 @@ function Get-PSUADORepositories {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]
+        [ValidateNotNullOrEmpty()]
         [string]$Project,
 
         [Parameter()]

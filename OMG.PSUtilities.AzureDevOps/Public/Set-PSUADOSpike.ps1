@@ -86,16 +86,19 @@ function Set-PSUADOSpike {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$Id,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Title,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Description,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$State,
 
         [Parameter()]
@@ -107,18 +110,23 @@ function Set-PSUADOSpike {
         [double]$Effort,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AssignedTo,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AreaPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$IterationPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Tags,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AcceptanceCriteria,
 
         [Parameter(Mandatory)]

@@ -87,7 +87,7 @@ function Set-PSUADOTask {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$Id,
 
         [Parameter()]
@@ -99,6 +99,7 @@ function Set-PSUADOTask {
         [string]$Description,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$State,
 
         [Parameter()]
