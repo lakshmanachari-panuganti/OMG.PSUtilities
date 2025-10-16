@@ -1,3 +1,16 @@
+## [1.0.12] - 16th October 2025
+### Added
+- `Write-ColorOutput` (Private): Outputs a message with specified color to the console.
+- `Write-ErrorMsg` (Private): Displays an error message in red color.
+- `Write-Info` (Private): Displays an informational message in yellow color.
+- `Write-Step` (Private): Displays a step header message in cyan color.
+- `Write-Success` (Private): Displays a success message in green color.
+- `Set-PSUAzureOpenAIEnvironment` (Public): Automated Azure OpenAI Service setup and environment variable configuration.
+
+## [1.0.11] - 8th October 2025
+### Changes:
+- `Set-PSUAzureOpenAIEnvironment`: This function was added to set the environment configuration for **Azure OpenAI** interactions. This likely configures the necessary environment variables
+
 ## [1.0.10] - 23rd August 2025
 ### Added
 - `Invoke-PSUAiPrompt.ps1`: Public function to route prompts to the selected AI provider (`AzureOpenAi`, `GeminiAi`, or `PerplexityAi`) with support for JSON response.

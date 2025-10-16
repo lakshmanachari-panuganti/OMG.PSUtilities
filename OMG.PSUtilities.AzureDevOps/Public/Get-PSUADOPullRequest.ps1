@@ -9,43 +9,45 @@ function Get-PSUADOPullRequest {
     either Repository ID or Repository Name.
 
 .PARAMETER RepositoryId
-    Optional. The ID of the specific repository to get pull requests from.
+    (Optional) The ID of the specific repository to get pull requests from.
 
 .PARAMETER RepositoryName
-    Optional. The name of the specific repository to get pull requests from.
+    (Optional) The name of the specific repository to get pull requests from.
 
 .PARAMETER Project
-    The name of the Azure DevOps project.
+    (Mandatory) The Azure DevOps project name containing the repository.
 
 .PARAMETER State
-    The state of pull requests to retrieve. Default is 'Active'. Other valid values: 'Completed', 'Abandoned'.
+    (Optional) The state of pull requests to retrieve. Default is 'Active'. Other valid values: 'Completed', 'Abandoned'.
 
 .PARAMETER Organization
-    The name of the Azure DevOps organization. Defaults to the environment variable ORGANIZATION if not specified.
+    (Optional) The Azure DevOps organization name under which the project resides.
+    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
 .PARAMETER PAT
-    The Personal Access Token used for authentication. Defaults to the environment variable PAT if not specified.
+    (Optional) Personal Access Token for Azure DevOps authentication.
+    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
 .EXAMPLE
-    Get-PSUADOPullRequest -Project "MyProject"
+    Get-PSUADOPullRequest -Organization "omg" -Project "psutilities"
 
-    Retrieves all active pull requests from all repositories in the "MyProject" project.
-
-.EXAMPLE
-    Get-PSUADOPullRequest -Project "MyProject" -RepositoryName "MyRepo" -State "Completed"
-
-    Retrieves all completed pull requests from the "MyRepo" repository in "MyProject".
+    Retrieves all active pull requests from all repositories in the "psutilities" project.
 
 .EXAMPLE
-    Get-PSUADOPullRequest -Organization "omgitsolutions" -Project "PSUtilities" -PAT $env:PAT
+    Get-PSUADOPullRequest -Organization "omg" -Project "psutilities" -RepositoryName "AzureDevOps" -State "Completed"
 
-    Retrieves all active pull requests from all repositories in the project using specific organization and PAT.
+    Retrieves all completed pull requests from the "AzureDevOps" repository in "psutilities".
+
+.EXAMPLE
+    Get-PSUADOPullRequest -Organization "omg" -Project "psutilities" -RepositoryName "Ai"
+
+    Retrieves all active pull requests from the "Ai" repository in the project.
 
 .OUTPUTS
     [PSCustomObject]
 
 .NOTES
-    Author: Lakshmanachari Panuganti  
+    Author: Lakshmanachari Panuganti
     Date: 2nd August 2025
     Updated: 11th August 2025 - Made repository parameters optional
 
@@ -82,71 +84,102 @@ function Get-PSUADOPullRequest {
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
+
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
     process {
         try {
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
+            # Validate required parameters that have auto-detection
             $allPullRequests = @()
 
-            # Determine which repositories to process
-            $repositoriesToProcess = @()
+                # Determine which repositories to process
+                $repositoriesToProcess = @()
 
-            switch ($PSCmdlet.ParameterSetName) {
-                'ById' {
-                    # Get repository by ID
-                    $repositoriesToProcess = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT | Where-Object { $_.Id -eq $RepositoryId }
-                }
-                'ByName' {
-                    # Get repository by name
-                    $repositoriesToProcess = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT | Where-Object { $_.Name -eq $RepositoryName }
-                }
-                'AllRepos' {
-                    # Get all repositories in the project
-                    $repositoriesToProcess = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
-                }
-            }
-
-            # Process each repository
-            foreach ($repo in $repositoriesToProcess) {
-                Write-Verbose "Fetching $State pull requests for repository '$($repo.Name)' (ID: $($repo.Id))"
-                $Project = $repo.Project
-                try {
-                    $stateParam = $State.ToLower()
-                    $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$($repo.Id)/pullrequests?searchCriteria.status=$stateParam&api-version=7.0"
-
-                    $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
-                    Write-Verbose "Found $($response.value.Count) pull requests in repository '$($repo.Name)'"
-                    if ($response.value.Count) {
-                        $pullRequests = $response.value | ForEach-Object {
-                            [pscustomobject]@{
-                                Id             = $_.pullRequestId
-                                Title          = $_.title
-                                Description    = $_.description
-                                Status         = $_.status
-                                IsDraft        = $_.isDraft
-                                SourceBranch   = $_.sourceRefName
-                                TargetBranch   = $_.targetRefName
-                                CreatedBy      = $_.createdBy.displayName
-                                CreatorEmail   = $_.createdBy.uniqueName
-                                CreationDate   = $_.creationDate
-                                MergeStatus    = $_.mergeStatus
-                                WebUrl         = $_.url
-                                RepositoryId   = $_.repository.id
-                                RepositoryName = $_.repository.name
-                                ProjectName    = $_.repository.project.name
-                            }
-                        }
-                        $allPullRequests += $pullRequests
+                switch ($PSCmdlet.ParameterSetName) {
+                    'ById' {
+                        # Get repository by ID
+                        $repositoriesToProcess = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT | Where-Object { $_.Id -eq $RepositoryId }
+                    }
+                    'ByName' {
+                        # Get repository by name
+                        $repositoriesToProcess = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT | Where-Object { $_.Name -eq $RepositoryName }
+                    }
+                    'AllRepos' {
+                        # Get all repositories in the project
+                        $repositoriesToProcess = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
                     }
                 }
-                catch {
-                    Write-Warning "Failed to get pull requests from repository '$($repo.Name)': $($_.Exception.Message)"
-                }
-            }
 
-            Write-Verbose "Total pull requests found: $($allPullRequests.Count)"
-            return $allPullRequests
-        }
-        catch {
+                # Process each repository
+                foreach ($repo in $repositoriesToProcess) {
+                    Write-Verbose "Fetching $State pull requests for repository '$($repo.Name)' (ID: $($repo.Id))"
+                    $Project = $repo.Project
+                    
+                    # Escape project name for URI
+                    $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                        $Project
+                    } else {
+                        [uri]::EscapeDataString($Project)
+                    }
+                    
+                    try {
+                        $stateParam = $State.ToLower()
+                        $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$($repo.Id)/pullrequests?searchCriteria.status=$stateParam&api-version=7.0"
+
+                        $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
+                        Write-Verbose "Found $($response.value.Count) pull requests in repository '$($repo.Name)'"
+                        if ($response.value.Count) {
+                            $pullRequests = $response.value | ForEach-Object {
+                                [pscustomobject]@{
+                                    Id             = $_.pullRequestId
+                                    Title          = $_.title
+                                    Description    = $_.description
+                                    Status         = $_.status
+                                    IsDraft        = $_.isDraft
+                                    SourceBranch   = $_.sourceRefName
+                                    TargetBranch   = $_.targetRefName
+                                    CreatedBy      = $_.createdBy.displayName
+                                    CreatorEmail   = $_.createdBy.uniqueName
+                                    CreationDate   = $_.creationDate
+                                    MergeStatus    = $_.mergeStatus
+                                    WebUrl         = $_.url
+                                    RepositoryId   = $_.repository.id
+                                    RepositoryName = $_.repository.name
+                                    ProjectName    = $_.repository.project.name
+                                }
+                            }
+                            $allPullRequests += $pullRequests
+                        }
+                    } catch {
+                        Write-Warning "Failed to get pull requests from repository '$($repo.Name)': $($_.Exception.Message)"
+                    }
+                }
+
+                Write-Verbose "Total pull requests found: $($allPullRequests.Count)"
+                return $allPullRequests
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

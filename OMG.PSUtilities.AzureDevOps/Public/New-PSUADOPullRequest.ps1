@@ -10,18 +10,16 @@ function New-PSUADOPullRequest {
 
     .PARAMETER Organization
         (Optional) The Azure DevOps organization name under which the project resides.
-        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER Project
-        (Optional) The Azure DevOps project name containing the repository.
-        Default value is auto-detected from git remote origin URL.
+        (Mandatory) The Azure DevOps project name containing the repository.
 
     .PARAMETER RepoId
         (Mandatory - ParameterSet: ByRepoId) The repository GUID in which to create the pull request.
 
-    .PARAMETER Repository
-        (Optional - ParameterSet: ByRepoName) The repository name in which to create the pull request.
-        Default value is auto-detected from git remote origin URL.
+    .PARAMETER RepositoryName
+        (Mandatory - ParameterSet: ByRepoName) The repository name in which to create the pull request.
 
     .PARAMETER SourceBranch
         (Optional) The full name of the source branch (e.g., 'refs/heads/feature-branch').
@@ -46,44 +44,61 @@ function New-PSUADOPullRequest {
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOPullRequest -Organization "myOrganization" -Project "MyProject" -RepoId "12345678-1234-1234-1234-123456789012" `
-            -SourceBranch "refs/heads/feature-x" -TargetBranch "refs/heads/main" `
-            -Title "Feature X Implementation" -Description "This PR adds feature X."
+        $params = @{
+            Organization = "omg"
+            Project      = "psutilities"
+            RepoId       = "12345678-1234-1234-1234-123456789012"
+            SourceBranch = "refs/heads/feature-x"
+            TargetBranch = "refs/heads/main"
+            Title        = "Feature X Implementation"
+            Description  = "This PR adds feature X."
+        }
+        New-PSUADOPullRequest @params
 
         Creates a pull request using repository ID.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Project "MyProject" -Repository "MyRepo" `
-            -Title "Bug fix for login" -Description "Fixed authentication issue"
+        $params = @{
+            Organization   = "omg"
+            Project        = "psutilities"
+            RepositoryName = "AzureDevOps"
+            SourceBranch   = "refs/heads/feature-branch"
+            TargetBranch   = "refs/heads/main"
+            Title          = "Bug fix for login"
+            Description    = "Fixed authentication issue"
+        }
+        New-PSUADOPullRequest @params
 
-        Creates a pull request using repository name with default source/target branches.
-
-    .EXAMPLE
-        New-PSUADOPullRequest -Title "Auto-detected PR" -Description "Uses auto-detection for org, project, and repo"
-
-        Creates a pull request using auto-detected organization, project, and repository from git remote URL.
-
-    .EXAMPLE
-        New-PSUADOPullRequest -Project "MyProject" -Repository "MyRepo" `
-            -Title "Bug fix for login" -Description "Fixed authentication issue" -Draft
-
-        Creates a draft pull request using repository name with default source/target branches.
+        Creates a pull request using repository name with specific branches.
 
     .EXAMPLE
-        New-PSUADOPullRequest -Title "Auto-complete feature" -Description "This will auto-complete when approved" `
-            -CompleteOnApproval
+        $params = @{
+            Organization   = "omg"
+            Project        = "psutilities"
+            RepositoryName = "Ai"
+            Title          = "Bug fix for login"
+            Description    = "Fixed authentication issue"
+            Draft          = $true
+        }
+        New-PSUADOPullRequest @params
+
+        Creates a draft pull request using repository name with git-detected source/target branches.
+
+    .EXAMPLE
+        $params = @{
+            Organization       = "omg"
+            Project            = "psutilities"
+            RepositoryName     = "Core"
+            Title              = "Auto-complete feature"
+            Description        = "This will auto-complete when approved"
+            CompleteOnApproval = $true
+        }
+        New-PSUADOPullRequest @params
 
         Creates a pull request that will automatically complete when all approvals and policies are satisfied.
-
-    .EXAMPLE
-        New-PSUADOPullRequest -Organization "myOrganization" -Project "MyProject" -Repository "MyRepo" `
-            -SourceBranch "refs/heads/feature-branch" -TargetBranch "refs/heads/develop" `
-            -Title "New Feature" -Description "Added new functionality" -PAT $env:AZDO_PAT
-
-        Creates a pull request using repository name with specific branches and PAT.
 
     .OUTPUTS
         [PSCustomObject]
@@ -91,7 +106,7 @@ function New-PSUADOPullRequest {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 2025-07-30
-        Updated: 2025-08-14 - Added Repository parameter and parameter sets
+        Updated: 2025-08-14 - Added RepositoryName parameter and parameter sets
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
@@ -106,46 +121,6 @@ function New-PSUADOPullRequest {
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
     param (
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string]$Organization = $(if ($env:ORGANIZATION) { $env:ORGANIZATION } else {
-            git remote get-url origin 2>$null | ForEach-Object {
-                if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
-            }
-        }),
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string]$Project = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match 'dev\.azure\.com/[^/]+/([^/]+)/_git/') { 
-                $matches[1]
-            }
-        }),
-
-        [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
-        [ValidateNotNullOrEmpty()]
-        [string]$RepoId,
-
-        [Parameter(ParameterSetName = 'ByRepoName')]
-        [ValidateNotNullOrEmpty()]
-        [string]$Repository = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match '/_git/([^/]+?)(?:\.git)?/?$') { $matches[1] }
-        }),
-        
-        [Parameter()]
-        [ValidateScript({
-            if ($_ -match '^refs/heads/.+') { $true }
-            else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
-        })]
-        [string]$SourceBranch = $("refs/heads/$((git branch --show-current).Trim())"),
-
-        [Parameter()]
-        [ValidateScript({
-            if ($_ -match '^refs/heads/.+') { $true }
-            else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
-        })]
-        [string]$TargetBranch = $("refs/heads/$((git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf).Trim())"),
-
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Title,
@@ -153,6 +128,32 @@ function New-PSUADOPullRequest {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Description,
+
+        [Parameter(Mandatory)]
+        [ValidateScript({
+                if ($_ -match '^refs/heads/.+') { $true }
+                else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
+            })]
+        [string]$SourceBranch,
+
+        [Parameter(Mandatory)]
+        [ValidateScript({
+                if ($_ -match '^refs/heads/.+') { $true }
+                else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
+            })]
+        [string]$TargetBranch,
+
+        [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepoId,
+
+        [Parameter(Mandatory, ParameterSetName = 'ByRepoName')]
+        [ValidateNotNullOrEmpty()]
+        [string]$RepositoryName,
+
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Project,
 
         [Parameter()]
         [switch]$Draft,
@@ -162,26 +163,52 @@ function New-PSUADOPullRequest {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
+        [string]$Organization = $env:ORGANIZATION,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 
+
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
     process {
         try {
-            # Resolve repository ID if needed
+            # Validate required parameters that have auto-detection
             $repositoryIdentifier = $null
             if ($PSCmdlet.ParameterSetName -eq 'ByRepoId') {
                 $repositoryIdentifier = $RepoId
             } else {
                 $repos = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
-                $matchedRepo = $repos | Where-Object { $_.Name -eq $Repository }
+                $matchedRepo = $repos | Where-Object { $_.Name -eq $RepositoryName }
                 if (-not $matchedRepo) {
-                    throw "Repository '$Repository' not found in project '$Project'."
+                    throw "Repository '$RepositoryName' not found in project '$Project'."
                 }
                 $repositoryIdentifier = $matchedRepo.Id
             }
-
-            # Compose authentication header
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
 
             $body = @{
                 sourceRefName = $SourceBranch
@@ -191,20 +218,37 @@ function New-PSUADOPullRequest {
                 isDraft       = $Draft.IsPresent
             } | ConvertTo-Json -Depth 10
 
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
+            
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests?api-version=7.0"
-            $draftStatus = if ($Draft.IsPresent) { "draft " } else { "" }
-            Write-Verbose "Creating ${draftStatus}pull request in project: $Project"
-            Write-Verbose "Repository: $repositoryIdentifier"
-            Write-Verbose "Source branch: $SourceBranch"
-            Write-Verbose "Target branch: $TargetBranch"
-            Write-Verbose "API URI: $uri"
 
-            $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $body -ContentType "application/json" -ErrorAction Stop
+            $irmParams = @{
+                Method      = 'Post'
+                Uri         = $uri
+                Headers     = $headers
+                Body        = $body
+                ContentType = 'application/json'
+                ErrorAction = 'Stop'
+            }
+            
+            # Create safe version for verbose output (mask Authorization header)
+            $verboseParams = $irmParams.Clone()
+            if ($verboseParams.Headers -and $verboseParams.Headers['Authorization']) {
+                $verboseParams.Headers = $verboseParams.Headers.Clone()
+                $verboseParams.Headers['Authorization'] = 'Basic ***MASKED***'
+                $verboseParams.Body = $verboseParams.Body | ConvertFrom-Json -Depth 10
+            }
+            Write-Verbose  "Invoke-RestMethod parameters for Pull Request creation: $($verboseParams | Out-String)"
+            
+            $response = Invoke-RestMethod @irmParams -Verbose:$false
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$repositoryIdentifier/pullrequest/$($response.pullRequestId)"
             $draftText = if ($response.isDraft) { "Draft " } else { "" }
-            Write-Host "${draftText}Pull Request created successfully. PR ID: $($response.pullRequestId)" -ForegroundColor Green
-            Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan
+            Write-Verbose "  ${draftText}Pull Request created successfully. PR ID: $($response.pullRequestId)"
+            Write-Verbose "  PR URL: $WebUrl"
 
             # Enable auto-completion if specified
             if ($CompleteOnApproval) {
@@ -215,44 +259,63 @@ function New-PSUADOPullRequest {
                             id = $response.createdBy.id
                         }
                         completionOptions = @{
-                            mergeStrategy = "noFastForward"
+                            mergeStrategy      = "noFastForward"
                             deleteSourceBranch = $false
-                            squashMerge = $false
+                            squashMerge        = $false
                         }
                     } | ConvertTo-Json -Depth 10
 
                     $autoCompleteUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryIdentifier/pullrequests/$($response.pullRequestId)?api-version=7.0"
-                    Write-Verbose "Setting auto-completion for PR ID: $($response.pullRequestId)"
-                    
-                    Invoke-RestMethod -Method Patch -Uri $autoCompleteUri -Headers $headers -Body $autoCompleteBody -ContentType "application/json" -ErrorAction Stop
-                    Write-Host "Auto-completion enabled. PR will complete automatically when all policies and approvals are satisfied." -ForegroundColor Yellow
-                }
-                catch {
+                    Write-Verbose "  Setting auto-completion for PR ID: $($response.pullRequestId)"
+
+                    # Use parameter splatting for auto-complete PATCH call
+                    $autoIRMParams = @{
+                        Method      = 'Patch'
+                        Uri         = $autoCompleteUri
+                        Headers     = $headers
+                        Body        = $autoCompleteBody
+                        ContentType = 'application/json'
+                        ErrorAction = 'Stop'
+                    }
+
+                    # Create safe version for verbose output (mask Authorization header)
+                    $verboseAutoIRMParams = $autoIRMParams.Clone()
+                    if ($verboseAutoIRMParams.Headers -and $verboseAutoIRMParams.Headers['Authorization']) {
+                        $verboseAutoIRMParams.Headers = $verboseAutoIRMParams.Headers.Clone()
+                        $verboseAutoIRMParams.Headers['Authorization'] = 'Basic ***MASKED***'
+                        $verboseAutoIRMParams.Body = $verboseAutoIRMParams.Body | ConvertFrom-Json -Depth 10
+                    }
+                    Write-Verbose "  Invoke-RestMethod parameters for set auto-complete: $($verboseAutoIRMParams | Out-String)"
+
+                    $response = Invoke-RestMethod @autoIRMParams -Verbose:$false
+                    if($response.completionOptions.mergeStrategy -eq "noFastForward") {
+                        Write-Verbose "  Auto-completion options set: MergeStrategy=$($response.completionOptions.mergeStrategy), DeleteSourceBranch=$($response.completionOptions.deleteSourceBranch), SquashMerge=$($response.completionOptions.squashMerge)"
+                    }
+                } catch {
                     Write-Warning "Failed to enable auto-completion: $($_.Exception.Message)"
                 }
             }
 
             [PSCustomObject]@{
-                Id                  = $response.pullRequestId
-                Title               = $response.title
-                Description         = $response.description
-                Status              = $response.status
-                IsDraft             = $response.isDraft
-                SourceBranch        = $response.sourceRefName
-                TargetBranch        = $response.targetRefName
-                CreatedBy           = $response.createdBy.displayName
-                CreatorEmail        = $response.createdBy.uniqueName
-                CreationDate        = $response.creationDate
-                RepositoryId        = $response.repository.id
-                RepositoryName      = $response.repository.name
-                ProjectName         = $response.repository.project.name
-                WebUrl              = $WebUrl
-                ApiUrl              = $response.url
-                CompleteOnApproval  = $CompleteOnApproval.IsPresent
-                PSTypeName          = 'PSU.ADO.PullRequest'
+                Id                 = $response.pullRequestId
+                Title              = $response.title
+                Description        = $response.description
+                Status             = $response.status
+                IsDraft            = $response.isDraft
+                SourceBranch       = $response.sourceRefName
+                TargetBranch       = $response.targetRefName
+                CreatedBy          = $response.createdBy.displayName
+                CreatorEmail       = $response.createdBy.uniqueName
+                CreationDate       = $response.creationDate
+                RepositoryId       = $response.repository.id
+                RepositoryName     = $response.repository.name
+                ProjectName        = $response.repository.project.name
+                WebUrl             = $WebUrl
+                ApiUrl             = $response.url
+                CompleteOnApproval = $CompleteOnApproval.IsPresent
+                PSTypeName         = 'PSU.ADO.PullRequest'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

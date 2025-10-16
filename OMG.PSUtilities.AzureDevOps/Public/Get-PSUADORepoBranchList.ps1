@@ -8,33 +8,37 @@
     Supports lookup by RepositoryId (GUID) or Repository (name).
 
 .PARAMETER Project
-    The name of the Azure DevOps project containing the repository.
+    (Mandatory) The Azure DevOps project name containing the repository.
 
 .PARAMETER RepositoryId
-    The unique identifier (GUID) of the repository to retrieve branches from.
+    (Mandatory - ParameterSet: ByRepositoryId) The unique identifier (GUID) of the repository to retrieve branches from.
 
-.PARAMETER Repository
-    The name of the repository to retrieve branches from.
+.PARAMETER RepositoryName
+    (Mandatory - ParameterSet: ByRepositoryName) The name of the repository to retrieve branches from.
 
 .PARAMETER Organization
-    The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable if not specified.
+    (Optional) The Azure DevOps organization name under which the project resides.
+    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
 .PARAMETER PAT
-    Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable if not specified.
-    The PAT must have read permissions for Code (Git repositories).
+    (Optional) Personal Access Token for Azure DevOps authentication.
+    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
 .EXAMPLE
-    Get-PSUADORepoBranchList -Project "PSUtilities" -RepositoryId "12345678-1234-1234-1234-123456789abc"
+    Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -RepositoryId "12345678-1234-1234-1234-123456789abc"
+
     Retrieves all branches for the specified repository using RepositoryId.
 
 .EXAMPLE
-    Get-PSUADORepoBranchList -Project "PSUtilities" -Repository "MyRepo"
-    Retrieves all branches for the specified repository using Repository name.
+    Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -RepositoryName "AzureDevOps"
+
+    Retrieves all branches for the "AzureDevOps" repository using RepositoryName.
 
 .EXAMPLE
-    $branches = Get-PSUADORepoBranchList -Project "PSUtilities" -Repository "WebRepo"
+    $branches = Get-PSUADORepoBranchList -Organization "omg" -Project "psutilities" -RepositoryName "Core"
     $branches | Where-Object { $_.Name -like "*feature*" }
-    Retrieves all branches and filters for feature branches.
+
+    Retrieves all branches from the "Core" repository and filters for feature branches.
 
 .OUTPUTS
     [PSCustomObject]
@@ -64,7 +68,7 @@ function Get-PSUADORepoBranchList {
 
         [Parameter(Mandatory, ParameterSetName = 'ByRepositoryName')]
         [ValidateNotNullOrEmpty()]
-        [string]$Repository,
+        [string]$RepositoryName,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -75,46 +79,84 @@ function Get-PSUADORepoBranchList {
         [string]$PAT = $env:PAT
     )
 
+
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
     process {
         try {
+            # Escape project name
+            $escapedProject = [uri]::EscapeDataString($Project)
+
+            # Resolve Repository Name to ID if needed
             if ($PSCmdlet.ParameterSetName -eq 'ByRepositoryName') {
-                # Get repository ID from repository name
-                $repoUri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$Repository?api-version=7.0"
-                $headers = Get-PSUAdoAuthHeader -PAT $PAT
-                $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get
+                Write-Verbose "Resolving repository name '$RepositoryName' to ID..."
+                $escapedRepo = [uri]::EscapeDataString($RepositoryName)
+                $repoUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$escapedRepo?api-version=7.1"
+
+                $repoResponse = Invoke-RestMethod -Uri $repoUri -Headers $headers -Method Get -ErrorAction Stop
+
                 if (-not $repoResponse.id) {
-                    Write-Error "Repository '$Repository' not found in project '$Project'."
-                    return
+                    throw "Repository '$RepositoryName' not found in project '$Project'."
                 }
+
                 $RepositoryId = $repoResponse.id
+                Write-Verbose "Resolved repository '$RepositoryName' to ID: $RepositoryId"
             }
 
-            $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories/$RepositoryId/refs?filter=heads/&api-version=7.0"
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
+            # Fetch branches
+            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$RepositoryId/refs?filter=heads/&api-version=7.1"
+            Write-Verbose "Fetching branches from: $uri"
 
-            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get
-            $formattedResults = @()
+            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Get -ErrorAction Stop
+
+            # Build results efficiently using List
+            $formattedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
+
             if ($response.value) {
                 foreach ($item in $response.value) {
-                    $formattedObject = [PSCustomObject]@{}
+                    # Build hashtable first, then create object once
+                    $properties = @{}
 
                     foreach ($property in $item.PSObject.Properties) {
-                        $originalName = $property.Name
-                        $originalValue = $property.Value
-
-                        # Capitalize the first letter of the property name
-                        $capitalizedName = ($originalName[0].ToString().ToUpper()) + ($originalName.Substring(1).ToLower())
-
-                        $formattedObject | Add-Member -MemberType NoteProperty -Name $capitalizedName -Value $originalValue
+                        # Simple capitalization - preserve rest of the name
+                        $capitalizedName = $property.Name.Substring(0, 1).ToUpper() + $property.Name.Substring(1)
+                        $properties[$capitalizedName] = $property.Value
                     }
 
-                    $formattedResults += $formattedObject
+                    # Add computed property for clean branch name
+                    if ($properties.ContainsKey('Name')) {
+                        $properties['BranchName'] = $properties['Name'] -replace '^refs/heads/', ''
+                    }
+
+                    # Create object once and add to list
+                    $formattedResults.Add([PSCustomObject]$properties)
                 }
             }
 
             return $formattedResults
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

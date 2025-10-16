@@ -7,26 +7,25 @@ function Get-PSUADORepositories {
         This function queries the Azure DevOps REST API to get all repositories in the specified organization and project.
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name containing the repositories.
 
     .PARAMETER Organization
-        The Azure DevOps organization. If not provided, defaults to the ORGANIZATION environment variable.
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        The Personal Access Token for authentication. If not provided, defaults to the PAT environment variable.
-
-    .OUTPUTS
-        [PSCustomObject]
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADORepositories -Project "PSUtilities"
+        Get-PSUADORepositories -Organization "omg" -Project "psutilities"
 
-        Retrieves all repositories in the "PSUtilities" project under the organization specified in $env:ORGANIZATION.
+        Retrieves all repositories in the "psutilities" project.
 
     .EXAMPLE
-        Get-PSUADORepositories -Project "PSUtilities" -Organization "omgitsolutions" -PAT "<YourPAT>"
+        Get-PSUADORepositories -Project "psutilities"
 
-        Retrieves all repositories explicitly using provided organization and PAT.
+        Retrieves all repositories using the organization from $env:ORGANIZATION.
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -52,12 +51,43 @@ function Get-PSUADORepositories {
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-    process {
-        $headers = Get-PSUAdoAuthHeader -PAT $PAT
-        $uri = "https://dev.azure.com/$Organization/$Project/_apis/git/repositories?api-version=7.1-preview.1"
 
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
+    process {
         try {
-            $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers
+            # Escape project name for URI
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
+            
+            $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories?api-version=7.1-preview.1"
+
+            $response = Invoke-RestMethod -Uri $uri -Method Get -Headers $headers -Verbose:$false
             $response.value | ForEach-Object {
                 [PSCustomObject]@{
                     Id              = $_.id
@@ -74,8 +104,7 @@ function Get-PSUADORepositories {
                     PSTypeName      = 'PSU.ADO.Repository'
                 }
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

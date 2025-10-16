@@ -43,16 +43,14 @@ function Test-PSUCommentBasedHelp {
                     HasHelpBlock = $true
                     MissingTags  = if ($missingTags.Count -eq 0) { 'NothingMissed' } else { $missingTags -join ', ' }
                 }
-            }
-            else {
+            } else {
                 $results += [pscustomobject]@{
                     File         = $file.FullName
                     HasHelpBlock = $false
                     MissingTags  = 'All (No comment block found)'
                 }
             }
-        }
-        catch {
+        } catch {
             $results += [pscustomobject]@{
                 File         = $file.FullName
                 HasHelpBlock = $false

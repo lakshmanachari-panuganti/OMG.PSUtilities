@@ -7,17 +7,17 @@ function Approve-PSUADOPullRequest {
         This function approves a pull request in Azure DevOps by its ID. It can approve with different vote values
         and optional comments. You can specify the repository details or use auto-detection from git remote.
 
+        Requires: Azure DevOps Personal Access Token with appropriate permissions
+
     .PARAMETER Organization
         (Optional) The Azure DevOps organization name under which the project resides.
-        Default value is auto-detected from git remote origin URL or $env:ORGANIZATION.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER Project
-        (Optional) The Azure DevOps project name containing the repository.
-        Default value is auto-detected from git remote origin URL.
+        (Mandatory) The Azure DevOps project name containing the repository.
 
     .PARAMETER Repository
-        (Optional) The repository name containing the pull request.
-        Default value is auto-detected from git remote origin URL.
+        (Mandatory) The repository name containing the pull request.
 
     .PARAMETER PullRequestId
         (Mandatory) The ID of the pull request to approve.
@@ -36,20 +36,20 @@ function Approve-PSUADOPullRequest {
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Approve-PSUADOPullRequest -PullRequestId 123
+        Approve-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "AzureDevOps" -PullRequestId 123
 
-        Approves pull request with ID 123 using auto-detected organization, project, and repository.
-
-    .EXAMPLE
-        Approve-PSUADOPullRequest -Organization "myorg" -Project "myproject" -Repository "myrepo" -PullRequestId 123 -Vote 5 -Comment "Looks good with minor suggestions"
-
-        Approves pull request with ID 123 with suggestions and a comment.
+        Approves pull request with ID 123 with default vote (10 - Approved).
 
     .EXAMPLE
-        Approve-PSUADOPullRequest -PullRequestId 123 -Vote -5 -Comment "Please address the unit test failures"
+        Approve-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Ai" -PullRequestId 456 -Vote 5 -Comment "Looks good with minor suggestions"
+
+        Approves pull request with ID 456 with suggestions and a comment.
+
+    .EXAMPLE
+        Approve-PSUADOPullRequest -Organization "omg" -Project "psutilities" -Repository "Core" -PullRequestId 789 -Vote -5 -Comment "Please address the unit test failures"
 
         Sets pull request to "Waiting for author" status with a comment.
 
@@ -59,7 +59,6 @@ function Approve-PSUADOPullRequest {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 19th August 2025
-        Requires: Azure DevOps Personal Access Token with appropriate permissions
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
@@ -74,27 +73,13 @@ function Approve-PSUADOPullRequest {
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
     param (
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $(if ($env:ORGANIZATION) { $env:ORGANIZATION } else {
-            git remote get-url origin 2>$null | ForEach-Object {
-                if ($_ -match 'dev\.azure\.com/([^/]+)/') { $matches[1] }
-            }
-        }),
+        [string]$Project,
 
-        [Parameter()]
+        [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
-        [string]$Project = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match 'dev\.azure\.com/[^/]+/([^/]+)/_git/') { 
-                $matches[1]
-            }
-        }),
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [string]$Repository = $(git remote get-url origin 2>$null | ForEach-Object {
-            if ($_ -match '/_git/([^/]+?)(?:\.git)?/?$') { $matches[1] }
-        }),
+        [string]$Repository,
 
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
@@ -109,24 +94,40 @@ function Approve-PSUADOPullRequest {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
+        [string]$Organization = $env:ORGANIZATION,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
+
     process {
         try {
-            # Validate required parameters that have auto-detection
-            if (-not $Organization) {
-                throw "Organization parameter is required. Set it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value 'your-org' or ensure you're in a git repository with Azure DevOps remote."
-            }
-            
-            if (-not $Project) {
-                throw "Project parameter is required. Either specify it explicitly or ensure you're in a git repository with Azure DevOps remote URL."
-            }
-            
-            if (-not $Repository) {
-                throw "Repository parameter is required. Either specify it explicitly or ensure you're in a git repository with Azure DevOps remote URL."
-            }
-
             # Get repository ID
             $repos = Get-PSUADORepositories -Project $Project -Organization $Organization -PAT $PAT
             $matchedRepo = $repos | Where-Object { $_.Name -eq $Repository }
@@ -135,12 +136,31 @@ function Approve-PSUADOPullRequest {
             }
             $repositoryId = $matchedRepo.Id
 
-            # Compose authentication header
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
-
-            # Get current user information for the reviewer
-            $userUri = "https://dev.azure.com/$Organization/_apis/profile/profiles/me?api-version=7.0"
-            $userProfile = Invoke-RestMethod -Method Get -Uri $userUri -Headers $headers -ErrorAction Stop
+            # Get current user information for the reviewer.
+            # NOTE: Profile APIs are hosted under vssps.dev.azure.com (or app.vssps.visualstudio.com) not dev.azure.com.
+            # The original implementation used dev.azure.com which can return a branded HTML 404 page (as observed by user).
+            $userProfile = $null
+            $profileError = $null
+            $profileEndpointsTried = @()
+            $profileBaseUris = @(
+                "https://vssps.dev.azure.com/$Organization/_apis/profile/profiles/me?api-version=7.0",
+                "https://dev.azure.com/$Organization/_apis/profile/profiles/me?api-version=7.0" # fallback to previous (legacy / misconfigured) just in case
+            )
+            foreach($endpoint in $profileBaseUris) {
+                $profileEndpointsTried += $endpoint
+                try {
+                    Write-Verbose "Attempting profile lookup: $endpoint"
+                    $userProfile = Invoke-RestMethod -Method Get -Uri $endpoint -Headers $headers -ErrorAction Stop
+                    if($userProfile){ break }
+                } catch {
+                    $profileError = $_
+                    Write-Verbose "Profile lookup failed at $endpoint : $($profileError.Exception.Message)"
+                }
+            }
+            if(-not $userProfile) {
+                $msg = "Unable to resolve current user profile from endpoints: `n - " + ($profileEndpointsTried -join "`n - ") + "`nLast error: $($profileError.Exception.Message)" + "`nVerify PAT has 'vso.profile' scope or try passing reviewer user id explicitly (future enhancement)."
+                throw $msg
+            }
 
             # Prepare the reviewer body
             $body = @{
@@ -153,10 +173,14 @@ function Approve-PSUADOPullRequest {
 
             $bodyJson = $body | ConvertTo-Json -Depth 10
 
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
             $reviewerId = $userProfile.id
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/git/repositories/$repositoryId/pullrequests/$PullRequestId/reviewers/$reviewerId" + "?api-version=7.0"
-            
+
             # Determine vote text for display
             $voteText = switch ($Vote) {
                 10 { "Approved" }
@@ -173,7 +197,7 @@ function Approve-PSUADOPullRequest {
             Write-Verbose "API URI: $uri"
 
             $response = Invoke-RestMethod -Method Put -Uri $uri -Headers $headers -Body $bodyJson -ContentType "application/json" -ErrorAction Stop
-            
+
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$Repository/pullrequest/$PullRequestId"
             Write-Host "Pull Request ID $PullRequestId review submitted: $voteText" -ForegroundColor Green
             Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan
@@ -184,22 +208,21 @@ function Approve-PSUADOPullRequest {
 
             # Return structured result
             [PSCustomObject]@{
-                Id              = $PullRequestId
-                Vote            = $response.vote
-                VoteText        = $voteText
-                Comment         = $Comment
-                ReviewerId      = $response.id
-                ReviewerName    = $response.displayName
-                ReviewerEmail   = $response.uniqueName
-                IsRequired      = $response.isRequired
-                Organization    = $Organization
-                Project         = $Project
-                Repository      = $Repository
-                WebUrl          = $WebUrl
-                PSTypeName      = 'PSU.ADO.PullRequestApproval'
+                Id            = $PullRequestId
+                Vote          = $response.vote
+                VoteText      = $voteText
+                Comment       = $Comment
+                ReviewerId    = $response.id
+                ReviewerName  = $response.displayName
+                ReviewerEmail = $response.uniqueName
+                IsRequired    = $response.isRequired
+                Organization  = $Organization
+                Project       = $Project
+                Repository    = $Repository
+                WebUrl        = $WebUrl
+                PSTypeName    = 'PSU.ADO.PullRequestApproval'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

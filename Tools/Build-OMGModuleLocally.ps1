@@ -42,8 +42,7 @@ function Build-OMGModuleLocally {
             1.. $importMsg.Length | foreach-object { Write-Host "-" -ForegroundColor Green -NoNewline }
             Write-Host ""
             Write-Host ""
-        }
-        catch {
+        } catch {
             Write-Error "Failed to import module: $_"
         }
     }

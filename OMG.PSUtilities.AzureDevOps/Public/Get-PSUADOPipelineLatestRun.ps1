@@ -13,35 +13,32 @@ function Get-PSUADOPipelineLatestRun {
         - This function uses Azure DevOps REST API version 7.1-preview.1.
 
     .PARAMETER PipelineId
-        The numeric ID of the Azure DevOps pipeline. Use this when you know the pipeline ID directly.
+        (Optional - ParameterSet: ByPipelineId) The numeric ID of the Azure DevOps pipeline.
 
     .PARAMETER PipelineUrl
-        The full URL of the Azure DevOps pipeline. Use this if you don't know the ID but have the URL.
+        (Optional - ParameterSet: ByPipelineUrl) The full URL of the Azure DevOps pipeline.
         The function will extract the pipeline ID automatically.
 
-    .PARAMETER PAT
-        Your Azure DevOps Personal Access Token. This is used for authentication to make API calls.
+    .PARAMETER Project
+        (Mandatory) The Azure DevOps project name containing the pipeline.
 
     .PARAMETER Organization
-        The name of your Azure DevOps organization (i.e., the part before `.visualstudio.com` or `.dev.azure.com`).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
-    .PARAMETER Project
-        The name of the Azure DevOps project containing the pipeline.
-
-    .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineId 2323 -Pat "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
-
-        This command fetches the latest run for pipeline ID 2323 in the mentioned project under the mentioned organization.
+    .PARAMETER PAT
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build?definitionId=23" -PAT "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
+        Get-PSUADOPipelineLatestRun -Organization "omg" -Project "psutilities" -PipelineId 2323
 
-        This command extracts the pipeline ID from the given URL and fetches the latest run details.
+        Fetches the latest run for pipeline ID 2323 in the psutilities project.
 
     .EXAMPLE
-        Get-PSUADOPipelineLatestRun -PipelineUrl "https://dev.azure.com/myorg/myproject/_build/results?buildId=456&view=results" -PAT "YourADO PAT" -Organization "YourADOOrgName" -Project "YourADOProjectName"
+        Get-PSUADOPipelineLatestRun -Organization "omg" -Project "psutilities" -PipelineUrl "https://dev.azure.com/omg/psutilities/_build?definitionId=23"
 
-        This command works with build results URLs that contain pipeline information.
+        Extracts the pipeline ID from the URL and fetches the latest run details.
 
     .OUTPUTS
         [PSCustomObject]
@@ -72,16 +69,40 @@ function Get-PSUADOPipelineLatestRun {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$PAT = $env:PAT,
+        [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Organization = $env:ORGANIZATION
+        [string]$PAT = $env:PAT
     )
 
+
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
     process {
         try {
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
             # Handle PipelineId extraction from URL if that is the input set
             if ($PSCmdlet.ParameterSetName -eq 'ByUrl') {
                 Write-Verbose "Extracting Pipeline ID from URL: $PipelineUrl"
@@ -113,7 +134,11 @@ function Get-PSUADOPipelineLatestRun {
 
             Write-Verbose "Processing Pipeline ID: $PipelineId"
             Write-Verbose "Escaping project name for URL..."
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
 
             # Get top 2 latest runs for fallback logic
             $runUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$PipelineId/runs" +
@@ -138,13 +163,11 @@ function Get-PSUADOPipelineLatestRun {
                 $result = if ($previousRun -and $previousRun.result) {
                     Write-Verbose "Latest run in progress, using previous run result: $($previousRun.result)"
                     $previousRun.result
-                }
-                else {
+                } else {
                     Write-Verbose "No previous run available, result set to N/A"
                     "N/A"
                 }
-            }
-            else {
+            } else {
                 $state = $latestRun.state
                 $result = $latestRun.result
             }
@@ -153,14 +176,13 @@ function Get-PSUADOPipelineLatestRun {
             $buildParams = @{
                 BuildId      = $latestRun.id
                 Pat          = $PAT
-                Organization = $Organization  # Fixed: was $ORGANIZATION
-                Project      = $Project       # Fixed: was $PROJECT
+                Organization = $Organization
+                Project      = $Project
             }
 
             try {
                 $Build = Get-PSUADOPipelineBuild @buildParams
-            }
-            catch {
+            } catch {
                 Write-Warning "Could not retrieve detailed build information: $($_.Exception.Message)"
                 $Build = [PSCustomObject]@{ TriggeredBy = "Unknown" }
             }
@@ -178,8 +200,7 @@ function Get-PSUADOPipelineLatestRun {
                 HasPreviousRun = $null -ne $previousRun
                 PSTypeName     = 'PSU.ADO.PipelineRun'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

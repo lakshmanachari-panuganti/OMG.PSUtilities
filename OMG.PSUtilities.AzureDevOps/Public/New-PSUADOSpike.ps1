@@ -4,7 +4,7 @@ function New-PSUADOSpike {
         Creates a new spike work item in Azure DevOps.
 
     .DESCRIPTION
-        This function creates a new spike work item in Azure DevOps using the REST API. 
+        This function creates a new spike work item in Azure DevOps using the REST API.
         Spikes are used for research, investigation, or proof-of-concept work where the outcome is knowledge rather than working software.
         Returns the created work item details including the work item ID.
 
@@ -36,21 +36,23 @@ function New-PSUADOSpike {
         Comma-separated tags to apply to the work item (optional).
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name where the spike will be created.
 
     .PARAMETER Organization
-        The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable (optional).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable (optional).
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOSpike -Title "Research OAuth integration options" -Description "Investigate different OAuth providers for user authentication" -Project "MyProject"
+        New-PSUADOSpike -Organization "omg" -Project "psutilities" -Title "Research OAuth integration options" -Description "Investigate different OAuth providers for user authentication"
 
         Creates a basic spike for OAuth research.
 
     .EXAMPLE
-        New-PSUADOSpike -Title "Performance testing spike" -Description "Test database query performance with large datasets" -TimeBox "2 days" -Priority 1 -StoryPoints 3 -AssignedTo "researcher@company.com" -Project "MyProject"
+        New-PSUADOSpike -Organization "omg" -Project "psutilities" -Title "Performance testing spike" -Description "Test database query performance with large datasets" -TimeBox "2 days" -Priority 1 -StoryPoints 3 -AssignedTo "researcher@company.com"
 
         Creates a detailed spike with time-box and assignment.
 
@@ -112,10 +114,34 @@ function New-PSUADOSpike {
         [string]$PAT = $env:PAT
     )
 
+
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+        $headers['Content-Type'] = 'application/json-patch+json'
+    }
     process {
         try {
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
-            $headers['Content-Type'] = 'application/json-patch+json'
 
             # Build the work item fields
             $fields = @(
@@ -186,7 +212,11 @@ function New-PSUADOSpike {
             }
 
             $body = $fields | ConvertTo-Json -Depth 3
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$Spike?api-version=7.1-preview.3"
 
             Write-Verbose "Creating spike in project: $Project"
@@ -195,25 +225,24 @@ function New-PSUADOSpike {
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
 
             [PSCustomObject]@{
-                Id               = $response.id
-                Title            = $response.fields.'System.Title'
-                Description      = $response.fields.'System.Description'
-                State            = $response.fields.'System.State'
-                Priority         = $response.fields.'Microsoft.VSTS.Common.Priority'
-                StoryPoints      = $response.fields.'Microsoft.VSTS.Scheduling.StoryPoints'
-                TimeBox          = $response.fields.'Microsoft.VSTS.Common.TimeCriticality'
-                AssignedTo       = $response.fields.'System.AssignedTo'.displayName
-                CreatedDate      = $response.fields.'System.CreatedDate'
-                CreatedBy        = $response.fields.'System.CreatedBy'.displayName
-                WorkItemType     = $response.fields.'System.WorkItemType'
-                AreaPath         = $response.fields.'System.AreaPath'
-                IterationPath    = $response.fields.'System.IterationPath'
-                Url              = $response.url
-                WebUrl           = $response._links.html.href
-                PSTypeName       = 'PSU.ADO.Spike'
+                Id            = $response.id
+                Title         = $response.fields.'System.Title'
+                Description   = $response.fields.'System.Description'
+                State         = $response.fields.'System.State'
+                Priority      = $response.fields.'Microsoft.VSTS.Common.Priority'
+                StoryPoints   = $response.fields.'Microsoft.VSTS.Scheduling.StoryPoints'
+                TimeBox       = $response.fields.'Microsoft.VSTS.Common.TimeCriticality'
+                AssignedTo    = $response.fields.'System.AssignedTo'.displayName
+                CreatedDate   = $response.fields.'System.CreatedDate'
+                CreatedBy     = $response.fields.'System.CreatedBy'.displayName
+                WorkItemType  = $response.fields.'System.WorkItemType'
+                AreaPath      = $response.fields.'System.AreaPath'
+                IterationPath = $response.fields.'System.IterationPath'
+                Url           = $response.url
+                WebUrl        = $response._links.html.href
+                PSTypeName    = 'PSU.ADO.Spike'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

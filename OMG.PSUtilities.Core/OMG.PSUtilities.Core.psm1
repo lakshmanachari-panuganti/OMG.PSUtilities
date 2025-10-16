@@ -32,13 +32,15 @@ $PublicFunctions = @(
     'Get-PSUUserSession',
     'New-PSUGithubPullRequest',
     'New-PSUHTMLReport',
+    'New-PSUOutlookMeeting',
     'Remove-PSUUserEnvironmentVariable',
     'Remove-PSUUserSession',
     'Send-PSUHTMLReport',
     'Send-PSUTeamsMessage',
     'Set-PSUUserEnvironmentVariable',
     'Test-PSUInternetConnection',
-    'Uninstall-PSUInstalledSoftware'
+    'Uninstall-PSUInstalledSoftware',
+    'Unlock-PSUTerraformStateAWS'
 )
 
 $AliasesToExport = @(

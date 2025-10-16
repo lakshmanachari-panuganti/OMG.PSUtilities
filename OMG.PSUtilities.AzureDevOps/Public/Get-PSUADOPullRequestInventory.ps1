@@ -9,18 +9,20 @@ function Get-PSUADOPullRequestInventory {
         Permission errors are handled gracefully to skip projects the user cannot access.
 
     .PARAMETER Organization
-        The name of the Azure DevOps organization. If not specified, the value from the ORGANIZATION environment variable is used.
+        (Optional) The Azure DevOps organization name under which the projects reside.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        The Personal Access Token used for authentication. If not specified, the value from the PAT environment variable is used.
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        PS> $PRInventory = Get-PSUADOPullRequestInventory -Organization 'omgitsolutions' -PAT 'your-pat-token'
+        $PRInventory = Get-PSUADOPullRequestInventory -Organization "omg"
 
-        Retrieves all active pull requests across all repositories and projects under 'omgitsolutions'.
+        Retrieves all active pull requests across all repositories and projects under the "omg" organization.
 
     .OUTPUTS
-        System.Object[] 
+        System.Object[]
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -42,49 +44,73 @@ function Get-PSUADOPullRequestInventory {
         [string]$PAT = $env:PAT
     )
 
-    $PullRequests = [System.Collections.Generic.List[PSCustomObject]]::new()
-    Write-Verbose "Fetching project list for organization [$Organization]..."
-    $ProjectList = Get-PSUADOProjectList -Organization $Organization -PAT $PAT
-    
-    $projectCount = $ProjectList.Count
-    $projectIndex = 0
-
-    foreach ($project in $ProjectList) {
-        $projectIndex++
-        $progressActivity = "Processing project [$($project.Name)] ($projectIndex of $projectCount)"
-        Write-Progress -Activity $progressActivity -Status "Fetching repositories..." -PercentComplete (($projectIndex / $projectCount) * 100)
-
-        try {
-            Write-Verbose "Fetching repositories for project [$($project.Name)]..."
-            $Repositories = Get-PSUADORepositories -Project $project.Name -Organization $Organization -PAT $PAT
-            Write-Verbose "[$($Repositories.Count)] repositories found in [$($project.Name)]"
-
-            $repoCount = $Repositories.Count
-            $repoIndex = 0
-
-            foreach ($Repository in $Repositories) {
-                $repoIndex++
-                Write-Progress -Activity $progressActivity -Status "Fetching PRs from repo [$($Repository.name)] ($repoIndex of $repoCount)" -PercentComplete (($repoIndex / $repoCount) * 100)
-
-                $prs = Get-PSUADOPullRequest -RepositoryId $Repository.id -Project $project.Name -Organization $Organization -PAT $PAT   
-                foreach ($pr in $prs) {
-                    $PullRequests.Add($pr)
-                }
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
             }
-
         }
-        catch {
-            $exceptionMessage = $_.Exception.Message
-            if ($exceptionMessage -notlike "*you do not have permissions*") {
-                $PSCmdlet.ThrowTerminatingError($_)
-            }
-            else {
-                Write-Warning "Skipped project [$($project.Name)] due to insufficient permissions."
-            }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
         }
     }
-    
-    Write-Verbose "Completed pull request inventory collection."
-    $PullRequests.ToArray() | Select-Object *
-    
+
+    process {
+        $PullRequests = [System.Collections.Generic.List[PSCustomObject]]::new()
+        Write-Verbose "Fetching project list for organization [$Organization]..."
+        $ProjectList = Get-PSUADOProjectList -Organization $Organization -PAT $PAT
+
+        $projectCount = $ProjectList.Count
+        $projectIndex = 0
+
+        foreach ($project in $ProjectList) {
+            $projectIndex++
+            $progressActivity = "Processing project [$($project.Name)] ($projectIndex of $projectCount)"
+            Write-Progress -Activity $progressActivity -Status "Fetching repositories..." -PercentComplete (($projectIndex / $projectCount) * 100)
+
+            try {
+                Write-Verbose "Fetching repositories for project [$($project.Name)]..."
+                $Repositories = Get-PSUADORepositories -Project $project.Name -Organization $Organization -PAT $PAT
+                Write-Verbose "[$($Repositories.Count)] repositories found in [$($project.Name)]"
+
+                $repoCount = $Repositories.Count
+                $repoIndex = 0
+
+                foreach ($Repository in $Repositories) {
+                    $repoIndex++
+                    Write-Progress -Activity $progressActivity -Status "Fetching PRs from repo [$($Repository.name)] ($repoIndex of $repoCount)" -PercentComplete (($repoIndex / $repoCount) * 100)
+
+                    $prs = Get-PSUADOPullRequest -RepositoryId $Repository.id -Project $project.Name -Organization $Organization -PAT $PAT
+                    foreach ($pr in $prs) {
+                        $PullRequests.Add($pr)
+                    }
+                }
+
+            } catch {
+                $exceptionMessage = $_.Exception.Message
+                if ($exceptionMessage -notlike "*you do not have permissions*") {
+                    $PSCmdlet.ThrowTerminatingError($_)
+                } else {
+                    Write-Warning "Skipped project [$($project.Name)] due to insufficient permissions."
+                }
+            }
+        }
+    } # End of process block
+
+    end {
+        Write-Verbose "Completed pull request inventory collection."
+        $PullRequests.ToArray() | Select-Object *
+    }
 }

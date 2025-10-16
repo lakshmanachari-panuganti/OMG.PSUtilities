@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AzureDevOps Module Test Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; margin: 20px; background: #f5f5f5; }
+        .container { max-width: 1200px; margin: 0 auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { color: #0078d4; border-bottom: 3px solid #0078d4; padding-bottom: 10px; }
+        h2 { color: #333; margin-top: 30px; }
+        .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        .stat-card { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px; text-align: center; }
+        .stat-card.success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .stat-card.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+        .stat-card h3 { margin: 0; font-size: 2em; }
+        .stat-card p { margin: 5px 0 0 0; font-size: 0.9em; opacity: 0.9; }
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background: #0078d4; color: white; font-weight: 600; }
+        tr:hover { background: #f5f5f5; }
+        .passed { color: #28a745; font-weight: bold; }
+        .failed { color: #dc3545; font-weight: bold; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 OMG.PSUtilities.AzureDevOps Module Test Report</h1>
+        
+        <div class="summary">
+            <div class="stat-card">
+                <h3>30</h3>
+                <p>Total Tests</p>
+            </div>
+            <div class="stat-card success">
+                <h3>18</h3>
+                <p>Passed</p>
+            </div>
+            <div class="stat-card warning">
+                <h3>12</h3>
+                <p>Failed</p>
+            </div>
+            <div class="stat-card">
+                <h3>60%</h3>
+                <p>Success Rate</p>
+            </div>
+        </div>
+        
+        <h2>Test Details</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Test Name</th>
+                    <th>Status</th>
+                    <th>Message</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>                <tr>
+                    <td>Environment: ORGANIZATION</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Lakshmanachari</td>
+                    <td>13:17:17</td>
+                </tr>                <tr>
+                    <td>Environment: PAT</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Length: 84 characters</td>
+                    <td>13:17:17</td>
+                </tr>                <tr>
+                    <td>Module Import</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Version 0.0, 26 functions</td>
+                    <td>13:17:18</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOProjectList</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Found project 'OMG.PSUtilities' (ID: 260618a0-c49b-4299-9198-9db8fb624d97)</td>
+                    <td>13:17:19</td>
+                </tr>                <tr>
+                    <td>Get-PSUADORepositories</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Found repository 'Test-Repo1' (ID: da09be4a-d672-4622-bfdf-01045ed97212)</td>
+                    <td>13:17:19</td>
+                </tr>                <tr>
+                    <td>Get-PSUADORepoBranchList</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>Response status code does not indicate success: 404 (Not Found).</td>
+                    <td>13:17:20</td>
+                </tr>                <tr>
+                    <td>New-PSUADOVariableGroup</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Created variable group ID: 2</td>
+                    <td>13:17:21</td>
+                </tr>                <tr>
+                    <td>New-PSUADOVariable (Regular)</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>A parameter cannot be found that matches parameter name 'VariableGroupId'.</td>
+                    <td>13:17:21</td>
+                </tr>                <tr>
+                    <td>New-PSUADOVariable (Secret)</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>A parameter cannot be found that matches parameter name 'VariableGroupId'.</td>
+                    <td>13:17:21</td>
+                </tr>                <tr>
+                    <td>New-PSUADOVariable (Environment)</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>A parameter cannot be found that matches parameter name 'VariableGroupId'.</td>
+                    <td>13:17:21</td>
+                </tr>                <tr>
+                    <td>Set-PSUADOVariable (Update)</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>Expected 'Updated' action, got 'Added'</td>
+                    <td>13:17:22</td>
+                </tr>                <tr>
+                    <td>Set-PSUADOVariable (Add)</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Added new variable 'NewVarViaSet'</td>
+                    <td>13:17:22</td>
+                </tr>                <tr>
+                    <td>Set-PSUADOVariableGroup (Name)</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>Name not updated correctly</td>
+                    <td>13:17:24</td>
+                </tr>                <tr>
+                    <td>Set-PSUADOVariableGroup (Description)</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>Description not updated correctly</td>
+                    <td>13:17:24</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOVariableGroupInventory (Basic)</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Found 2 variable group(s)</td>
+                    <td>13:17:26</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOVariableGroupInventory (Detailed)</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Found test group with 3 variable(s)</td>
+                    <td>13:17:28</td>
+                </tr>                <tr>
+                    <td>New-PSUADOPullRequest</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>Cannot validate argument on parameter 'SourceBranch'. SourceBranch must be in the format 'refs/heads/branch-name'.</td>
+                    <td>13:17:28</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOPullRequest</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>Parameter cannot be processed because the parameter name 'Repository' is ambiguous. Possible matches include: -RepositoryId -RepositoryName.</td>
+                    <td>13:17:28</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOPullRequestInventory</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>A parameter cannot be found that matches parameter name 'Project'.</td>
+                    <td>13:17:28</td>
+                </tr>                <tr>
+                    <td>Approve-PSUADOPullRequest</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Skipped - no test PR created</td>
+                    <td>13:17:28</td>
+                </tr>                <tr>
+                    <td>Complete-PSUADOPullRequest</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Skipped - no test PR or cleanup disabled</td>
+                    <td>13:17:28</td>
+                </tr>                <tr>
+                    <td>New-PSUADOUserStory</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Created User Story #1</td>
+                    <td>13:17:29</td>
+                </tr>                <tr>
+                    <td>New-PSUADOTask</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Created Task #2 (linked to User Story #1)</td>
+                    <td>13:17:30</td>
+                </tr>                <tr>
+                    <td>New-PSUADOBug</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>A parameter cannot be found that matches parameter name 'ReproSteps'.</td>
+                    <td>13:17:30</td>
+                </tr>                <tr>
+                    <td>Set-PSUADOTask</td>
+                    <td class="failed">✗ FAILED</td>
+                    <td>Cannot validate argument on parameter 'State'. The argument "Active" does not belong to the set "To Do,In Progress,Done,Removed" specified by the ValidateSet attribute. Supply an argument that is in the set and then try the command again.</td>
+                    <td>13:17:30</td>
+                </tr>                <tr>
+                    <td>Set-PSUADOBug</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Skipped - no test bug created</td>
+                    <td>13:17:30</td>
+                </tr>                <tr>
+                    <td>Set-PSUADOSpike</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Skipped - requires existing spike work item</td>
+                    <td>13:17:30</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOPipeline</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Found 0 pipeline(s)</td>
+                    <td>13:17:30</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOPipelineLatestRun</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Skipped - no pipelines found</td>
+                    <td>13:17:30</td>
+                </tr>                <tr>
+                    <td>Get-PSUADOPipelineBuild</td>
+                    <td class="passed">✓ PASSED</td>
+                    <td>Found 1 build(s)</td>
+                    <td>13:42:30</td>
+                </tr>            </tbody>
+        </table>
+        
+        <div class="footer">
+            <p><strong>Test Type:</strong> Comprehensive</p>
+            <p><strong>Organization:</strong> Lakshmanachari</p>
+            <p><strong>Project:</strong> OMG.PSUtilities</p>
+            <p><strong>Repository:</strong> Test-Repo1</p>
+            <p><strong>Duration:</strong> 00:25:12.9210631</p>
+            <p><strong>Generated:</strong> 2025-10-15 13:42:30</p>
+        </div>
+    </div>
+</body>
+</html>

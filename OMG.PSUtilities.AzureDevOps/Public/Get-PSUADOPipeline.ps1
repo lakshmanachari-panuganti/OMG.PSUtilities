@@ -9,15 +9,15 @@
     You can also retrieve a specific pipeline by its ID.
 
 .PARAMETER Project
-    (Mandatory) The Azure DevOps project name against which the pipeline should be retrieved.
+    (Mandatory) The Azure DevOps project name containing the pipelines.
 
 .PARAMETER Organization
     (Optional) The Azure DevOps organization name under which the project resides.
-    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
+    Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
 .PARAMETER PAT
     (Optional) Personal Access Token for Azure DevOps authentication.
-    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+    Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
 .PARAMETER Id
     (Optional) The ID of a specific pipeline to retrieve.
@@ -28,10 +28,14 @@
     If specified, fetches additional details for each pipeline (may be slower).
 
 .EXAMPLE
-    Get-PSUADOPipeline -Organization "OmgITSolutions" -Project "PSUtilities" -PAT $env:PAT
+    Get-PSUADOPipeline -Organization "omg" -Project "psutilities"
+
+    Retrieves all pipelines from the "psutilities" project.
 
 .EXAMPLE
-    Get-PSUADOPipeline -Organization "OmgITSolutions" -Project "PSUtilities" -PAT $env:PAT -Id 1234 -AddDetails
+    Get-PSUADOPipeline -Organization "omg" -Project "psutilities" -Id 1234 -AddDetails
+
+    Retrieves detailed information for pipeline ID 1234.
 
 .OUTPUTS
     [PSCustomObject]
@@ -55,81 +59,127 @@ function Get-PSUADOPipeline {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
+        [int]$Id,
+
+        [Parameter()]
+        [switch]$AddDetails,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$PAT = $env:PAT,
-
-        [Parameter()]
-        [ValidateNotNullOrEmpty()]
-        [int]$Id,
-
-        [Parameter()]
-        [switch]$AddDetails
+        [string]$PAT = $env:PAT
     )
 
-    $headers = Get-PSUAdoAuthHeader -PAT $PAT
-
-    try {
-        if ($Id) {
-            $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
-            $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
-
-            $webUrl = "https://dev.azure.com/$Organization/$Project/_build?definitionId=$Id"
-
-            [PSCustomObject]@{
-                Name           = $pipelineDetails.name
-                ID             = $pipelineDetails.id
-                URL            = $pipelineDetails._links.web.href
-                WebUrl         = $webUrl
-                Folder         = $pipelineDetails.folder
-                YamlPath       = $pipelineDetails.configuration.path
-                RepositoryType = $pipelineDetails.configuration.repository.type
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
             }
         }
-        else {
-            $listUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines?api-version=7.1-preview.1"
-            $pipelineList = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get
 
-            if (-not $pipelineList.value) {
-                Write-Verbose "No pipelines found."
-                return
-            }
-
-            $results = foreach ($pipeline in $pipelineList.value) {
-                $Id = $pipeline.id
-                $webUrl = "https://dev.azure.com/$Organization/$Project/_build?definitionId=$Id"
-
-                if ($AddDetails) {
-                    $detailsUri = "https://dev.azure.com/$Organization/$Project/_apis/pipelines/$Id`?api-version=7.1-preview.1"
-                    $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
-
-                    [PSCustomObject]@{
-                        Name           = $pipeline.name
-                        ID             = $pipeline.id
-                        URL            = $pipeline._links.web.href
-                        WebUrl         = $webUrl
-                        Folder         = $pipeline.folder
-                        YamlPath       = $pipelineDetails.configuration.path
-                        RepositoryType = $pipelineDetails.configuration.repository.type
-                    }
-                }
-                else {
-                    [PSCustomObject]@{
-                        Name   = $pipeline.name
-                        ID     = $pipeline.id
-                        URL    = $pipeline._links.web.href
-                        WebUrl = $webUrl
-                        Folder = $pipeline.folder
-                    }
-                }
-            }
-
-            return $results
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
         }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
     }
-    catch {
-        $PSCmdlet.ThrowTerminatingError($_)
+
+    process {
+        try {
+            # Escape project name for URI
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
+            
+            if ($Id) {
+                $detailsUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$Id`?api-version=7.1-preview.1"
+                $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
+
+                if (-not $pipelineDetails) {
+                    throw "Failed to retrieve pipeline details for ID: $Id"
+                }
+
+                $webUrl = "https://dev.azure.com/$Organization/$escapedProject/_build?definitionId=$Id"
+
+                [PSCustomObject]@{
+                    Name           = $pipelineDetails.name
+                    ID             = $pipelineDetails.id
+                    URL            = $pipelineDetails._links.web.href
+                    WebUrl         = $webUrl
+                    Folder         = $pipelineDetails.folder
+                    YamlPath       = $pipelineDetails.configuration.path
+                    RepositoryType = $pipelineDetails.configuration.repository.type
+                }
+            } else {
+                $listUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines?api-version=7.1-preview.1"
+                $pipelineList = Invoke-RestMethod -Uri $listUri -Headers $headers -Method Get
+
+                if (-not $pipelineList.value) {
+                    Write-Verbose "No pipelines found."
+                    return
+                }
+
+                $results = foreach ($pipeline in $pipelineList.value) {
+                    $Id = $pipeline.id
+                    $webUrl = "https://dev.azure.com/$Organization/$escapedProject/_build?definitionId=$Id"
+
+                    if ($AddDetails) {
+                        $detailsUri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$Id`?api-version=7.1-preview.1"
+                        $pipelineDetails = Invoke-RestMethod -Uri $detailsUri -Headers $headers -Method Get
+                        
+                        if (-not $pipelineDetails) {
+                            Write-Warning "Failed to retrieve details for pipeline ID: $Id"
+                            [PSCustomObject]@{
+                                Name           = $pipeline.name
+                                ID             = $pipeline.id
+                                URL            = $pipeline._links.web.href
+                                WebUrl         = $webUrl
+                                Folder         = $pipeline.folder
+                                YamlPath       = "Details unavailable"
+                                RepositoryType = "Details unavailable"
+                            }
+                        } else {
+                            [PSCustomObject]@{
+                                Name           = $pipeline.name
+                                ID             = $pipeline.id
+                                URL            = $pipeline._links.web.href
+                                WebUrl         = $webUrl
+                                Folder         = $pipeline.folder
+                                YamlPath       = $pipelineDetails.configuration.path
+                                RepositoryType = $pipelineDetails.configuration.repository.type
+                            }
+                        }
+                    } else {
+                        [PSCustomObject]@{
+                            Name   = $pipeline.name
+                            ID     = $pipeline.id
+                            URL    = $pipeline._links.web.href
+                            WebUrl = $webUrl
+                            Folder = $pipeline.folder
+                        }
+                    }
+                }
+
+                return $results
+            }
+        } catch {
+            $PSCmdlet.ThrowTerminatingError($_)
+        }
     }
 }

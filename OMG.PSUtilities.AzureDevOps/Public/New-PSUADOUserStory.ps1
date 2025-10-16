@@ -4,7 +4,7 @@ function New-PSUADOUserStory {
         Creates a new user story in Azure DevOps.
 
     .DESCRIPTION
-        This function creates a new user story in Azure DevOps using the REST API. 
+        This function creates a new user story in Azure DevOps using the REST API.
         It allows you to specify the title, description, acceptance criteria, priority, and other properties.
         Returns the created user story details as follows.
             ID
@@ -50,21 +50,23 @@ function New-PSUADOUserStory {
         Comma-separated tags to apply to the work item (optional).
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name where the user story will be created.
 
     .PARAMETER Organization
-        The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable (optional).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable (optional).
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOUserStory -Title "Implement user authentication" -Description "As a user, I want to log in securely" -Project "MyProject"
+        New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "Implement user authentication" -Description "As a user, I want to log in securely"
 
         Creates a basic user story with title and description.
 
     .EXAMPLE
-        New-PSUADOUserStory -Title "Add search functionality" -Description "Users need to search products" -AcceptanceCriteria "Search returns relevant results" -Priority 1 -StoryPoints 5 -AssignedTo "user@company.com" -Project "MyProject"
+        New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "Add search functionality" -Description "Users need to search products" -AcceptanceCriteria "Search returns relevant results" -Priority 1 -StoryPoints 5 -AssignedTo "user@company.com"
 
         Creates a detailed user story with all properties specified.
 
@@ -126,10 +128,34 @@ function New-PSUADOUserStory {
         [string]$PAT = $env:PAT
     )
 
+
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+        $headers['Content-Type'] = 'application/json-patch+json'
+    }
     process {
         try {
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
-            $headers['Content-Type'] = 'application/json-patch+json'
 
             # Build the work item fields
             $fields = @(
@@ -200,7 +226,11 @@ function New-PSUADOUserStory {
             }
 
             $body = $fields | ConvertTo-Json -Depth 3
-            $escapedProject = [uri]::EscapeDataString($Project)
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/wit/workitems/`$User%20Story?api-version=7.1-preview.3"
 
             Write-Verbose "Creating user story in project: $Project"
@@ -209,24 +239,23 @@ function New-PSUADOUserStory {
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
 
             [PSCustomObject]@{
-                Id               = $response.id
-                Title            = $response.fields.'System.Title'
-                Description      = $response.fields.'System.Description'
-                State            = $response.fields.'System.State'
-                Priority         = $response.fields.'Microsoft.VSTS.Common.Priority'
-                StoryPoints      = $response.fields.'Microsoft.VSTS.Scheduling.StoryPoints'
-                AssignedTo       = $response.fields.'System.AssignedTo'.displayName
-                CreatedDate      = $response.fields.'System.CreatedDate'
-                CreatedBy        = $response.fields.'System.CreatedBy'.displayName
-                WorkItemType     = $response.fields.'System.WorkItemType'
-                AreaPath         = $response.fields.'System.AreaPath'
-                IterationPath    = $response.fields.'System.IterationPath'
-                Url              = $response.url
-                WebUrl           = $response._links.html.href
-                PSTypeName       = 'PSU.ADO.UserStory'
+                Id            = $response.id
+                Title         = $response.fields.'System.Title'
+                Description   = $response.fields.'System.Description'
+                State         = $response.fields.'System.State'
+                Priority      = $response.fields.'Microsoft.VSTS.Common.Priority'
+                StoryPoints   = $response.fields.'Microsoft.VSTS.Scheduling.StoryPoints'
+                AssignedTo    = $response.fields.'System.AssignedTo'.displayName
+                CreatedDate   = $response.fields.'System.CreatedDate'
+                CreatedBy     = $response.fields.'System.CreatedBy'.displayName
+                WorkItemType  = $response.fields.'System.WorkItemType'
+                AreaPath      = $response.fields.'System.AreaPath'
+                IterationPath = $response.fields.'System.IterationPath'
+                Url           = $response.url
+                WebUrl        = $response._links.html.href
+                PSTypeName    = 'PSU.ADO.UserStory'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

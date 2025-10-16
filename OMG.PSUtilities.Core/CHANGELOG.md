@@ -1,3 +1,5 @@
+## [1.0.10] - 8th October 2025
+
 ## [1.0.9] - 23rd August 2025
 ### Added
 - `Get-PSUModule.ps1`: Introduces the `Get-PSUModule` function to detect a module by searching for `.psd1` or `.psm1` files up the directory tree. Returns module metadata (name, version, paths) for dynamic introspection and automation. Supports starting search from either `ScriptRoot` or a specific `ScriptPath`.

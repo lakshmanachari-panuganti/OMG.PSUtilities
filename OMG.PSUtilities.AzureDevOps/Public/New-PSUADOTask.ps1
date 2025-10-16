@@ -39,29 +39,31 @@ function New-PSUADOTask {
         Comma-separated tags to apply to the work item (optional).
 
     .PARAMETER Project
-        The name of the Azure DevOps project.
+        (Mandatory) The Azure DevOps project name where the task will be created.
 
     .PARAMETER Organization
-        The Azure DevOps organization name. Defaults to the ORGANIZATION environment variable (optional).
+        (Optional) The Azure DevOps organization name under which the project resides.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Personal Access Token for Azure DevOps authentication. Defaults to the PAT environment variable (optional).
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        New-PSUADOTask -Title "Setup database schema" -Description "Create initial database tables" -Project "MyProject"
+        New-PSUADOTask -Organization "omg" -Project "psutilities" -Title "Setup database schema" -Description "Create initial database tables"
 
         Creates a standalone task without linking to a parent work item.
 
     .EXAMPLE
-        New-PSUADOTask -Title "Implement login API" -Description "Create REST API for user authentication" -ParentWorkItemId 1234 -EstimatedHours 8 -AssignedTo "dev@company.com" -Project "MyProject"
+        New-PSUADOTask -Organization "omg" -Project "psutilities" -Title "Implement login API" -Description "Create REST API for user authentication" -ParentWorkItemId 1234 -EstimatedHours 8 -AssignedTo "dev@company.com"
 
         Creates a task and links it to work item ID 1234 (could be User Story, Bug, or Spike) with estimated hours and assignment.
 
     .EXAMPLE
         # Create a user story and then add tasks to it
-        $userStory = New-PSUADOUserStory -Title "User login feature" -Description "Implement secure login" -Project "MyProject"
-        New-PSUADOTask -Title "Create login form" -Description "Build HTML login form" -ParentWorkItemId $userStory.Id -Project "MyProject"
-        New-PSUADOTask -Title "Implement authentication" -Description "Add backend auth logic" -ParentWorkItemId $userStory.Id -Project "MyProject"
+        $userStory = New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "User login feature" -Description "Implement secure login"
+        New-PSUADOTask -Organization "omg" -Project "psutilities" -Title "Create login form" -Description "Build HTML login form" -ParentWorkItemId $userStory.Id
+        New-PSUADOTask -Organization "omg" -Project "psutilities" -Title "Implement authentication" -Description "Add backend auth logic" -ParentWorkItemId $userStory.Id
 
         Creates a user story and adds two tasks as children.
 
@@ -128,11 +130,40 @@ function New-PSUADOTask {
         [string]$PAT = $env:PAT
     )
 
+
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+        $headers['Content-Type'] = 'application/json-patch+json'
+    }
     process {
         try {
-            $headers = Get-PSUAdoAuthHeader -PAT $PAT
-            $headers['Content-Type'] = 'application/json-patch+json'
-            $escapedProject = [uri]::EscapeDataString($Project)
+
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
             # Build the work item fields
             $fields = @(
                 @{
@@ -225,26 +256,25 @@ function New-PSUADOTask {
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
 
             [PSCustomObject]@{
-                Id               = $response.id
-                Title            = $response.fields.'System.Title'
-                Description      = $response.fields.'System.Description'
-                State            = $response.fields.'System.State'
-                Priority         = $response.fields.'Microsoft.VSTS.Common.Priority'
-                EstimatedHours   = $response.fields.'Microsoft.VSTS.Scheduling.OriginalEstimate'
-                RemainingHours   = $response.fields.'Microsoft.VSTS.Scheduling.RemainingWork'
-                AssignedTo       = $response.fields.'System.AssignedTo'.displayName
-                CreatedDate      = $response.fields.'System.CreatedDate'
-                CreatedBy        = $response.fields.'System.CreatedBy'.displayName
-                WorkItemType     = $response.fields.'System.WorkItemType'
-                AreaPath         = $response.fields.'System.AreaPath'
-                IterationPath    = $response.fields.'System.IterationPath'
-                ParentId         = $ParentWorkItemId
-                Url              = $response.url
-                WebUrl           = $response._links.html.href
-                PSTypeName       = 'PSU.ADO.Task'
+                Id             = $response.id
+                Title          = $response.fields.'System.Title'
+                Description    = $response.fields.'System.Description'
+                State          = $response.fields.'System.State'
+                Priority       = $response.fields.'Microsoft.VSTS.Common.Priority'
+                EstimatedHours = $response.fields.'Microsoft.VSTS.Scheduling.OriginalEstimate'
+                RemainingHours = $response.fields.'Microsoft.VSTS.Scheduling.RemainingWork'
+                AssignedTo     = $response.fields.'System.AssignedTo'.displayName
+                CreatedDate    = $response.fields.'System.CreatedDate'
+                CreatedBy      = $response.fields.'System.CreatedBy'.displayName
+                WorkItemType   = $response.fields.'System.WorkItemType'
+                AreaPath       = $response.fields.'System.AreaPath'
+                IterationPath  = $response.fields.'System.IterationPath'
+                ParentId       = $ParentWorkItemId
+                Url            = $response.url
+                WebUrl         = $response._links.html.href
+                PSTypeName     = 'PSU.ADO.Task'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

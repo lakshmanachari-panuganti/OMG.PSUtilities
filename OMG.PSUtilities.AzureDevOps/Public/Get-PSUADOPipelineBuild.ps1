@@ -14,16 +14,21 @@ function Get-PSUADOPipelineBuild {
 
     .PARAMETER Organization
         (Optional) The Azure DevOps organization name under which the project resides.
-        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "value_of_org_name"
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
-        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "value_of_PAT"
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .EXAMPLE
-        Get-PSUADOPipelineBuild -BuildId 12345 -PAT 'xxxxxxxxxx' -Organization 'OmgItSolutions' -Project 'PSUtilities'
+        Get-PSUADOPipelineBuild -Organization "omg" -Project "psutilities" -BuildId 12345
 
-        This example gets details for build ID 12345 in the given organization and project.
+        Retrieves details for build ID 12345 in the psutilities project.
+
+    .EXAMPLE
+        Get-PSUADOPipelineBuild -Organization "omg" -Project "psutilities" -BuildId 67890
+
+        Retrieves details for build ID 67890 in the psutilities project.
 
     .OUTPUTS
         [PSCustomObject]
@@ -31,7 +36,7 @@ function Get-PSUADOPipelineBuild {
     .NOTES
         Author: Lakshmanachari Panuganti
         Date  : 2025-06-16 : Initial development
-    
+
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
         https://www.linkedin.com/in/lakshmanachari-panuganti/
@@ -60,15 +65,39 @@ function Get-PSUADOPipelineBuild {
         [string]$PAT = $env:PAT
 
     )
-    begin{
+    begin {
+        # Display parameters
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Verbose "  $($param.Key): $maskedPAT"
+            } else {
+                Write-Verbose "  $($param.Key): $($param.Value)"
+            }
+        }
+
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $PAT) {
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
+        }
+
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
     }
     process {
         try {
-            Write-Verbose "Processing build ID: $BuildId"
             Write-Verbose "Escaping project name for the URL..."
-            
-            $escapedProject = [uri]::EscapeDataString($Project)
+
+            $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
+                $Project
+            } else {
+                [uri]::EscapeDataString($Project)
+            }
 
             $buildUrl = "https://dev.azure.com/$Organization/$escapedProject/_apis/build/builds/$($BuildId)?api-version=7.1-preview.7"
             Write-Verbose "Calling Azure DevOps API at: $buildUrl"
@@ -98,8 +127,7 @@ function Get-PSUADOPipelineBuild {
                 RepositoryUrl = $build.repository.url
                 PSTypeName    = 'PSU.ADO.BuildDetails'
             }
-        }
-        catch {
+        } catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

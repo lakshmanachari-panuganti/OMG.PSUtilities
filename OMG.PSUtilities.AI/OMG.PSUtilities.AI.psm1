@@ -25,6 +25,7 @@ $PublicFunctions = @(
     'Invoke-PSUPromptOnGeminiAi',
     'Invoke-PSUPromptOnPerplexityAi',
     'New-PSUAiPoweredPullRequest',
+    'Set-PSUAzureOpenAIEnvironment',
     'Set-PSUDefaultAiEngine',
     'Start-PSUGeminiChat',
     'Update-PSUChangeLog'

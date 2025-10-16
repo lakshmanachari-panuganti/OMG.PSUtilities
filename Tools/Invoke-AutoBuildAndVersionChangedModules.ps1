@@ -76,8 +76,7 @@ foreach ($thismodule in $changedModules.Keys) {
 
         if ([string]::IsNullOrEmpty($msg) -or [string]::IsNullOrWhiteSpace($msg)) {
             # Skipping this file from updating in CHANGELOG
-        }
-        else {
+        } else {
             $changeDetails += "- [$($thisModuleFile.ChangeType) $($thisModuleFile.ItemType)] $($thisModuleFile.Name) : $msg"
         }
     }
@@ -111,8 +110,7 @@ foreach ($thismodule in $changedModules.Keys) {
             Add-Content -Path $changelogPath -Value $_
         }
         Write-Host "CHANGELOG updated."
-    }
-    else {
+    } else {
         Write-Host "[DryRun] [OMG.PSUtilities.$($thismodule)] Would update CHANGELOG with version $newVersion"
     }
 
@@ -131,8 +129,7 @@ foreach ($thismodule in $changedModules.Keys) {
         $readmeLines += ($changeDetails | ForEach-Object { "- $_" })
         Set-Content -Path $thisModuleReadmePath -Value $readmeLines
         Write-Host "README updated."
-    }
-    else {
+    } else {
         Write-Host "[DryRun] [OMG.PSUtilities.$thismodule] Would update README.md with version and function list."
     }
 
@@ -140,8 +137,7 @@ foreach ($thismodule in $changedModules.Keys) {
     if (-not $DryRun) {
         Reset-OMGModuleManifests.ps1 -ModuleName "OMG.PSUtilities.$thismodule"
         Build-OMGModuleLocally -ModuleName "OMG.PSUtilities.$thismodule"
-    }
-    else {
+    } else {
         Write-Host "[DryRun] Would update manifest and build module."
     }
 }

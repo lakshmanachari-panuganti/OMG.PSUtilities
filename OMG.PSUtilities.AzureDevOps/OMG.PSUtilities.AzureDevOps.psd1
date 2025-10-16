@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AzureDevOps.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.8'
+ModuleVersion = '1.0.10'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -84,11 +84,22 @@ FunctionsToExport = @(
     'Get-PSUADORepoBranchList',
     'Get-PSUADORepositories',
     'Get-PSUADOVariableGroupInventory',
+    'Get-PSUADOWorkItem',
+    'Get-PSUADOWorkItemStates',
+    'Invoke-PSUADORepoClone',
     'New-PSUADOBug',
     'New-PSUADOPullRequest',
     'New-PSUADOSpike',
     'New-PSUADOTask',
-    'New-PSUADOUserStory'
+    'New-PSUADOUserStory',
+    'New-PSUADOVariable',
+    'New-PSUADOVariableGroup',
+    'Set-PSUADOBug',
+    'Set-PSUADOSpike',
+    'Set-PSUADOTask',
+    'Set-PSUADOUserStory',
+    'Set-PSUADOVariable',
+    'Set-PSUADOVariableGroup'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

@@ -36,16 +36,16 @@ function Get-PSUADOVariableGroupInventory {
         - PSTypeName: Custom type name for formatting
 
     .PARAMETER Organization
-        The name of the Azure DevOps organization. This is the part that appears in your Azure DevOps URL
-        (e.g., 'omg' in https://dev.azure.com/omg).
+        (Optional) The Azure DevOps organization name under which the projects reside.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
 
     .PARAMETER PAT
-        Azure DevOps Personal Access Token with appropriate permissions. If not provided, the function
-        will attempt to use the $env:ADO_PAT or $env:PAT environment variable. The PAT must have at least
-        'Variable Groups (read)' and 'Project and Team (read)' permissions.
+        (Optional) Personal Access Token for Azure DevOps authentication with appropriate permissions.
+        Default value is $env:PAT or $env:ADO_PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
+        The PAT must have at least 'Variable Groups (read)' and 'Project and Team (read)' permissions.
 
     .PARAMETER $project
-        Optional wildcard filter for project names. Supports standard PowerShell wildcard patterns.
+        (Optional) Wildcard filter for project names. Supports standard PowerShell wildcard patterns.
         Examples: '*Services*', 'Prod-*', '*API*'
         Default: '*' (all projects)
 
@@ -63,32 +63,32 @@ function Get-PSUADOVariableGroupInventory {
         Range: 1-20
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG'
+        Get-PSUADOVariableGroupInventory
 
-        Retrieves variable group inventory for all projects in the 'OMG' organization.
+        Retrieves variable group inventory for all projects in the organization specified by $env:ORGANIZATION.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Project @('ProjectA', 'ProjectB')
+        Get-PSUADOVariableGroupInventory -Project @('psutilities', 'AzureDevOps')
 
         Retrieves variable group inventory for specific projects only.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Project @('*-Prod', '*-Dev') -OutputFilePath 'C:\Reports\VarGroups.csv'
+        Get-PSUADOVariableGroupInventory -Project @('*-Prod', '*-Dev') -OutputFilePath 'C:\Reports\VarGroups.csv'
 
         Retrieves variable groups from projects matching wildcard patterns and exports to CSV.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -Filter 'VariableGroupName -like "*prod*"'
+        Get-PSUADOVariableGroupInventory -Organization 'omg' -Filter 'VariableGroupName -like "*prod*"'
 
-        Retrieves variable groups with names containing 'prod'.
+        Retrieves variable groups with names containing 'prod' from a specific organization.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -ThrottleLimit 15
+        Get-PSUADOVariableGroupInventory -ThrottleLimit 15
 
         Retrieves variable group inventory with higher concurrency (15 parallel threads) for faster processing of large organizations.
 
     .EXAMPLE
-        Get-PSUADOVariableGroupInventory -Organization 'OMG' -IncludeVariableDetails -Verbose
+        Get-PSUADOVariableGroupInventory -IncludeVariableDetails -Verbose
 
         Retrieves detailed variable group inventory with verbose logging and additional variable metadata.
 
@@ -121,14 +121,6 @@ function Get-PSUADOVariableGroupInventory {
     [CmdletBinding(DefaultParameterSetName = 'Default')]
     [OutputType([PSCustomObject[]])]
     param (
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$Organization,
-
-        [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
-        [string]$PAT,
-
         [Parameter()]
         [ValidateNotNullOrEmpty()]
         [string[]]$Project = '*',
@@ -152,19 +144,28 @@ function Get-PSUADOVariableGroupInventory {
 
         [Parameter()]
         [ValidateRange(1, 20)]
-        [int]$ThrottleLimit = 10
+        [int]$ThrottleLimit = 10,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$Organization = $env:ORGANIZATION,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$PAT = $env:PAT
     )
 
     begin {
-        Write-Verbose "Starting Azure DevOps Variable Group inventory process"
+        Write-Host "Starting Azure DevOps Variable Group inventory process"
 
-        # Initialize PAT from environment if not provided
+        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
+        if (-not $Organization) {
+            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
+        }
+
+        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
         if (-not $PAT) {
-            $PAT = $env:ADO_PAT ?? $env:PAT
-            if (-not $PAT) {
-                throw "Personal Access Token is required. Provide via -PAT parameter or set `$env:ADO_PAT environment variable."
-            }
-            Write-Verbose "Using Personal Access Token from environment variable"
+            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
         }
 
         # Setup authentication headers
@@ -178,10 +179,19 @@ function Get-PSUADOVariableGroupInventory {
         # Initialize results collection
         $variableGroupInventory = [System.Collections.Generic.List[PSCustomObject]]::new()
 
-        Write-Verbose "Authentication configured for organization: $Organization"
-        Write-Verbose "Project filter: $Project"
-        Write-Verbose "Include variable details: $IncludeVariableDetails"
-        Write-Verbose "Throttle limit: $ThrottleLimit"
+        # Display parameters
+        Write-Host "Parameters:" -ForegroundColor Green
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'PAT') {
+                $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+                Write-Host "  $($param.Key): $maskedPAT" -ForegroundColor Cyan
+            } elseif ($param.Value -is [array]) {
+                $displayValue = $param.Value -join ', '
+                Write-Host "  $($param.Key): $displayValue" -ForegroundColor Cyan
+            } else {
+                Write-Host "  $($param.Key): $($param.Value)" -ForegroundColor Cyan
+            }
+        }
 
         # Check if ThreadJob module is available
         $useThreadJobs = $false
@@ -190,13 +200,11 @@ function Get-PSUADOVariableGroupInventory {
                 Import-Module ThreadJob -Force -ErrorAction Stop
                 $useThreadJobs = $true
                 Write-Verbose "ThreadJob module loaded successfully - parallel processing enabled"
-            }
-            else {
+            } else {
                 Write-Warning "ThreadJob module not found. Install it with: Install-Module ThreadJob"
                 Write-Information "Falling back to sequential processing..." -InformationAction Continue
             }
-        }
-        catch {
+        } catch {
             Write-Warning "Failed to load ThreadJob module: $($_.Exception.Message)"
             Write-Information "Falling back to sequential processing..." -InformationAction Continue
         }
@@ -222,8 +230,7 @@ function Get-PSUADOVariableGroupInventory {
                 }
                 # Remove duplicates if any
                 $filteredProjects = $filteredProjects | Sort-Object id -Unique
-            }
-            else {
+            } else {
                 # Process all projects if no Project filter specified
                 $filteredProjects = $projectsResponse.value
             }
@@ -236,7 +243,7 @@ function Get-PSUADOVariableGroupInventory {
 
             Write-Verbose "Found $($filteredProjects.Count) matching projects"
             $processingMethod = if ($useThreadJobs -and $filteredProjects.Count -gt 1) { "parallel ($ThrottleLimit threads)" } else { "sequential" }
-            Write-Information "Processing $($filteredProjects.Count) projects matching filter '$Project' using $processingMethod processing" -InformationAction Continue
+            Write-Host "Processing $($filteredProjects.Count) projects matching filter '$Project' using $processingMethod processing" -ForegroundColor Cyan
 
             if ($useThreadJobs -and $filteredProjects.Count -gt 1) {
                 # Parallel processing
@@ -272,12 +279,10 @@ function Get-PSUADOVariableGroupInventory {
                                 }
                                 $KeyVaultName = if ($variableGroup.providerData -and $variableGroup.providerData.vault) {
                                     $variableGroup.providerData.vault
-                                }
-                                elseif ($variableGroup.providerData -and $variableGroup.providerData.serviceEndpointId) {
+                                } elseif ($variableGroup.providerData -and $variableGroup.providerData.serviceEndpointId) {
                                     # Sometimes Key Vault name is in serviceEndpointId or requires additional API call
                                     "ServiceEndpoint:$($variableGroup.providerData.serviceEndpointId)"
-                                }
-                                else {
+                                } else {
                                     $null
                                 }
                                 # Create inventory object
@@ -307,8 +312,7 @@ function Get-PSUADOVariableGroupInventory {
                                         $varName = $property.Name
                                         $varValue = if ($property.Value.isSecret -eq $true) {
                                             '********'
-                                        }
-                                        else {
+                                        } else {
                                             $property.Value.value
                                         }
 
@@ -333,8 +337,7 @@ function Get-PSUADOVariableGroupInventory {
                             VariableGroupCount = $results.Count
                             ErrorMessage       = $null
                         }
-                    }
-                    catch {
+                    } catch {
                         return @{
                             Success            = $false
                             ProjectName        = $projectObj.name
@@ -392,24 +395,20 @@ function Get-PSUADOVariableGroupInventory {
                                 $variableGroupInventory.AddRange($jobResult.Results)
                             }
                             $successfulProjects++
-                        }
-                        else {
+                        } else {
                             Write-Warning "Failed to process project '$($jobResult.ProjectName)': $($jobResult.ErrorMessage)"
                             $failedProjects++
                         }
-                    }
-                    catch {
+                    } catch {
                         Write-Warning "Error receiving job results for project: $($_.Exception.Message)"
                         $failedProjects++
-                    }
-                    finally {
+                    } finally {
                         Remove-Job -Job $job -Force -ErrorAction SilentlyContinue
                     }
                 }
 
                 Write-Verbose "ThreadJob processing completed. Successful: $successfulProjects, Failed: $failedProjects"
-            }
-            else {
+            } else {
                 # Sequential processing
                 Write-Verbose "Using sequential processing (ThreadJobs not available or single project)"
 
@@ -480,8 +479,7 @@ function Get-PSUADOVariableGroupInventory {
                                         $varName = $property.Name
                                         $varValue = if ($property.Value.isSecret -eq $true) {
                                             '********'
-                                        }
-                                        else {
+                                        } else {
                                             $property.Value.value
                                         }
 
@@ -498,12 +496,10 @@ function Get-PSUADOVariableGroupInventory {
 
                                 $variableGroupInventory.Add($inventoryItem)
                             }
-                        }
-                        else {
+                        } else {
                             Write-Verbose "No variable groups found in project '$($projectObj.name)'"
                         }
-                    }
-                    catch {
+                    } catch {
                         $errorMessage = "Failed to retrieve variable groups for project '$($projectObj.name)': $($_.Exception.Message)"
                         Write-Warning $errorMessage
                         Write-Verbose "Full error details: $($_.Exception | Format-List * | Out-String)"
@@ -518,8 +514,7 @@ function Get-PSUADOVariableGroupInventory {
             if ($variableGroupInventory.Count -eq 0) {
                 Write-Information "No variable groups found in the specified projects." -InformationAction Continue
                 return @()
-            }
-            else {
+            } else {
                 # Apply Filter if specified (similar to Get-ADUser -Filter)
                 $finalResults = $variableGroupInventory
 
@@ -531,8 +526,7 @@ function Get-PSUADOVariableGroupInventory {
                     $count = $item.VariableCount
                     if ($count -is [array]) {
                         $totalVariables += [int]$count[0]
-                    }
-                    else {
+                    } else {
                         $totalVariables += [int]$count
                     }
                 }
@@ -544,11 +538,11 @@ function Get-PSUADOVariableGroupInventory {
                     TotalVariables             = $totalVariables
                 }
 
-                Write-Information "Inventory Summary:" -InformationAction Continue
-                Write-Information "  - Total Variable Groups: $($summary.TotalVariableGroups)" -InformationAction Continue
-                Write-Information "  - Projects Processed: $($summary.ProjectsProcessed)" -InformationAction Continue
-                Write-Information "  - Projects with Variable Groups: $($summary.ProjectsWithVariableGroups)" -InformationAction Continue
-                Write-Information "  - Total Variables: $($summary.TotalVariables)" -InformationAction Continue
+                Write-Host "Inventory Summary:" -ForegroundColor Green
+                Write-Host "  - Total Variable Groups: $($summary.TotalVariableGroups)" -ForegroundColor Cyan
+                Write-Host "  - Projects Processed: $($summary.ProjectsProcessed)" -ForegroundColor Cyan
+                Write-Host "  - Projects with Variable Groups: $($summary.ProjectsWithVariableGroups)" -ForegroundColor Cyan
+                Write-Host "  - Total Variables: $($summary.TotalVariables)" -ForegroundColor Cyan
 
                 # Export to file if specified
                 if ($OutputFilePath) {
@@ -569,8 +563,7 @@ function Get-PSUADOVariableGroupInventory {
                             }
                         }
                         Write-Information "Results exported to: $OutputFilePath" -InformationAction Continue
-                    }
-                    catch {
+                    } catch {
                         Write-Warning "Failed to export results to '$OutputFilePath': $($_.Exception.Message)"
                     }
                 }
@@ -580,8 +573,7 @@ function Get-PSUADOVariableGroupInventory {
                 # Return the inventory
                 return $finalResults.ToArray()
             }
-        }
-        catch {
+        } catch {
             Write-Progress -Activity "Azure DevOps Variable Group Inventory" -Status "Error occurred" -PercentComplete 100 -Completed
             $errorMessage = "Failed to retrieve variable group inventory: $($_.Exception.Message)"
             Write-Error $errorMessage

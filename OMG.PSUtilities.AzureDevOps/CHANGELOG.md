@@ -1,4 +1,97 @@
+## [1.0.10] - 16th October 2025
+### Added
+- New `Get-PSUADOWorkItem.ps1` (Public): Retrieves a work item from Azure DevOps.
+- New `Get-PSUADOWorkItemStates.ps1` (Public): Retrieves all available states for Azure DevOps work item types in a project.
+- New `Invoke-PSUADORepoClone.ps1` (Public): Clones all repositories from an Azure DevOps project to a local directory.
+- New `New-PSUADOBug.ps1` (Public): Creates a new bug work item in Azure DevOps.
+- New `New-PSUADOSpike.ps1` (Public): Creates a new spike work item in Azure DevOps.
+- New `New-PSUADOTask.ps1` (Public): Creates a new task work item in Azure DevOps.
+- New `New-PSUADOVariable.ps1` (Public): Adds a variable to an existing Azure DevOps Variable Group.
+- New `New-PSUADOVariableGroup.ps1` (Public): Creates a new Azure DevOps Variable Group.
+- New `Set-PSUADOBug.ps1` (Public): Updates an existing bug in Azure DevOps.
+- New `Set-PSUADOSpike.ps1` (Public): Updates an existing spike work item in Azure DevOps.
+- New `Set-PSUADOTask.ps1` (Public): Updates an existing task in Azure DevOps.
+- New `Set-PSUADOVariable.ps1` (Public): Updates an existing variable in an Azure DevOps Variable Group.
+- New `Set-PSUADOVariableGroup.ps1` (Public): Updates an existing Azure DevOps Variable Group.
+
+### Changed
+- Updated `ConvertTo-CapitalizedObject.ps1` (Private) to ensure the function block is properly terminated.
+- Improved error handling in `Get-PSUAdoAuthHeader.ps1` (Private) when the Azure DevOps PAT is missing.
+- Made `Project` and `Repository` parameters mandatory in `Approve-PSUADOPullRequest.ps1` (Public).
+- Replaced auto-detection logic for `Organization`, `Project`, and `Repository` with mandatory parameters in `Approve-PSUADOPullRequest.ps1` (Public).
+- Addressed issue where profile APIs are hosted under `vssps.dev.azure.com` to `Approve-PSUADOPullRequest.ps1` (Public).
+- Made `Project` and `Repository` parameters mandatory in `Complete-PSUADOPullRequest.ps1` (Public).
+- Replaced auto-detection logic for `Organization`, `Project`, and `Repository` with mandatory parameters in `Complete-PSUADOPullRequest.ps1` (Public).
+- Enhanced completion logic with source commit id in `Complete-PSUADOPullRequest.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADOPipeline.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `Get-PSUADOPipeline.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADOPipelineBuild.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOPipelineLatestRun.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOProjectList.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOPullRequest.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `Get-PSUADOPullRequest.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADOPullRequestInventory.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `Get-PSUADORepoBranchList.ps1` (Public).
+- Made `RepositoryId` and `RepositoryName` mandatory and created parameter sets in `Get-PSUADORepoBranchList.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADORepositories.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOVariableGroupInventory.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `New-PSUADOBug.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOBug.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOPullRequest.ps1` (Public) to use `$env:ORGANIZATION`.
+- Replaced auto-detection logic for `Organization`, `Project`, and `Repository` with mandatory parameters in `New-PSUADOPullRequest.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOSpike.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOSpike.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOTask.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOTask.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOUserStory.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOUserStory.ps1` (Public).
+
+### Removed
+- Removed `Set-PSUADOEnvVariable--wip.ps1` (Public) since this was work in progress and not finalized.
+
 # CHANGELOG
+
+## [1.0.9] - 15th October 2025
+### Fixed
+- **CRITICAL**: Fixed 18 functions with duplicate validation code in process{} blocks
+  - Removed performance-degrading duplicate validations that ran per pipeline item
+  - Corrected begin{}/process{} separation of concerns
+  - Functions affected: Get-PSUADOProjectList, Get-PSUADORepositories, Get-PSUADORepoBranchList, Get-PSUADOWorkItem, New-PSUADOBug, New-PSUADOSpike, New-PSUADOTask, New-PSUADOUserStory, New-PSUADOVariable, New-PSUADOVariableGroup, Set-PSUADOBug, Set-PSUADOSpike, Set-PSUADOTask, Set-PSUADOUserStory, Set-PSUADOVariable, Set-PSUADOVariableGroup, New-PSUADOPullRequest, Invoke-PSUADORepoClone
+- **CRITICAL**: Fixed syntax error in Get-PSUADOPullRequest.ps1 (duplicate try block causing parse error)
+- **MEDIUM**: Added 4 missing functions to module manifest FunctionsToExport
+  - New-PSUADOVariable
+  - New-PSUADOVariableGroup
+  - Set-PSUADOVariable
+  - Set-PSUADOVariableGroup
+
+### Changed
+- Standardized code formatting to K&R brace style across all 26 functions
+- Implemented `} else {` on same line convention throughout codebase
+- Enhanced error handling consistency across all functions
+- Improved parameter ordering compliance verification
+
+### Added
+- Format-AllPowerShellFiles.ps1 for automated code formatting with whitespace cleanup
+- Trailing whitespace removal in code formatting process
+- Excessive blank line removal (max 2 consecutive blank lines)
+- .vscode/settings.json with PowerShell formatting rules
+- BUG-FIX-SUMMARY-2025-01-15.md - Detailed bug analysis and fix documentation
+- COMPREHENSIVE-REVIEW-2025-01-15.md - Complete module quality assessment
+- COMPREHENSIVE-REVIEW-2025-01-15-FINAL.md - Final review after all fixes
+
+### Documentation
+- Enhanced Instructions-Validation-Pattern.md with:
+  - Code Formatting Standard section with K&R brace style rules
+  - Common Migration Mistakes section documenting duplicate code pattern
+  - Enhanced verification checklist with formatting checks
+  - Bug prevention guidelines
+- Updated README.md with all 26 functions organized by category
+- Added comprehensive usage examples for work items, variables, and variable groups
+
+### Performance
+- Eliminated duplicate validation overhead in pipeline processing
+- Single-run validation in begin{} instead of per-item in process{}
+- Optimized header creation (once per pipeline vs per item)
 
 ## [1.0.8] - 2025-08-19
 ### Changed

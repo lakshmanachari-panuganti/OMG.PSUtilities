@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.Core.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.9'
+ModuleVersion = '1.0.11'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -86,13 +86,15 @@ FunctionsToExport = @(
     'Get-PSUUserSession',
     'New-PSUGithubPullRequest',
     'New-PSUHTMLReport',
+    'New-PSUOutlookMeeting',
     'Remove-PSUUserEnvironmentVariable',
     'Remove-PSUUserSession',
     'Send-PSUHTMLReport',
     'Send-PSUTeamsMessage',
     'Set-PSUUserEnvironmentVariable',
     'Test-PSUInternetConnection',
-    'Uninstall-PSUInstalledSoftware'
+    'Uninstall-PSUInstalledSoftware',
+    'Unlock-PSUTerraformStateAWS'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
