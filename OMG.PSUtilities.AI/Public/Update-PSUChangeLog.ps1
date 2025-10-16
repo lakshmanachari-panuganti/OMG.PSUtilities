@@ -35,16 +35,27 @@ function Update-PSUChangeLog {
         [string]$FeatureBranch = $(git branch --show-current 2>$null)
     )
     process {
-        if ($null -eq $ModuleName) {
-            $ModuleName = Get-PSUGitFileChangeMetadata | 
+        if ([string]::IsNullOrWhiteSpace($ModuleName)) {
+            $gitChanges = Get-PSUGitFileChangeMetadata | 
             Where-Object { 
                 $_.file -like 'OMG.PSUtilities.*/*/*.ps1' -and
                 $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
-            } |
-            ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique
+            } 
+            $ModuleList = @($gitChanges | ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique)
+            $ModuleName = @()
+            foreach ($Module in $ModuleList) {
+                Write-Host "Detected following files changed in module: [$Module]" -ForegroundColor Yellow
+                $gitChanges | Where-Object { $_.file -like "$Module/*" } | ForEach-Object { Write-Host " - $($_.file)" -ForegroundColor Cyan }
+                $yOrn = Read-Host "Do you want to update change log for this module? [Y/N]"
+                if($yOrn -eq "Y") {
+                    $ModuleName += $Module
+                } else {
+                    Write-Host "Skipping Update-PSUChangeLog for module [$Module]" -ForegroundColor Cyan
+                }
+            }
         }
         foreach ($thisModuleName in $ModuleName) {
-            Write-Host "Starting Update-PSUChangeLog for module [$thisModuleName]"
+            Write-Host "Starting Update-PSUChangeLog for module [$thisModuleName]" -ForegroundColor Cyan
             try {
                 $moduleRoot = Join-Path $RootPath $thisModuleName
                 $changelogPath = Join-Path $moduleRoot 'CHANGELOG.md'
