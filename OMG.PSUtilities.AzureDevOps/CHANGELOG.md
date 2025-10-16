@@ -1,3 +1,54 @@
+## [1.0.10] - 16th October 2025
+### Added
+- New `Get-PSUADOWorkItem.ps1` (Public): Retrieves a work item from Azure DevOps.
+- New `Get-PSUADOWorkItemStates.ps1` (Public): Retrieves all available states for Azure DevOps work item types in a project.
+- New `Invoke-PSUADORepoClone.ps1` (Public): Clones all repositories from an Azure DevOps project to a local directory.
+- New `New-PSUADOBug.ps1` (Public): Creates a new bug work item in Azure DevOps.
+- New `New-PSUADOSpike.ps1` (Public): Creates a new spike work item in Azure DevOps.
+- New `New-PSUADOTask.ps1` (Public): Creates a new task work item in Azure DevOps.
+- New `New-PSUADOVariable.ps1` (Public): Adds a variable to an existing Azure DevOps Variable Group.
+- New `New-PSUADOVariableGroup.ps1` (Public): Creates a new Azure DevOps Variable Group.
+- New `Set-PSUADOBug.ps1` (Public): Updates an existing bug in Azure DevOps.
+- New `Set-PSUADOSpike.ps1` (Public): Updates an existing spike work item in Azure DevOps.
+- New `Set-PSUADOTask.ps1` (Public): Updates an existing task in Azure DevOps.
+- New `Set-PSUADOVariable.ps1` (Public): Updates an existing variable in an Azure DevOps Variable Group.
+- New `Set-PSUADOVariableGroup.ps1` (Public): Updates an existing Azure DevOps Variable Group.
+
+### Changed
+- Updated `ConvertTo-CapitalizedObject.ps1` (Private) to ensure the function block is properly terminated.
+- Improved error handling in `Get-PSUAdoAuthHeader.ps1` (Private) when the Azure DevOps PAT is missing.
+- Made `Project` and `Repository` parameters mandatory in `Approve-PSUADOPullRequest.ps1` (Public).
+- Replaced auto-detection logic for `Organization`, `Project`, and `Repository` with mandatory parameters in `Approve-PSUADOPullRequest.ps1` (Public).
+- Addressed issue where profile APIs are hosted under `vssps.dev.azure.com` to `Approve-PSUADOPullRequest.ps1` (Public).
+- Made `Project` and `Repository` parameters mandatory in `Complete-PSUADOPullRequest.ps1` (Public).
+- Replaced auto-detection logic for `Organization`, `Project`, and `Repository` with mandatory parameters in `Complete-PSUADOPullRequest.ps1` (Public).
+- Enhanced completion logic with source commit id in `Complete-PSUADOPullRequest.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADOPipeline.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `Get-PSUADOPipeline.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADOPipelineBuild.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOPipelineLatestRun.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOProjectList.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOPullRequest.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `Get-PSUADOPullRequest.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADOPullRequestInventory.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `Get-PSUADORepoBranchList.ps1` (Public).
+- Made `RepositoryId` and `RepositoryName` mandatory and created parameter sets in `Get-PSUADORepoBranchList.ps1` (Public).
+- Added default value for the `Organization` parameter in `Get-PSUADORepositories.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `Get-PSUADOVariableGroupInventory.ps1` (Public) to use `$env:ORGANIZATION`.
+- Added default value for the `Organization` parameter in `New-PSUADOBug.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOBug.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOPullRequest.ps1` (Public) to use `$env:ORGANIZATION`.
+- Replaced auto-detection logic for `Organization`, `Project`, and `Repository` with mandatory parameters in `New-PSUADOPullRequest.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOSpike.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOSpike.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOTask.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOTask.ps1` (Public).
+- Added default value for the `Organization` parameter in `New-PSUADOUserStory.ps1` (Public) to use `$env:ORGANIZATION`.
+- Made the `Project` parameter mandatory in `New-PSUADOUserStory.ps1` (Public).
+
+### Removed
+- Removed `Set-PSUADOEnvVariable--wip.ps1` (Public) since this was work in progress and not finalized.
+
 # CHANGELOG
 
 ## [1.0.9] - 15th October 2025

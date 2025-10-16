@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AzureDevOps.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.9'
+ModuleVersion = '1.0.10'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -85,6 +85,7 @@ FunctionsToExport = @(
     'Get-PSUADORepositories',
     'Get-PSUADOVariableGroupInventory',
     'Get-PSUADOWorkItem',
+    'Get-PSUADOWorkItemStates',
     'Invoke-PSUADORepoClone',
     'New-PSUADOBug',
     'New-PSUADOPullRequest',

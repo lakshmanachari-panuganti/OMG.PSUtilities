@@ -30,6 +30,7 @@ $PublicFunctions = @(
     'Get-PSUADORepositories',
     'Get-PSUADOVariableGroupInventory',
     'Get-PSUADOWorkItem',
+    'Get-PSUADOWorkItemStates',
     'Invoke-PSUADORepoClone',
     'New-PSUADOBug',
     'New-PSUADOPullRequest',

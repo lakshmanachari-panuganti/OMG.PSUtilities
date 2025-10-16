@@ -133,7 +133,7 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
 
             if ($PSCmdlet.ShouldProcess($ModuleName, "Update CHANGELOG.md")) {
                 Write-Verbose "Invoking AI summarization..."
-                $ChangeLogSummary = Invoke-PSUPromptOnAzureOpenAi -Prompt ($prompt | Out-String)
+                $ChangeLogSummary = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
 
                 Write-Verbose "Fetching module metadata..."
                 $psd1Path = Get-PSUModule -ScriptPath $changelogPath | Select-Object -ExpandProperty ManifestPath
