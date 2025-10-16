@@ -1,4 +1,4 @@
-function Update-OMGModuleVersion {
+function Update-PSUModuleVersion {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory,

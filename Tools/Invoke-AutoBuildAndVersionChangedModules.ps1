@@ -16,7 +16,6 @@ $toolsPath = Join-Path $rootPath 'Tools'
 # Import reusable build functions
 . "$toolsPath\Build-OMGModuleLocally.ps1"
 . "$toolsPath\Reset-OMGModuleManifests.ps1.ps1"
-. "$toolsPath\Update-OMGModuleVersion.ps1"
 
 Write-Host "Scanning for modified modules..." -ForegroundColor Cyan
 
@@ -99,7 +98,7 @@ foreach ($thismodule in $changedModules.Keys) {
 
     # Bump module version and get new version
 
-    $newVersion = Update-OMGModuleVersion -ModuleName $thismodule -Increment Patch
+    $newVersion = Update-PSUModuleVersion -ModuleName $thismodule -Increment Patch
 
     # Update CHANGELOG
     if (-not $DryRun) {

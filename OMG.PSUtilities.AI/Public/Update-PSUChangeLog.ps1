@@ -22,7 +22,7 @@ function Update-PSUChangeLog {
     [Alias("aichangelog")]
     param(
         [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
-        [string]$ModuleName,
+        $ModuleName,
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
@@ -42,18 +42,19 @@ function Update-PSUChangeLog {
                 $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
             } 
             $ModuleList = @($gitChanges | ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique)
-            $ModuleName = @()
+            $ModuleName = [System.Collections.Generic.List[string]]::new()
             foreach ($Module in $ModuleList) {
                 Write-Host "Detected following files changed in module: [$Module]" -ForegroundColor Yellow
                 $gitChanges | Where-Object { $_.file -like "$Module/*" } | ForEach-Object { Write-Host " - $($_.file)" -ForegroundColor Cyan }
                 $yOrn = Read-Host "Do you want to update change log for this module? [Y/N]"
                 if($yOrn -eq "Y") {
-                    $ModuleName += $Module
+                    $ModuleName.Add($Module)
                 } else {
                     Write-Host "Skipping Update-PSUChangeLog for module [$Module]" -ForegroundColor Cyan
                 }
             }
         }
+
         foreach ($thisModuleName in $ModuleName) {
             Write-Host "Starting Update-PSUChangeLog for module [$thisModuleName]" -ForegroundColor Cyan
             try {
@@ -162,7 +163,6 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                     if ($currentChangelog.StartsWith("## [$($psDataFile.ModuleVersion)]")) {
                         Write-Host "Already found existing changelog entry for version $($psDataFile.ModuleVersion)" -ForegroundColor Green
                     } else {
-
                         $entry = "## [$($psDataFile.ModuleVersion)] - $(Get-OrdinalDate)`n$ChangeLogSummary`n"
                         $newChangelog = $entry + $currentChangelog
                         Set-Content -Path $changelogPath -Value $newChangelog -Encoding UTF8
@@ -171,7 +171,7 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                     }
                 }
             } catch {
-                $PSCmdlet.ThrowTerminatingError( "Failed to update changelog for $thisModuleName. Error: $_")
+                $PSCmdlet.ThrowTerminatingError("Failed to update changelog for $thisModuleName. Error: $_")
             }
         }
         
