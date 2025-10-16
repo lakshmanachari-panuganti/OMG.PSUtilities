@@ -52,9 +52,9 @@ function Update-PSUChangeLog {
             $ModuleList = @($gitChanges | ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique)
             $ModuleName = [System.Collections.Generic.List[string]]::new()
             foreach ($Module in $ModuleList) {
-                Write-Host "Detected following files changed in module: [$Module]" -ForegroundColor Yellow
+                Write-Host "[$Module] Detected following files changed" -ForegroundColor Yellow
                 $gitChanges | Where-Object { $_.file -like "$Module/*" } | ForEach-Object { Write-Host " - $($_.file)" -ForegroundColor Cyan }
-                $yOrn = Read-Host "Do you want to update change log for this module? [Y/N]"
+                $yOrn = Read-Host "[$Module] Do you want to update change log for this module? [Y/N]"
                 if($yOrn -eq "Y") {
                     $ModuleName.Add($Module)
                 } else {
