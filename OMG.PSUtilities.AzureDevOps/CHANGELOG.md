@@ -1,3 +1,11 @@
+## [1.0.11] - 16th October 2025
+### Added
+- Added `State` parameter to `New-PSUADOUserStory.ps1` to set the initial state of the user story.
+
+### Changed
+- Updated `New-PSUADOUserStory.ps1` and `Set-PSUADOUserStory.ps1` to include validation for the `State` parameter against available states.
+- Updated `Set-PSUADOUserStory.ps1` to remove the `ValidateSet` attribute from the `State` parameter.
+
 ## [1.0.10] - 16th October 2025
 ### Added
 - New `Get-PSUADOWorkItem.ps1` (Public): Retrieves a work item from Azure DevOps.

@@ -160,19 +160,13 @@ function Set-PSUADOUserStory {
         $headers['Content-Type'] = 'application/json-patch+json'
 
         # Validate State parameter if provided
-        <#
         if ($State) {
-            try {
-                $availableStates = Get-PSUADOWorkItemStates -Project $Project -WorkItemType "User Story" -Organization $Organization -PAT $PAT
-                $validStates = $availableStates.States | Select-Object -ExpandProperty Name
-                if ($State -notin $validStates) {
-                    throw "Invalid state '$State' for User Story work item type. Valid states are: $($validStates -join ', ')"
-                }
-            } catch {
-                Write-Warning "Could not validate state '$State' against available states: $($_.Exception.Message)"
+            $availableStates = Get-PSUADOWorkItemStates -Project $Project -WorkItemType "User Story" -Organization $Organization -PAT $PAT
+            $validStates = $availableStates.States | Select-Object -ExpandProperty Name
+            if ($State -notin $validStates) {
+                throw "Invalid state '$State' for User Story work item type. Valid states are: $($validStates -join ', ')"
             }
         }
-        #>
     }
     process {
         try {
@@ -183,7 +177,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('Title')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.Title'
                     value = $Title
                 }
@@ -191,7 +185,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('Description')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.Description'
                     value = $Description
                 }
@@ -199,7 +193,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('State')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.State'
                     value = $State
                 }
@@ -207,7 +201,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('Priority')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/Microsoft.VSTS.Common.Priority'
                     value = $Priority
                 }
@@ -215,7 +209,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('StoryPoints')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/Microsoft.VSTS.Scheduling.StoryPoints'
                     value = $StoryPoints
                 }
@@ -223,7 +217,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('AssignedTo')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.AssignedTo'
                     value = $AssignedTo
                 }
@@ -231,7 +225,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('AreaPath')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.AreaPath'
                     value = $AreaPath
                 }
@@ -239,7 +233,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('IterationPath')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.IterationPath'
                     value = $IterationPath
                 }
@@ -247,7 +241,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('Tags')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.Tags'
                     value = $Tags
                 }
@@ -255,7 +249,7 @@ function Set-PSUADOUserStory {
 
             if ($PSBoundParameters.ContainsKey('AcceptanceCriteria')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/Microsoft.VSTS.Common.AcceptanceCriteria'
                     value = $AcceptanceCriteria
                 }
@@ -264,6 +258,9 @@ function Set-PSUADOUserStory {
             if ($patchDocument.Count -eq 0) {
                 throw "At least one property must be specified to update."
             }
+
+            Write-Verbose "Patch document count: $($patchDocument.Count)"
+            Write-Verbose "Patch document: $($patchDocument | ConvertTo-Json -Depth 10)"
 
             # Construct API URI
             $escapedProject = if ($Project -match '%[0-9A-Fa-f]{2}') {
@@ -277,7 +274,7 @@ function Set-PSUADOUserStory {
             Write-Verbose "API URI: $uri"
             Write-Verbose "Patch operations: $($patchDocument.Count)"
 
-            $body = $patchDocument | ConvertTo-Json -Depth 10
+            $body = $patchDocument | ConvertTo-Json -Depth 10 -AsArray
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Patch -Body $body -ErrorAction Stop
 
             [PSCustomObject]@{
