@@ -32,14 +32,16 @@ function Update-PSUChangeLog {
         [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD 2>$null),
 
         [Parameter()]
-        [string]$FeatureBranch = $(git branch --show-current 2>$null)
+        [string]$FeatureBranch = $(git branch --show-current 2>$null),
 
         [Parameter()]
         [switch]$AllGitChanges
     )
     process {
         if ([string]::IsNullOrWhiteSpace($ModuleName)) {
-            $gitChanges = Get-PSUGitFileChangeMetadata
+            $gitChanges = Get-PSUGitFileChangeMetadata | Where-Object { 
+                    $_.file -like 'OMG.PSUtilities.*/*'
+                } 
             if (-not $AllGitChanges.IsPresent) {
                 $gitChanges = $gitChanges | Where-Object { 
                     $_.file -like 'OMG.PSUtilities.*/*/*.ps1' -and
