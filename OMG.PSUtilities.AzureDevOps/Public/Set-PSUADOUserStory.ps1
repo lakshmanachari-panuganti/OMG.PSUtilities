@@ -89,12 +89,15 @@ function Set-PSUADOUserStory {
         [int]$Id,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Title,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Description,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$State,
 
         [Parameter()]
@@ -106,18 +109,23 @@ function Set-PSUADOUserStory {
         [double]$StoryPoints,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AssignedTo,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AreaPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$IterationPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Tags,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AcceptanceCriteria,
 
         [Parameter(Mandatory)]
@@ -132,7 +140,6 @@ function Set-PSUADOUserStory {
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-
 
     begin {
         # Display parameters
@@ -170,8 +177,6 @@ function Set-PSUADOUserStory {
     }
     process {
         try {
-
-
             # Build the patch document
             $patchDocument = @()
 
