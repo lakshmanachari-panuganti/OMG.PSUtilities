@@ -33,14 +33,20 @@ function Update-PSUChangeLog {
 
         [Parameter()]
         [string]$FeatureBranch = $(git branch --show-current 2>$null)
+
+        [Parameter()]
+        [switch]$AllGitChanges
     )
     process {
         if ([string]::IsNullOrWhiteSpace($ModuleName)) {
-            $gitChanges = Get-PSUGitFileChangeMetadata | 
-            Where-Object { 
-                $_.file -like 'OMG.PSUtilities.*/*/*.ps1' -and
-                $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
-            } 
+            $gitChanges = Get-PSUGitFileChangeMetadata
+            if (-not $AllGitChanges.IsPresent) {
+                $gitChanges = $gitChanges | Where-Object { 
+                    $_.file -like 'OMG.PSUtilities.*/*/*.ps1' -and
+                    $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
+                } 
+            }
+
             $ModuleList = @($gitChanges | ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique)
             $ModuleName = [System.Collections.Generic.List[string]]::new()
             foreach ($Module in $ModuleList) {
