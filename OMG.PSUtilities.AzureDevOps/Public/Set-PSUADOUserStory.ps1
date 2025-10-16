@@ -20,8 +20,7 @@ function Set-PSUADOUserStory {
         (Optional) The new description for the user story.
 
     .PARAMETER State
-        (Optional) The state of the user story.
-        Common values: 'New', 'Active', 'Resolved', 'Closed', 'Removed'.
+        (Optional) The state of the user story. Must be a valid state for the User Story work item type in the project.
 
     .PARAMETER Priority
         (Optional) The priority of the user story. Valid values: 1, 2, 3, 4.
@@ -96,7 +95,6 @@ function Set-PSUADOUserStory {
         [string]$Description,
 
         [Parameter()]
-        [ValidateSet('New', 'Active', 'Resolved', 'Closed', 'Removed')]
         [string]$State,
 
         [Parameter()]
@@ -160,6 +158,19 @@ function Set-PSUADOUserStory {
 
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
         $headers['Content-Type'] = 'application/json-patch+json'
+
+        # Validate State parameter if provided
+        if ($State) {
+            try {
+                $availableStates = Get-PSUADOWorkItemStates -Project $Project -WorkItemType "User Story" -Organization $Organization -PAT $PAT
+                $validStates = $availableStates.States | Select-Object -ExpandProperty Name
+                if ($State -notin $validStates) {
+                    throw "Invalid state '$State' for User Story work item type. Valid states are: $($validStates -join ', ')"
+                }
+            } catch {
+                Write-Warning "Could not validate state '$State' against available states: $($_.Exception.Message)"
+            }
+        }
     }
     process {
         try {

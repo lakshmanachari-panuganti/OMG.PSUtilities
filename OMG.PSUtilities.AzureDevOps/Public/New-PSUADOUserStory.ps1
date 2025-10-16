@@ -5,7 +5,7 @@ function New-PSUADOUserStory {
 
     .DESCRIPTION
         This function creates a new user story in Azure DevOps using the REST API.
-        It allows you to specify the title, description, acceptance criteria, priority, and other properties.
+        It allows you to specify the title, description, acceptance criteria, priority, state, and other properties.
         Returns the created user story details as follows.
             ID
             Title
@@ -49,6 +49,9 @@ function New-PSUADOUserStory {
     .PARAMETER Tags
         Comma-separated tags to apply to the work item (optional).
 
+    .PARAMETER State
+        The initial state of the user story. Must be a valid state for the User Story work item type. If not specified, uses the project default state (optional).
+
     .PARAMETER Project
         (Mandatory) The Azure DevOps project name where the user story will be created.
 
@@ -66,9 +69,9 @@ function New-PSUADOUserStory {
         Creates a basic user story with title and description.
 
     .EXAMPLE
-        New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "Add search functionality" -Description "Users need to search products" -AcceptanceCriteria "Search returns relevant results" -Priority 1 -StoryPoints 5 -AssignedTo "user@company.com"
+        New-PSUADOUserStory -Organization "omg" -Project "psutilities" -Title "Add search functionality" -Description "Users need to search products" -AcceptanceCriteria "Search returns relevant results" -Priority 1 -StoryPoints 5 -AssignedTo "user@company.com" -State "Active"
 
-        Creates a detailed user story with all properties specified.
+        Creates a detailed user story with all properties specified, including setting the initial state to Active.
 
     .OUTPUTS
         [PSCustomObject]
@@ -115,6 +118,9 @@ function New-PSUADOUserStory {
         [Parameter()]
         [string]$Tags,
 
+        [Parameter()]
+        [string]$State,
+
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [string]$Project,
@@ -153,6 +159,21 @@ function New-PSUADOUserStory {
 
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
         $headers['Content-Type'] = 'application/json-patch+json'
+
+        # Validate State parameter if provided
+        <#
+        if ($State) {
+            try {
+                $availableStates = Get-PSUADOWorkItemStates -Project $Project -WorkItemType "User Story" -Organization $Organization -PAT $PAT
+                $validStates = $availableStates.States | Select-Object -ExpandProperty Name
+                if ($State -notin $validStates) {
+                    throw "Invalid state '$State' for User Story work item type. Valid states are: $($validStates -join ', ')"
+                }
+            } catch {
+                Write-Warning "Could not validate state '$State' against available states: $($_.Exception.Message)"
+            }
+        }
+        #>
     }
     process {
         try {
@@ -222,6 +243,14 @@ function New-PSUADOUserStory {
                     op    = "add"
                     path  = "/fields/System.Tags"
                     value = $Tags
+                }
+            }
+
+            if ($State) {
+                $fields += @{
+                    op    = "add"
+                    path  = "/fields/System.State"
+                    value = $State
                 }
             }
 
