@@ -86,17 +86,19 @@ function Set-PSUADOSpike {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$Id,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Title,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Description,
 
         [Parameter()]
-        [ValidateSet('New', 'Active', 'Resolved', 'Closed', 'Removed')]
+        [ValidateNotNullOrEmpty()]
         [string]$State,
 
         [Parameter()]
@@ -108,18 +110,23 @@ function Set-PSUADOSpike {
         [double]$Effort,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AssignedTo,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AreaPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$IterationPath,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$Tags,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$AcceptanceCriteria,
 
         [Parameter(Mandatory)]
@@ -158,6 +165,15 @@ function Set-PSUADOSpike {
             throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
         }
 
+        # Validate State parameter if provided
+        if ($State) {
+            $availableStates = Get-PSUADOWorkItemStates -Project $Project -WorkItemType "Spike" -Organization $Organization -PAT $PAT
+            $validStates = $availableStates.States | Select-Object -ExpandProperty Name
+            if ($State -notin $validStates) {
+                throw "Invalid state '$State' for Spike work item type. Valid states are: $($validStates -join ', ')"
+            }
+        }
+
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
         $headers['Content-Type'] = 'application/json-patch+json'
     }
@@ -170,7 +186,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('Title')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.Title'
                     value = $Title
                 }
@@ -178,7 +194,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('Description')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.Description'
                     value = $Description
                 }
@@ -186,7 +202,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('State')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.State'
                     value = $State
                 }
@@ -194,7 +210,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('Priority')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/Microsoft.VSTS.Common.Priority'
                     value = $Priority
                 }
@@ -202,7 +218,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('Effort')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/Microsoft.VSTS.Scheduling.Effort'
                     value = $Effort
                 }
@@ -210,7 +226,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('AssignedTo')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.AssignedTo'
                     value = $AssignedTo
                 }
@@ -218,7 +234,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('AreaPath')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.AreaPath'
                     value = $AreaPath
                 }
@@ -226,7 +242,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('IterationPath')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.IterationPath'
                     value = $IterationPath
                 }
@@ -234,7 +250,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('Tags')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/System.Tags'
                     value = $Tags
                 }
@@ -242,7 +258,7 @@ function Set-PSUADOSpike {
 
             if ($PSBoundParameters.ContainsKey('AcceptanceCriteria')) {
                 $patchDocument += @{
-                    op    = 'add'
+                    op    = 'replace'
                     path  = '/fields/Microsoft.VSTS.Common.AcceptanceCriteria'
                     value = $AcceptanceCriteria
                 }
@@ -264,7 +280,7 @@ function Set-PSUADOSpike {
             Write-Verbose "API URI: $uri"
             Write-Verbose "Patch operations: $($patchDocument.Count)"
 
-            $body = $patchDocument | ConvertTo-Json -Depth 10
+            $body = $patchDocument | ConvertTo-Json -Depth 10 -AsArray
             $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Patch -Body $body -ErrorAction Stop
 
             [PSCustomObject]@{

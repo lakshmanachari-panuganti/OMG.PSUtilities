@@ -40,7 +40,8 @@ $PublicFunctions = @(
     'Set-PSUUserEnvironmentVariable',
     'Test-PSUInternetConnection',
     'Uninstall-PSUInstalledSoftware',
-    'Unlock-PSUTerraformStateAWS'
+    'Unlock-PSUTerraformStateAWS',
+    'Update-PSUModuleVersion'
 )
 
 $AliasesToExport = @(

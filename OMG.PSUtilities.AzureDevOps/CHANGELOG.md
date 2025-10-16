@@ -1,3 +1,20 @@
+## [1.0.12] - 17th October 2025
+### Changed
+- Changed validation for `$PullRequestId` parameter in `Approve-PSUADOPullRequest.ps1` and `Complete-PSUADOPullRequest.ps1` to use `ValidateRange` attribute.
+- Changed validation for `$Id` parameter in `Get-PSUADOPipeline.ps1`, `Get-PSUADOWorkItem.ps1`, `New-PSUADOVariable.ps1`, `Set-PSUADOBug.ps1`, `Set-PSUADOSpike.ps1`, `Set-PSUADOTask.ps1`, `Set-PSUADOUserStory.ps1` and `Set-PSUADOVariableGroup.ps1` to use `ValidateRange` attribute.
+- Added `ValidateNotNullOrEmpty` attribute to `$Project` parameter in `Get-PSUADORepositories.ps1`.
+- Added `ValidateNotNullOrEmpty` attribute to `$Title`, `$Description`, `$ReproSteps`, `$State`, `$Severity`, `$AssignedTo`, `$AreaPath`, and `$IterationPath`, `$Tags` parameters in `Set-PSUADOBug.ps1`.
+- Added validation for `$State` parameter in `Set-PSUADOBug.ps1` to check against available states.
+- Changed `op` from `add` to `replace` for all parameters in `Set-PSUADOBug.ps1`.
+- Added `ValidateNotNullOrEmpty` attribute to `$Title`, `$Description`, `$State`, `$AssignedTo`, `$AreaPath`, `$IterationPath`, `$Tags` and `$AcceptanceCriteria` parameters in `Set-PSUADOSpike.ps1`.
+- Added validation for `$State` parameter in `Set-PSUADOSpike.ps1` to check against available states.
+- Changed `op` from `add` to `replace` for all parameters in `Set-PSUADOSpike.ps1`.
+- Added `ValidateNotNullOrEmpty` attribute to `$Title`, `$Description`, `$State`, `$Activity`, `$AssignedTo`, `$AreaPath`, and `$IterationPath`, `$Tags` parameters in `Set-PSUADOTask.ps1`.
+- Added validation for `$State` parameter in `Set-PSUADOTask.ps1` to check against available states.
+- Changed `op` from `add` to `replace` for all parameters in `Set-PSUADOTask.ps1`.
+- Added `ValidateNotNullOrEmpty` attribute to `$Title`, `$Description`, `$State`, `$AssignedTo`, `$AreaPath`, `$IterationPath`, `$Tags` and `$AcceptanceCriteria` parameters in `Set-PSUADOUserStory.ps1`.
+- Added `ValidateNotNullOrEmpty` attribute to `$VariableGroupName` parameter in `Set-PSUADOVariableGroup.ps1`.
+
 ## [1.0.11] - 16th October 2025
 ### Added
 - Added `State` parameter to `New-PSUADOUserStory.ps1` to set the initial state of the user story.

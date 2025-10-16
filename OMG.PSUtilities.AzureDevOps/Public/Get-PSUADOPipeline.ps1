@@ -58,7 +58,7 @@ function Get-PSUADOPipeline {
         [string]$Project,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$Id,
 
         [Parameter()]

@@ -1,4 +1,4 @@
-function Update-OMGModuleVersion {
+function Update-PSUModuleVersion {
     param (
         [Parameter(Mandatory)]
         [ValidateSet("Major", "Minor", "Patch")]

@@ -60,10 +60,11 @@ function Set-PSUADOVariableGroup {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$VariableGroupId,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$VariableGroupName,
 
         [Parameter()]

@@ -51,7 +51,7 @@ function Get-PSUADOWorkItem {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$Id,
 
         [Parameter(Mandatory)]
@@ -66,7 +66,6 @@ function Get-PSUADOWorkItem {
         [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
-
 
     begin {
         # Display parameters

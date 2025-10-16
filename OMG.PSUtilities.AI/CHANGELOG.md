@@ -1,3 +1,15 @@
+## [1.0.13] - 17th October 2025
+### Added
+- Parameter `AllGitChanges` to `Update-PSUChangeLog` to include all Git changes, including non-PowerShell files.
+
+### Changed
+- Modified `Update-PSUChangeLog` to process multiple modules based on Git changes.
+- Updated `Update-PSUChangeLog` to detect module changes and prompt the user for confirmation before updating the changelog for each module.
+- Updated `Update-PSUChangeLog` to check if a changelog entry already exists for the current module version and prompt to bump the module version.
+- Refactored `Update-PSUChangeLog` to improve error handling and logging.
+- Modified `New-PSUAiPoweredPullRequest` to call `Invoke-PSUGitCommit` if the user chooses to update the changelog.
+- Changed the `ModuleName` parameter in `Update-PSUChangeLog` to be optional.
+
 ## [1.0.12] - 16th October 2025
 ### Added
 - `Write-ColorOutput` (Private): Outputs a message with specified color to the console.

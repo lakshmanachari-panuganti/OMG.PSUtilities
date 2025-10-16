@@ -79,7 +79,7 @@ function Complete-PSUADOPullRequest {
         [string]$Repository,
 
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
+        [ValidateRange(1, [int]::MaxValue)]
         [int]$PullRequestId,
 
         [Parameter()]
