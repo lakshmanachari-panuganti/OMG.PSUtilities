@@ -83,6 +83,7 @@ function New-PSUAiPoweredPullRequest {
     $UpdateChangeLog = Read-Host "Do you want me to update ChangeLog.md file with the changes? (Y/N)"
     if ($UpdateChangeLog -eq 'Y') {
         Update-PSUChangeLog
+        Invoke-PSUGitCommit
     }
     $ChangeSummary = Get-PSUAiPoweredGitChangeSummary -ApiKeyGemini $ApiKey
 
