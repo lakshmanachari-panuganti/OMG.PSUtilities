@@ -1,3 +1,7 @@
+## [1.0.14] - 17th October 2025
+### Changed
+- Added `Start-Sleep -Seconds 3` to `New-PSUAiPoweredPullRequest` to ensure the changelog update completes before proceeding.
+
 ## [1.0.13] - 17th October 2025
 ### Added
 - Parameter `AllGitChanges` to `Update-PSUChangeLog` to include all Git changes, including non-PowerShell files.

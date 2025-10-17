@@ -84,6 +84,7 @@ function New-PSUAiPoweredPullRequest {
     if ($UpdateChangeLog -eq 'Y') {
         Update-PSUChangeLog
         Invoke-PSUGitCommit
+        Start-Sleep -Seconds 3
     }
     $ChangeSummary = Get-PSUAiPoweredGitChangeSummary -ApiKeyGemini $ApiKey
 
