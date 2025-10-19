@@ -1,3 +1,10 @@
+## [1.0.12] - 19th October 2025
+### Added
+- New `Update-OMGModuleVersion` (Public) function to increment the version of a specified PowerShell module by Major, Minor, or Patch.
+
+### Changed
+- Updated module's `.psd1` manifest file and `plasterManifest.xml` file.
+
 ## [1.0.11] - 17th October 2025
 ### Added
 - New `Update-OMGModuleVersion` (Public) cmdlet to update module version in `.psd1` and `plasterManifest.xml` files.

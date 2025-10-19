@@ -1,3 +1,8 @@
+## [1.0.15] - 19th October 2025
+### Changed
+- The `SourceBranch` and `TargetBranch` parameters in `New-PSUADOPullRequest` now default to the current Git branch and the remote HEAD branch, respectively.
+- Added validation to ensure `SourceBranch` and `TargetBranch` are in the available Git branches.
+
 ## [1.0.14] - 19th October 2025
 ### Added
 - Added validation of `SourceBranch` and `TargetBranch` against the available local git branches, ensuring they exist before creating the pull request.

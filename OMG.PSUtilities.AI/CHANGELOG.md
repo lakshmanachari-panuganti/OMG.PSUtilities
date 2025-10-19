@@ -1,3 +1,10 @@
+## [1.0.17] - 19th October 2025
+### Changed
+- Updated `Invoke-PSUAiPrompt` to include parameter validation, verbose logging, and improved error handling.
+- Added comprehensive comment-based help to `Invoke-PSUAiPrompt` including .SYNOPSIS, .DESCRIPTION, .PARAMETER, .EXAMPLE, .OUTPUTS, and .NOTES sections.
+- Updated `Update-PSUChangeLog` to include parameter descriptions, .OUTPUTS, and .NOTES sections in the comment-based help.
+- Changed `Update-PSUModuleVersion` to `Update-OMGModuleVersion` in `Update-PSUChangeLog`.
+
 ## [1.0.16] - 19th October 2025
 ### Added
 - Added parameter display output in `New-PSUAiPoweredPullRequest.ps1` for `FeatureBranch`, `BaseBranch`, `PullRequestTemplatePath`, and `CompleteOnApproval` to improve user feedback.
