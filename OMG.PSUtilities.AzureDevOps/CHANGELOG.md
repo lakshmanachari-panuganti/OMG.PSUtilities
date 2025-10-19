@@ -1,3 +1,14 @@
+## [1.0.14] - 19th October 2025
+### Added
+- Added validation of `SourceBranch` and `TargetBranch` against the available local git branches, ensuring they exist before creating the pull request.
+- Added automatic conversion of simple branch names (e.g., `feature-x`) to full ref format (`refs/heads/feature-x`) before request creation.
+- Added informative console output displaying pull request details such as source branch, target branch, repository identifier, title, and description.
+
+### Changed
+- Changed `SourceBranch` and `TargetBranch` parameter descriptions to accept branch names without the `refs/heads/` prefix (e.g., `feature/enhance-ui`, `main`).
+- Removed strict validation requiring branch names to be in the `refs/heads/branch-name` format.
+- Updated example default branch values to branch names without the `refs/heads/` prefix.
+- Standardized branch naming internally to use the full ref format only after validating branch existence.
 ## [1.0.13] - 19th October 2025
 ### Added
 - Added validation for `SourceBranch` and `TargetBranch` to accept branch names without the `refs/heads/` prefix.

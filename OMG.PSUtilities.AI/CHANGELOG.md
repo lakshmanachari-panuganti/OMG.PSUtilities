@@ -1,3 +1,15 @@
+## [1.0.16] - 19th October 2025
+### Added
+- Added parameter display output in `New-PSUAiPoweredPullRequest.ps1` for `FeatureBranch`, `BaseBranch`, `PullRequestTemplatePath`, and `CompleteOnApproval` to improve user feedback.
+
+### Changed
+- Removed the `ApiKeyGemini` parameter and related environment variable usage from `Get-PSUAiPoweredGitChangeSummary.ps1`.
+- Replaced calls from `Invoke-PSUPromptOnGeminiAi` to the new generic `Invoke-PSUAiPrompt` in `Get-PSUAiPoweredGitChangeSummary.ps1`, `Invoke-PSUGitCommit.ps1`, and `New-PSUAiPoweredPullRequest.ps1` to generalize AI prompt invocation.
+- Updated default branch retrieval syntax in `New-PSUAiPoweredPullRequest.ps1` to use regex replacement for cleaner base branch name.
+- Replaced `PullRequestTemplate` parameter with `PullRequestTemplatePath` in `New-PSUAiPoweredPullRequest.ps1` for clarity and consistency.
+- Removed all references to Gemini AI-specific API keys and usage from public functions to decouple from specific AI service.
+- Enhanced `New-PSUAiPoweredPullRequest.ps1` to optionally update `ChangeLog.md` and commit changes before generating the pull request summary using AI.
+- Adjusted internal logic in `New-PSUAiPoweredPullRequest.ps1` to test and read the pull request template file from the new `PullRequestTemplatePath` parameter.
 ## [1.0.15] - 19th October 2025
 ### Added
 - Added parameter display output for `FeatureBranch`, `BaseBranch`, `PullRequestTemplatePath`, and `CompleteOnApproval` in `New-PSUAiPoweredPullRequest.ps1`.

@@ -204,12 +204,12 @@ function New-PSUADOPullRequest {
             $availableBranches = $(git branch --list | ForEach-Object { $_.Trim().TrimStart('*').Trim() }) | Sort-Object { $_.Length }
 
             # Validating source/target branches and standardizing to 'refs/heads/branch-name' format
-            if ($SourceBranch in $availableBranches) {
+            if ($SourceBranch -in $availableBranches) {
                 $SourceBranch = 'refs/heads/' + $SourceBranch
             } else {
                 throw "SourceBranch must be in the available branches:`n$($availableBranches -join "`n")"
             }
-            if ($TargetBranch in $availableBranches) {
+            if ($TargetBranch -in $availableBranches) {
                 $TargetBranch = 'refs/heads/' + $TargetBranch
             } else {
                 throw "TargetBranch must be in the available branches:`n$($availableBranches -join "`n")"
