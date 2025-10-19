@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.Core.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.11'
+ModuleVersion = '1.0.12'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -95,7 +95,7 @@ FunctionsToExport = @(
     'Test-PSUInternetConnection',
     'Uninstall-PSUInstalledSoftware',
     'Unlock-PSUTerraformStateAWS',
-    'Update-PSUModuleVersion'
+    'Update-OMGModuleVersion'
 )
 
 # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.

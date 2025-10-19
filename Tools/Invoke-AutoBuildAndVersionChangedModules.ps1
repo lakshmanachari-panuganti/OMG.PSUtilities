@@ -98,7 +98,7 @@ foreach ($thismodule in $changedModules.Keys) {
 
     # Bump module version and get new version
 
-    $newVersion = Update-PSUModuleVersion -ModuleName $thismodule -Increment Patch
+    $newVersion = Update-OMGModuleVersion -ModuleName $thismodule -Increment Patch
 
     # Update CHANGELOG
     if (-not $DryRun) {

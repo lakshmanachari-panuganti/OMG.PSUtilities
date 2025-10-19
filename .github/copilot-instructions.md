@@ -309,13 +309,13 @@ if ($condition)
 4. **Build and test**: Run `Build-OMGModuleLocally -ModuleName "OMG.PSUtilities.ModuleName"`
 5. **Run tests**: Execute `.github\Instructions-OMG.PSUtilities.AzureDevOps\Run-MasterTest.ps1`
 6. **Update CHANGELOG.md** with new function details
-7. **Version bump**: Run `Update-PSUModuleVersion -ModuleName "OMG.PSUtilities.ModuleName" -BumpType Minor`
+7. **Version bump**: Run `Update-OMGModuleVersion -ModuleName "OMG.PSUtilities.ModuleName" -BumpType Minor`
 
 ### Developer Tools (Tools/ folder)
 
 - **`Reset-OMGModuleManifests.ps1`** - Auto-updates `.psm1` and `.psd1` after adding/removing functions
 - **`Build-OMGModuleLocally.ps1`** - Builds and imports module for testing
-- **`Update-PSUModuleVersion.ps1`** - Increments version in manifest and CHANGELOG
+- **`Update-OMGModuleVersion.ps1`** - Increments version in manifest and CHANGELOG
 - **`New-OMGModuleStructure.ps1`** - Creates new module scaffold with Plaster
 - **`Invoke-GitAutoTagAndPush.ps1`** - Git tagging and push automation
 

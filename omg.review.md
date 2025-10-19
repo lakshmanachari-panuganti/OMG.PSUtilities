@@ -540,7 +540,7 @@ foreach ($param in $PSBoundParameters.GetEnumerator()) {
 **Automation Tools:**
 
 1. **Build-OMGModuleLocally.ps1** — Local module build and installation
-2. **Update-PSUModuleVersion.ps1** — Semantic versioning automation (Major/Minor/Patch)
+2. **Update-OMGModuleVersion.ps1** — Semantic versioning automation (Major/Minor/Patch)
 3. **Update-OMGModuleManifests.ps1** — Auto-generates manifest `FunctionsToExport` from Public folder
 4. **Invoke-GitAutoTagAndPush.ps1** — Git tagging based on changelog versions
 5. **Test-PSUCommentBasedHelp.ps1** — Validates comment-based help completeness

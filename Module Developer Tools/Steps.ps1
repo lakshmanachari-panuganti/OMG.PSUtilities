@@ -61,7 +61,7 @@ function omgpublishmodule {
         $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
     } |
     ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique
-    $ModulesUpdated | Update-PSUModuleVersion -Increment Patch
+    $ModulesUpdated | Update-OMGModuleVersion -Increment Patch
     $ModulesUpdated | Reset-OMGModuleManifests
     $updateChangeLog = Read-Host "Do you want to update the CHANGELOG.md for the updated modules? (Y/N)"
     if ($updateChangeLog -eq 'Y') {

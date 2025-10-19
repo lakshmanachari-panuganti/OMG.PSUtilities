@@ -1,4 +1,40 @@
-function Update-PSUModuleVersion {
+<#
+.SYNOPSIS
+Increments the version of a specified PowerShell module by Major, Minor, or Patch.
+
+.DESCRIPTION
+The Update-OMGModuleVersion function updates the version number of a PowerShell module by incrementing the Major, Minor, or Patch component. It modifies the ModuleVersion in the module's .psd1 manifest file and, if present, updates the version in the plasterManifest.xml file as well.
+
+.PARAMETER ModuleName
+The name of the module whose version should be updated. This should correspond to a directory under the path specified by the BASE_MODULE_PATH environment variable.
+
+.PARAMETER Increment
+Specifies which part of the version to increment. Valid values are 'Major', 'Minor', or 'Patch'.
+
+.INPUTS
+System.String
+Accepts the module name from the pipeline.
+
+.OUTPUTS
+PSCustomObject
+
+.EXAMPLE
+Update-OMGModuleVersion -ModuleName 'MyModule' -Increment 'Minor'
+
+Increments the minor version of 'MyModule' and updates the relevant manifest files.
+
+.EXAMPLE
+'MyModule' | Update-OMGModuleVersion -Increment 'Patch'
+
+Increments the patch version of 'MyModule' using pipeline input.
+
+.NOTES
+- The function expects the BASE_MODULE_PATH environment variable to be set.
+- The function will only update the version if the .psd1 manifest file and (optionally) plasterManifest.xml are present in the module directory.
+- The current version is retrieved from the PSGallery repository.
+
+#>
+function Update-OMGModuleVersion {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory,

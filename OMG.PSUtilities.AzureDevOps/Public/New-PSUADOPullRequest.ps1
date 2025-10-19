@@ -128,11 +128,10 @@ function New-PSUADOPullRequest {
         [string]$Description,
 
         [Parameter()]
-        [Parameter(Mandatory)]
-        [string]$SourceBranch,
+        [string]$SourceBranch = $(git branch --show-current 2>$null),
 
-        [Parameter(Mandatory)]
-        [string]$TargetBranch,
+        [Parameter()]
+        [string]$TargetBranch = $(git symbolic-ref refs/remotes/origin/HEAD 2>$null | ForEach-Object { $_ -replace 'refs/remotes/origin/', '' }),
 
         [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
         [ValidateNotNullOrEmpty()]
@@ -163,6 +162,22 @@ function New-PSUADOPullRequest {
 
 
     begin {
+        # Get available git branches as an array for validation
+        $availableBranches = $(git branch --list | ForEach-Object { $_.Trim().TrimStart('*').Trim() }) | Sort-Object { $_.Length }
+        # Validate and standardize SourceBranch
+        if ($SourceBranch -in $availableBranches) {
+            $SourceBranch = 'refs/heads/' + $SourceBranch
+        } else {
+            throw "SourceBranch must be in the available branches:`n$($availableBranches -join "`n")"
+        }
+
+        # Validate and standardize TargetBranch
+        if ($TargetBranch -in $availableBranches) {
+            $TargetBranch = 'refs/heads/' + $TargetBranch
+        } else {
+            throw "TargetBranch must be in the available branches:`n$($availableBranches -join "`n")"
+        }
+        
         # Display parameters
         Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
         foreach ($param in $PSBoundParameters.GetEnumerator()) {
@@ -171,6 +186,7 @@ function New-PSUADOPullRequest {
                 Write-Verbose "  $($param.Key): $maskedPAT"
             } else {
                 Write-Verbose "  $($param.Key): $($param.Value)"
+            }
             }
         }
 
@@ -199,20 +215,6 @@ function New-PSUADOPullRequest {
                     throw "Repository '$RepositoryName' not found in project '$Project'."
                 }
                 $repositoryIdentifier = $matchedRepo.Id
-            }
-            # Get available git branches as an array
-            $availableBranches = $(git branch --list | ForEach-Object { $_.Trim().TrimStart('*').Trim() }) | Sort-Object { $_.Length }
-
-            # Validating source/target branches and standardizing to 'refs/heads/branch-name' format
-            if ($SourceBranch -in $availableBranches) {
-                $SourceBranch = 'refs/heads/' + $SourceBranch
-            } else {
-                throw "SourceBranch must be in the available branches:`n$($availableBranches -join "`n")"
-            }
-            if ($TargetBranch -in $availableBranches) {
-                $TargetBranch = 'refs/heads/' + $TargetBranch
-            } else {
-                throw "TargetBranch must be in the available branches:`n$($availableBranches -join "`n")"
             }
             
             Write-Host "Creating Pull Request:" -ForegroundColor Cyan

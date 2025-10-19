@@ -108,7 +108,7 @@ function Update-OMGChangeLogReadMe {
 
         # Bump module version and get new version
         $date = (Get-Date).ToString('yyyy-MM-dd')
-        $newVersion = Update-PSUModuleVersion -ModuleName $thismoduleName -Increment Patch
+        $newVersion = Update-OMGModuleVersion -ModuleName $thismoduleName -Increment Patch
 
         # Update CHANGELOG
         if (-not $DryRun) {
