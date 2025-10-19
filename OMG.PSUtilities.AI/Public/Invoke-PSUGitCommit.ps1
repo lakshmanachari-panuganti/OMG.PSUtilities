@@ -216,7 +216,7 @@ Change Type: $($item.Status)
 $($item.Diff)
 "@
         }
-        $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
+        $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
         $commitMessage = $commitMessage.Trim() | where-object { $_ }
 
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan

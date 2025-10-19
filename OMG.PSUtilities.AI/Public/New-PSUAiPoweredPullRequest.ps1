@@ -58,7 +58,7 @@ function New-PSUAiPoweredPullRequest {
     )]
     param (
         [Parameter()]
-        [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
+        [string]$BaseBranch = $((git symbolic-ref refs/remotes/origin/HEAD) -replace '^refs/remotes/origin/', ''),
 
         [Parameter()]
         [string]$FeatureBranch = $(git branch --show-current),
@@ -71,7 +71,7 @@ function New-PSUAiPoweredPullRequest {
                 }
                 return $true
             })]
-        [string]$PullRequestTemplate,
+        [string]$PullRequestTemplatePath,
 
         [Parameter()]
         [string] $ApiKey = $env:API_KEY_GEMINI,
@@ -79,6 +79,12 @@ function New-PSUAiPoweredPullRequest {
         [Parameter()]
         [switch]$CompleteOnApproval
     )
+
+    # Parameter display
+    Write-Host "FeatureBranch: $FeatureBranch" -ForegroundColor Cyan
+    Write-Host "BaseBranch: $BaseBranch" -ForegroundColor Cyan
+    Write-Host "PullRequestTemplatePath: $PullRequestTemplatePath" -ForegroundColor Cyan
+    Write-Host "CompleteOnApproval: $CompleteOnApproval" -ForegroundColor Cyan
 
     $UpdateChangeLog = Read-Host "Do you want me to update ChangeLog.md file with the changes? (Y/N)"
     if ($UpdateChangeLog -eq 'Y') {
@@ -102,9 +108,9 @@ function New-PSUAiPoweredPullRequest {
     $PRTemplateContent = ""
     $PRTemplateStatement = @()
     
-    if (Test-Path $PullRequestTemplate) {
+    if (Test-Path $PullRequestTemplatePath) {
         try {
-            $PRTemplateContent = Get-Content -Path $PullRequestTemplate -ErrorAction Stop | Out-String
+            $PRTemplateContent = Get-Content -Path $PullRequestTemplatePath -ErrorAction Stop | Out-String
             $PRTemplateStatement = @(
                 "NOTE: Please follow the Pull Request template guidelines below carefully:",
                 "",
