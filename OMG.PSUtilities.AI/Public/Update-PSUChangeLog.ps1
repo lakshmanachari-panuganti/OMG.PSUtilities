@@ -1,4 +1,5 @@
-    <#
+function Update-PSUChangeLog {
+<#
     .SYNOPSIS
         Uses AI to generate and prepend a professional changelog entry for major module updates, based on file diffs between branches.
 
