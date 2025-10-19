@@ -47,8 +47,7 @@ function Get-PSUAiPoweredGitChangeSummary {
     )]
     param(
         [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
-        [string]$FeatureBranch = $(git branch --show-current),
-        [string]$ApiKeyGemini = $env:API_KEY_GEMINI
+        [string]$FeatureBranch = $(git branch --show-current)
     )
 
     # Ensure Git is installed
@@ -113,7 +112,7 @@ Here are the file-level diffs:
     }
 
     # Call Gemini for summarization
-    $json = Invoke-PSUAiPrompt -Prompt $prompt -ApiKey $ApiKeyGemini -ReturnJsonResponse
+    $json = Invoke-PSUAiPrompt -Prompt $prompt -ReturnJsonResponse
 
     try {
         $results = $json | ConvertFrom-Json -ErrorAction Stop
