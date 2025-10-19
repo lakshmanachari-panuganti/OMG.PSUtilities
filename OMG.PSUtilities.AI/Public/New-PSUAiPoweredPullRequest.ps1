@@ -4,8 +4,8 @@ function New-PSUAiPoweredPullRequest {
         Uses Gemini AI to generate a professional Pull Request (PR) title and description from Git change summaries.
 
     .DESCRIPTION
-        This function takes Git change summaries and uses the Gemini model (via Invoke-PSUPromptOnGeminiAi)
-        to produce a high-quality PR title and description written from a developer or DevOps perspective.
+        This function takes Git change summaries and uses Invoke-PSUAiPrompt to produce 
+        a meaningful PR title and description written from a developer or DevOps perspective.
 
     .PARAMETER BaseBranch
         (Optional) The base branch to compare against.
@@ -18,10 +18,6 @@ function New-PSUAiPoweredPullRequest {
     .PARAMETER PullRequestTemplate
         (Optional) Path to the Pull Request template file.
         Default value is "C:\Temp\PRTemplate.txt".
-
-    .PARAMETER ApiKey
-        (Optional) The API key for Google Gemini AI service.
-        Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
 
     .PARAMETER CompleteOnApproval
         (Optional) Switch parameter to enable auto-completion when the pull request is approved.
@@ -58,7 +54,7 @@ function New-PSUAiPoweredPullRequest {
     )]
     param (
         [Parameter()]
-        [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
+        [string]$BaseBranch = $((git symbolic-ref refs/remotes/origin/HEAD) -replace '^refs/remotes/origin/', ''),
 
         [Parameter()]
         [string]$FeatureBranch = $(git branch --show-current),
@@ -71,14 +67,17 @@ function New-PSUAiPoweredPullRequest {
                 }
                 return $true
             })]
-        [string]$PullRequestTemplate,
-
-        [Parameter()]
-        [string] $ApiKey = $env:API_KEY_GEMINI,
+        [string]$PullRequestTemplatePath,
 
         [Parameter()]
         [switch]$CompleteOnApproval
     )
+
+    # Parameter display
+    Write-Host "FeatureBranch: $FeatureBranch" -ForegroundColor Cyan
+    Write-Host "BaseBranch: $BaseBranch" -ForegroundColor Cyan
+    Write-Host "PullRequestTemplatePath: $PullRequestTemplatePath" -ForegroundColor Cyan
+    Write-Host "CompleteOnApproval: $CompleteOnApproval" -ForegroundColor Cyan
 
     $UpdateChangeLog = Read-Host "Do you want me to update ChangeLog.md file with the changes? (Y/N)"
     if ($UpdateChangeLog -eq 'Y') {
@@ -86,7 +85,7 @@ function New-PSUAiPoweredPullRequest {
         Invoke-PSUGitCommit
         Start-Sleep -Seconds 3
     }
-    $ChangeSummary = Get-PSUAiPoweredGitChangeSummary -ApiKeyGemini $ApiKey
+    $ChangeSummary = Get-PSUAiPoweredGitChangeSummary
 
     if (-not $ChangeSummary) {
         Write-Warning "No changes found "
@@ -102,9 +101,9 @@ function New-PSUAiPoweredPullRequest {
     $PRTemplateContent = ""
     $PRTemplateStatement = @()
     
-    if (Test-Path $PullRequestTemplate) {
+    if (Test-Path $PullRequestTemplatePath) {
         try {
-            $PRTemplateContent = Get-Content -Path $PullRequestTemplate -ErrorAction Stop | Out-String
+            $PRTemplateContent = Get-Content -Path $PullRequestTemplatePath -ErrorAction Stop | Out-String
             $PRTemplateStatement = @(
                 "NOTE: Please follow the Pull Request template guidelines below carefully:",
                 "",
@@ -144,7 +143,7 @@ $PRTemplateStatement
 "@.Trim()
 
     # Call Gemini to generate PR content
-    $response = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ReturnJsonResponse
+    $response = Invoke-PSUAiPrompt -Prompt $prompt -ReturnJsonResponse
 
     # Try parsing the AI response as JSON
     try {

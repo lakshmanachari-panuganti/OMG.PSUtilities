@@ -22,12 +22,10 @@ function New-PSUADOPullRequest {
         (Mandatory - ParameterSet: ByRepoName) The repository name in which to create the pull request.
 
     .PARAMETER SourceBranch
-        (Optional) The full name of the source branch (e.g., 'refs/heads/feature-branch').
-        Default value is 'refs/heads/' + current git branch from git branch --show-current.
+        (Optional) The full name of the source branch (e.g., 'feature/enhance-ui', 'bugfix/login-issue', 'hotfix/urgent-fix', 'develop').
 
     .PARAMETER TargetBranch
-        (Optional) The full name of the target branch (e.g., 'refs/heads/main').
-        Default value is 'refs/heads/' + default branch from git symbolic-ref refs/remotes/origin/HEAD.
+        (Optional) The full name of the target branch (e.g., 'main' or 'release/main', or 'master', or 'release/master')..
 
     .PARAMETER Title
         (Mandatory) The title of the pull request.
@@ -51,8 +49,8 @@ function New-PSUADOPullRequest {
             Organization = "omg"
             Project      = "psutilities"
             RepoId       = "12345678-1234-1234-1234-123456789012"
-            SourceBranch = "refs/heads/feature-x"
-            TargetBranch = "refs/heads/main"
+            SourceBranch = "feature-x"
+            TargetBranch = "main"
             Title        = "Feature X Implementation"
             Description  = "This PR adds feature X."
         }
@@ -65,8 +63,8 @@ function New-PSUADOPullRequest {
             Organization   = "omg"
             Project        = "psutilities"
             RepositoryName = "AzureDevOps"
-            SourceBranch   = "refs/heads/feature-branch"
-            TargetBranch   = "refs/heads/main"
+            SourceBranch   = "feature-branch"
+            TargetBranch   = "main"
             Title          = "Bug fix for login"
             Description    = "Fixed authentication issue"
         }
@@ -129,18 +127,11 @@ function New-PSUADOPullRequest {
         [ValidateNotNullOrEmpty()]
         [string]$Description,
 
+        [Parameter()]
         [Parameter(Mandatory)]
-        [ValidateScript({
-                if ($_ -match '^refs/heads/.+') { $true }
-                else { throw "SourceBranch must be in the format 'refs/heads/branch-name'." }
-            })]
         [string]$SourceBranch,
 
         [Parameter(Mandatory)]
-        [ValidateScript({
-                if ($_ -match '^refs/heads/.+') { $true }
-                else { throw "TargetBranch must be in the format 'refs/heads/branch-name'." }
-            })]
         [string]$TargetBranch,
 
         [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
@@ -209,6 +200,27 @@ function New-PSUADOPullRequest {
                 }
                 $repositoryIdentifier = $matchedRepo.Id
             }
+            # Get available git branches as an array
+            $availableBranches = $(git branch --list | ForEach-Object { $_.Trim().TrimStart('*').Trim() }) | Sort-Object { $_.Length }
+
+            # Validating source/target branches and standardizing to 'refs/heads/branch-name' format
+            if ($SourceBranch in $availableBranches) {
+                $SourceBranch = 'refs/heads/' + $SourceBranch
+            } else {
+                throw "SourceBranch must be in the available branches:`n$($availableBranches -join "`n")"
+            }
+            if ($TargetBranch in $availableBranches) {
+                $TargetBranch = 'refs/heads/' + $TargetBranch
+            } else {
+                throw "TargetBranch must be in the available branches:`n$($availableBranches -join "`n")"
+            }
+            
+            Write-Host "Creating Pull Request:" -ForegroundColor Cyan
+            Write-Host "  SourceBranch: $SourceBranch"
+            Write-Host "  TargetBranch: $TargetBranch"
+            Write-Host "  Repository: $repositoryIdentifier"
+            Write-Host "  Title: $Title"
+            Write-Host "  Description: $Description"
 
             $body = @{
                 sourceRefName = $SourceBranch

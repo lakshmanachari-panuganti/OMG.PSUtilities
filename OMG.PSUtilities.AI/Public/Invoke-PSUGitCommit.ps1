@@ -25,8 +25,7 @@ function Invoke-PSUGitCommit {
         Date   : 31st July 2025
         Requires:
             - Git CLI
-            - $env:API_KEY_GEMINI
-            - Invoke-PSUPromptOnGeminiAi
+            - Invoke-PSUAiPrompt
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
@@ -217,7 +216,7 @@ Change Type: $($item.Status)
 $($item.Diff)
 "@
         }
-        $commitMessage = Invoke-PSUPromptOnGeminiAi -Prompt ($prompt | Out-String) -ApiKey $env:API_KEY_GEMINI
+        $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
         $commitMessage = $commitMessage.Trim() | where-object { $_ }
 
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan
