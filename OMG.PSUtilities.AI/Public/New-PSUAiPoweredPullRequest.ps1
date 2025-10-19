@@ -19,10 +19,6 @@ function New-PSUAiPoweredPullRequest {
         (Optional) Path to the Pull Request template file.
         Default value is "C:\Temp\PRTemplate.txt".
 
-    .PARAMETER ApiKey
-        (Optional) The API key for Google Gemini AI service.
-        Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
-
     .PARAMETER CompleteOnApproval
         (Optional) Switch parameter to enable auto-completion when the pull request is approved.
         This will be passed to the underlying PR creation function.
@@ -74,9 +70,6 @@ function New-PSUAiPoweredPullRequest {
         [string]$PullRequestTemplatePath,
 
         [Parameter()]
-        [string] $ApiKey = $env:API_KEY_GEMINI,
-
-        [Parameter()]
         [switch]$CompleteOnApproval
     )
 
@@ -92,7 +85,7 @@ function New-PSUAiPoweredPullRequest {
         Invoke-PSUGitCommit
         Start-Sleep -Seconds 3
     }
-    $ChangeSummary = Get-PSUAiPoweredGitChangeSummary -ApiKeyGemini $ApiKey
+    $ChangeSummary = Get-PSUAiPoweredGitChangeSummary
 
     if (-not $ChangeSummary) {
         Write-Warning "No changes found "

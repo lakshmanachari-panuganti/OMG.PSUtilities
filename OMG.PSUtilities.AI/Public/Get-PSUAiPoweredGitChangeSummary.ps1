@@ -18,10 +18,6 @@ function Get-PSUAiPoweredGitChangeSummary {
         (Optional) The feature branch being merged.
         Default value is the current git branch from git branch --show-current.
 
-    .PARAMETER ApiKeyGemini
-        (Optional) The API key for Google Gemini AI service.
-        Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
-
     .EXAMPLE
         Get-PSUAiPoweredGitChangeSummary -BaseBranch main -FeatureBranch feature/login-ui
 
