@@ -1,22 +1,37 @@
-function Update-PSUChangeLog {
     <#
     .SYNOPSIS
         Uses AI to generate and prepend a professional changelog entry for major module updates, based on file diffs between branches.
+
     .DESCRIPTION
         Compares .ps1 file changes between branches, summarizes them with AI, and prepends the result to CHANGELOG.md.
+
     .PARAMETER ModuleName
         The name of the module to update (e.g., OMG.PSUtilities.AI).
+
     .PARAMETER RootPath
         The root path where modules are located. Defaults to $env:BASE_MODULE_PATH.
+
     .PARAMETER BaseBranch
         The base branch to compare (default: origin/main).
+
     .PARAMETER FeatureBranch
         The feature branch to compare (default: current branch).
+
+    .PARAMETER AllGitChanges
+        (Optional) If set, includes all git changes, not just .ps1 files.
+
     .EXAMPLE
         Update-PSUChangeLog -ModuleName OMG.PSUtilities.AI
+
+    .OUTPUTS
+        None
+
     .NOTES
-        Author : Lakshmanachari Panuganti
-        Date : 22nd August 2025
+        Author: Lakshmanachari Panuganti
+        Created: 2025-08-22
+        Last Modified: 2025-10-19
+        Version: 1.1
+
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Alias("aichangelog")]
@@ -176,7 +191,7 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                         Write-Host " [$thisModuleName] CHANGELOG.md path: $changelogPath" -ForegroundColor Green
                         $moduleIncrease = Read-Host " [$thisModuleName] Do you want me to bump module version? [Y/N]"
                         if($moduleIncrease -eq "Y") {
-                           $versionbump = Update-PSUModuleVersion -ModuleName $thisModuleName -Increment Patch
+                           $versionbump = Update-OMGModuleVersion -ModuleName $thisModuleName -Increment Patch
                            if($versionbump.NewVersion -le $moduleVersion){
                                 Write-Warning " [$thisModuleName] There is a version conflict with CHANGELOG.md and .\$thisModuleName.psd1. Skipping CHANGELOG update!"
                                 continue
