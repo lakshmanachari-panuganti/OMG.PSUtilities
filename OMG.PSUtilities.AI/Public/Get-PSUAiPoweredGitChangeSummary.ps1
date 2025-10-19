@@ -113,7 +113,7 @@ Here are the file-level diffs:
     }
 
     # Call Gemini for summarization
-    $json = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ApiKey $ApiKeyGemini -ReturnJsonResponse
+    $json = Invoke-PSUAiPrompt -Prompt $prompt -ApiKey $ApiKeyGemini -ReturnJsonResponse
 
     try {
         $results = $json | ConvertFrom-Json -ErrorAction Stop

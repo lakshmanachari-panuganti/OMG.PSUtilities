@@ -4,8 +4,8 @@ function New-PSUAiPoweredPullRequest {
         Uses Gemini AI to generate a professional Pull Request (PR) title and description from Git change summaries.
 
     .DESCRIPTION
-        This function takes Git change summaries and uses the Gemini model (via Invoke-PSUPromptOnGeminiAi)
-        to produce a high-quality PR title and description written from a developer or DevOps perspective.
+        This function takes Git change summaries and uses Invoke-PSUAiPrompt to produce 
+        a meaningful PR title and description written from a developer or DevOps perspective.
 
     .PARAMETER BaseBranch
         (Optional) The base branch to compare against.
@@ -144,7 +144,7 @@ $PRTemplateStatement
 "@.Trim()
 
     # Call Gemini to generate PR content
-    $response = Invoke-PSUPromptOnGeminiAi -Prompt $prompt -ReturnJsonResponse
+    $response = Invoke-PSUAiPrompt -Prompt $prompt -ReturnJsonResponse
 
     # Try parsing the AI response as JSON
     try {
