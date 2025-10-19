@@ -1,3 +1,14 @@
+## [1.0.13] - 19th October 2025
+### Added
+- Added validation for `SourceBranch` and `TargetBranch` to accept branch names without the `refs/heads/` prefix.
+- Added logic to retrieve available git branches and validate that provided branch names exist in the repository.
+- Added automatic conversion of branch names to the full `refs/heads/branch-name` format before creating the pull request.
+- Added informative `Write-Host` output to display pull request creation details including source branch, target branch, repository, title, and description.
+
+### Changed
+- Changed the `SourceBranch` and `TargetBranch` parameter documentation to reflect acceptance of branch names without the full ref prefix.
+- Removed the `ValidateScript` checks enforcing branch names to start with `refs/heads/`.
+- Updated example default values for `SourceBranch` and `TargetBranch` to use simple branch names (e.g., `"feature-x"` instead of `"refs/heads/feature-x"`).
 ## [1.0.12] - 17th October 2025
 ### Changed
 - Changed validation for `$PullRequestId` parameter in `Approve-PSUADOPullRequest.ps1` and `Complete-PSUADOPullRequest.ps1` to use `ValidateRange` attribute.

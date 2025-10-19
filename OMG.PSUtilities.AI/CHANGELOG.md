@@ -1,3 +1,14 @@
+## [1.0.15] - 19th October 2025
+### Added
+- Added parameter display output for `FeatureBranch`, `BaseBranch`, `PullRequestTemplatePath`, and `CompleteOnApproval` in `New-PSUAiPoweredPullRequest.ps1`.
+
+### Changed
+- Replaced all calls to `Invoke-PSUPromptOnGeminiAi` with the new `Invoke-PSUAiPrompt` in `Get-PSUAiPoweredGitChangeSummary.ps1`, `Invoke-PSUGitCommit.ps1`, and `New-PSUAiPoweredPullRequest.ps1`.
+- Updated the default value calculation of `BaseBranch` in `New-PSUAiPoweredPullRequest.ps1` to correctly extract the branch name using a regex replace.
+- Renamed parameter from `PullRequestTemplate` to `PullRequestTemplatePath` in `New-PSUAiPoweredPullRequest.ps1` and updated all references accordingly.
+- Simplified parameter requirements in `Invoke-PSUGitCommit.ps1` by removing environment variable dependency `$env:API_KEY_GEMINI`.
+- Improved commit message generation in `Invoke-PSUGitCommit.ps1` to use `Invoke-PSUAiPrompt` without requiring an API key argument.
+- Enhanced error handling and JSON parsing consistency in AI prompt responses across affected scripts.
 ## [1.0.14] - 17th October 2025
 ### Changed
 - Added `Start-Sleep -Seconds 3` to `New-PSUAiPoweredPullRequest` to ensure the changelog update completes before proceeding.
