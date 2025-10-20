@@ -91,7 +91,45 @@ function Invoke-PSUPromptOnPerplexityAi {
         Write-Error "Perplexity API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_PERPLEXITY' -Value '<your-api-key>'"
         return
     }
+    if ($ReturnJsonResponse.IsPresent) {
+        $Prompt += "`nRespond only in valid JSON format. The response must:"
+        $Prompt += "`n- Contain a single JSON object only."
+        $Prompt += "`n- Start with '{' and end with '}'."
+        $Prompt += "`n- Contain no text before or after the JSON."
+        $Prompt += "`n- Include no explanations, no commentary, no markdown, no code fences."
+        $Prompt += "`n- Do not say phrases like 'Here is your JSON', 'Response:', or similar."
 
+        $Prompt += "`nExample of a valid JSON response to return:"
+        $Prompt += @"
+{
+  "status": "success",
+  "message": "This is a valid response."
+}
+"@
+
+        $Prompt += "`nExample of an invalid JSON response NOT to return (extra text outside JSON):"
+        $Prompt += @"
+Here is your JSON response:
+{
+"status": "success",
+"message": "This is a valid response.",
+"timestamp": "2025-07-22T12:00:00Z",
+"request_id": "abc123xyz"
+}
+This extra text is not allowed.
+"@
+
+        $Prompt += "`nExample of an invalid JSON response NOT to return (markdown formatting used):"
+        $Prompt += @"
+```json
+{
+"status": "success",
+"message": "This is a valid response, but markdown is added.",
+"timestamp": "2025-07-22T12:00:00Z"
+}
+This markdown code block is not allowed.
+"@
+    }
     # Build request body
     $body = @{
         model       = $Model
@@ -119,12 +157,10 @@ function Invoke-PSUPromptOnPerplexityAi {
 
         if ($response.choices.Count -gt 0 -and $response.choices[0].message.content) {
             return $response.choices[0].message.content.Trim()
-        }
-        else {
+        } else {
             throw "No content received from Perplexity API."
         }
-    }
-    catch {
+    } catch {
         Write-Error "Failed to get response from Perplexity:`n$($_.Exception.Message)"
     }
 }

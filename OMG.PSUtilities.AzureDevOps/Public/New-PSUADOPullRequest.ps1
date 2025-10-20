@@ -128,9 +128,11 @@ function New-PSUADOPullRequest {
         [string]$Description,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$SourceBranch = $(git branch --show-current 2>$null),
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$TargetBranch = $(git symbolic-ref refs/remotes/origin/HEAD 2>$null | ForEach-Object { $_ -replace 'refs/remotes/origin/', '' }),
 
         [Parameter(Mandatory, ParameterSetName = 'ByRepoId')]
