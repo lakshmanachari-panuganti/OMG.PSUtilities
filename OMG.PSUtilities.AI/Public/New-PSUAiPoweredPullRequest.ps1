@@ -115,34 +115,41 @@ function New-PSUAiPoweredPullRequest {
                 "DO NOT alter anything that impacts organizational standards.",
                 "ONLY update the DESCRIPTION section thoughtfully and clearly."
             )
-        }
-        catch {
+        } catch {
             Write-Warning "Could not read PR template file: $($_.Exception.Message)"
         }
-    }
-    else {
+    } else {
         Write-Verbose "No PR template specified. Proceeding without template."
     }
 
-
     $prompt = @"
 You are a professional software engineer and DevOps expert.
-Given the following Git change summaries, generate a high-quality Pull Request title and a detailed, clear description suitable for code review.
-
-Use a professional tone, and ensure the description is helpful to both developers, reviewers and should be in human writing style.
+Given the following Git change summaries, generate a concise and professional Pull Request title and a detailed description suitable for code review. The description should be written in a clear human tone, helpful to both developers and reviewers.
 
 ### Git Change Summaries:
 $formattedChanges
 
-Finally remove any duplicate data in description and respond in the following JSON format (***ONLY JSON format***):
+Remove any repetition or duplicated information in the description.
+
+The ONLY valid response format is a single JSON object exactly like this (no markdown, no explanation, no commentary before or after):
+
 {
   "title": "<generated-title>",
   "description": "<generated-description>"
 }
+
+Do not wrap the JSON in markdown or code fences. The response must:
+- Start with "{"
+- End with "}"
+- Contain no text before "{" or after "}"
+- Not include phrases like "Here is your response" or "JSON output"
+- Not include markdown formatting, code fencing, bullet points, or commentary
+
 $PRTemplateStatement
 
-Note: I REITERATE: REQUIRE THAT YOU REPLY STRICTLY IN JSON FORMAT WITH NO EXTRA TEXT AND NO MARKDOWN
+If any rule is violated, regenerate the response until it strictly matches the required JSON format.
 "@.Trim()
+
 
     # Call Gemini to generate PR content
     $response = Invoke-PSUAiPrompt -Prompt $prompt -ReturnJsonResponse
@@ -174,28 +181,26 @@ Note: I REITERATE: REQUIRE THAT YOU REPLY STRICTLY IN JSON FORMAT WITH NO EXTRA 
                 if ($remoteUrl -match 'github\.com') {
                     Write-Host "Creating the GitHub pull request"
                     $params = @{
-                        Title = $PRContent.Title
+                        Title       = $PRContent.Title
                         Description = $PRContent.Description
-                        Token = $env:GITHUB_TOKEN
+                        Token       = $env:GITHUB_TOKEN
                     }
                     if ($CompleteOnApproval) { 
                         $params.CompleteOnApproval = $true 
                     }
                     New-PSUGithubPullRequest @params
-                }
-                elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                     Write-Host "Creating the Azure DevOps pull request"
                     $params = @{
-                        Title = $PRContent.Title
+                        Title       = $PRContent.Title
                         Description = $PRContent.Description
-                        PAT = $env:PAT
+                        PAT         = $env:PAT
                     }
                     if ($CompleteOnApproval) { 
                         $params.CompleteOnApproval = $true 
                     }
                     New-PSUADOPullRequest @params
-                }
-                else {
+                } else {
                     Write-Warning "git url: $remoteUrl"
                     Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
                 }
@@ -213,30 +218,28 @@ Note: I REITERATE: REQUIRE THAT YOU REPLY STRICTLY IN JSON FORMAT WITH NO EXTRA 
                 if ($remoteUrl -match 'github\.com') {
                     Write-Host "Creating draft GitHub pull request"
                     $params = @{
-                        Title = $PRContent.Title
+                        Title       = $PRContent.Title
                         Description = $PRContent.Description
-                        Token = $env:GITHUB_TOKEN
-                        Draft = $true
+                        Token       = $env:GITHUB_TOKEN
+                        Draft       = $true
                     }
                     if ($CompleteOnApproval) { 
                         $params.CompleteOnApproval = $true 
                     }
                     New-PSUGithubPullRequest @params
-                }
-                elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
+                } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                     Write-Host "Creating draft Azure DevOps pull request"
                     $params = @{
-                        Title = $PRContent.Title
+                        Title       = $PRContent.Title
                         Description = $PRContent.Description
-                        PAT = $env:PAT
-                        Draft = $true
+                        PAT         = $env:PAT
+                        Draft       = $true
                     }
                     if ($CompleteOnApproval) { 
                         $params.CompleteOnApproval = $true 
                     }
                     New-PSUADOPullRequest @params
-                }
-                else {
+                } else {
                     Write-Warning "git url: $remoteUrl"
                     Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
                 }
@@ -246,8 +249,7 @@ Note: I REITERATE: REQUIRE THAT YOU REPLY STRICTLY IN JSON FORMAT WITH NO EXTRA 
             }
         }
 
-    }
-    catch {
+    } catch {
         $PSCmdlet.ThrowTerminatingError($_)
     }
 }
