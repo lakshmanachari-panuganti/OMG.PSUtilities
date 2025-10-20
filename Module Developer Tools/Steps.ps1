@@ -91,13 +91,18 @@ function omgpublishmodule {
 function omgupdatemodule {
     omgmod | ForEach-Object {
         try {
-            Update-Module -Name $_.ModuleName -Verbose -Force
+            $localModule = Get-Module -ListAvailable -Name $_.ModuleName | Sort-Object Version -Descending | Select-Object -First 1
+            $galleryModule = Find-Module -Name $_.ModuleName -Repository PSGallery -ErrorAction SilentlyContinue
+            if ($localModule.Version -ne $galleryModule.Version) {
+                Write-Host "[$($_.ModuleName)] Local module version: $($localModule.Version) | PSGallery version: $($galleryModule.Version)" -ForegroundColor Cyan
+                Update-Module -Name $_.ModuleName -Verbose -Force
+            }
+            
         } catch {
             Write-Warning "Failed to update module $($_.ModuleName): $_"
         }
     }
 }
-
 function omgbuildmodule {
     omgmod | ForEach-Object {
         try {
