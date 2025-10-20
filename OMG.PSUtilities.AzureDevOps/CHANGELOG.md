@@ -1,3 +1,16 @@
+## [1.0.17] - 20th October 2025
+### Added
+
+- Added `[ValidateNotNullOrEmpty()]` parameter validation for both `$SourceBranch` and `$TargetBranch` in `New-PSUADOPullRequest` to prevent empty branch values.
+
+### Changed
+
+- Removed an extraneous closing brace (`}`) from the verbose parameter output logic in `New-PSUADOPullRequest`.
+- Improved parameter validation for `$TargetBranch` to handle cases where the remote HEAD reference is not available, ensuring the function is more robust in various Git states.
+
+### Fixed
+
+- Fixed potential null reference issue in parameter output logic by removing a misplaced closing brace.
 ## [1.0.16] - 20th October 2025
 ### Added
 - Added `[ValidateNotNullOrEmpty()]` attribute to the `SourceBranch` parameter in `New-PSUADOPullRequest.ps1`.
