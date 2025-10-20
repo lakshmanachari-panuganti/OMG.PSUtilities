@@ -246,7 +246,7 @@ $PRTemplateStatement
 
     }
     catch {
-        $PSCmdlet.ThrowTerminatingError()
+        $PSCmdlet.ThrowTerminatingError($_)
     }
 }
 
