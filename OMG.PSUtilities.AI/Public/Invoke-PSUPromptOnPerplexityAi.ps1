@@ -28,7 +28,7 @@ function Invoke-PSUPromptOnPerplexityAi {
 
     .PARAMETER Model
         (Optional) The Perplexity AI model to use for generation.
-        Default value is "sonar". Common models include "sonar-small-online", "sonar-medium-online", etc.
+        Default value is "sonar-pro". Other options: "sonar", "sonar-reasoning", "sonar-reasoning-pro", "sonar-deep-research"
 
     .PARAMETER MaxTokens
         (Optional) The maximum number of tokens the AI should generate in its response.
@@ -39,20 +39,31 @@ function Invoke-PSUPromptOnPerplexityAi {
         Default value is 0.7. Values closer to 0 are more focused, values closer to 1.0 are more creative.
 
     .PARAMETER ReturnJsonResponse
-        (Optional) Switch parameter to return the raw JSON response from the Perplexity AI API.
+        (Optional) Switch parameter to return valid JSON response. If the response is not valid JSON,
+        the function will automatically attempt to extract or fix it using AI-powered correction.
+
+    .PARAMETER MaxJsonRetries
+        (Optional) Maximum number of retry attempts for JSON correction using AI.
+        Default value is 2.
 
     .EXAMPLE
         Invoke-PSUPromptOnPerplexityAi -Prompt "Write a short poem about the future of AI."
 
     .EXAMPLE
-        Invoke-PSUPromptOnPerplexityAi -Prompt "Explain quantum computing in simple terms" -Model "sonar-small-online" -MaxTokens 200
+        Invoke-PSUPromptOnPerplexityAi -Prompt "Explain quantum computing in simple terms" -Model "sonar-reasoning" -MaxTokens 200
 
     .EXAMPLE
-        Invoke-PSUPromptOnPerplexityAi -Prompt "List the main components of a computer" -ReturnJsonResponse | ConvertFrom-Json | Select-Object -ExpandProperty choices
+        $result = Invoke-PSUPromptOnPerplexityAi -Prompt "List top 5 programming languages" -ReturnJsonResponse
+        $data = $result | ConvertFrom-Json
+
+    .EXAMPLE
+        # With custom retry attempts for JSON fixing
+        Invoke-PSUPromptOnPerplexityAi -Prompt "Get weather data" -ReturnJsonResponse -MaxJsonRetries 3
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: 22 July 2025
+        Modified: October 2025
+        Version: 2.0 - Added AI-powered JSON validation and correction
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
@@ -69,59 +80,82 @@ function Invoke-PSUPromptOnPerplexityAi {
     )]
     param(
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$Prompt,
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$ApiKey = $env:API_KEY_PERPLEXITY,
 
         [Parameter()]
-        [string]$Model = "sonar",
+        [ValidateSet('sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research')]
+        [string]$Model = "sonar-pro",
 
         [Parameter()]
+        [ValidateRange(1, 4096)]
         [int]$MaxTokens = 512,
 
         [Parameter()]
+        [ValidateRange(0.0, 1.0)]
         [double]$Temperature = 0.7,
 
         [Parameter()]
-        [switch]$ReturnJsonResponse
+        [switch]$ReturnJsonResponse,
+
+        [Parameter()]
+        [ValidateRange(0, 5)]
+        [int]$MaxJsonRetries = 2
     )
 
+    # Main function logic
     if (-not $ApiKey) {
         Write-Error "Perplexity API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_PERPLEXITY' -Value '<your-api-key>'"
         return
     }
 
-    # Build request body
-    $body = @{
-        model       = $Model
-        temperature = $Temperature
-        max_tokens  = $MaxTokens
-        messages    = @(
-            @{
-                role    = "user"
-                content = $Prompt
-            }
-        )
+    # Modify prompt for JSON responses
+    if ($ReturnJsonResponse.IsPresent) {
+        $Prompt += "`n`nIMPORTANT: You MUST respond with ONLY valid JSON. Follow these rules strictly:"
+        $Prompt += "`n- Return ONLY a JSON object or array"
+        $Prompt += "`n- Start immediately with '{' or '['"
+        $Prompt += "`n- End with '}' or ']'"
+        $Prompt += "`n- NO explanatory text before or after"
+        $Prompt += "`n- NO markdown formatting (no ``````json)"
+        $Prompt += "`n- NO phrases like 'Here is', 'Response:', etc."
+        $Prompt += "`n- The entire response must be parseable by a JSON parser"
     }
 
     $uri = "https://api.perplexity.ai/chat/completions"
     $headers = @{ "Authorization" = "Bearer $ApiKey" }
 
     try {
-        Write-Host "🧠 Thinking..." -ForegroundColor Cyan
-        $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers `
-            -Body ($body | ConvertTo-Json -Depth 100) -ContentType 'application/json'
-
+        # Make the API call
+        $content = Invoke-PerplexityApiCall -PromptText $Prompt `
+            -ModelName $Model `
+            -Temp $Temperature `
+            -Tokens $MaxTokens `
+            -Headers $headers `
+            -Uri $uri
+        
         if ($ReturnJsonResponse.IsPresent) {
-            return ($response | ConvertTo-Json -Depth 10)
-        }
-
-        if ($response.choices.Count -gt 0 -and $response.choices[0].message.content) {
-            return $response.choices[0].message.content.Trim()
+            # Extract and validate JSON with AI-powered correction if needed
+            try {
+                $validJson = Get-ValidJson -Text $content `
+                    -MaxRetries $MaxJsonRetries `
+                    -ModelName $Model `
+                    -Tokens $MaxTokens `
+                    -Headers $headers `
+                    -Uri $uri
+                return $validJson
+            }
+            catch {
+                Write-Error "Failed to extract or correct JSON response: $($_.Exception.Message)"
+                Write-Warning "Raw response was: $content"
+                throw
+            }
         }
         else {
-            throw "No content received from Perplexity API."
+            return $content
         }
     }
     catch {

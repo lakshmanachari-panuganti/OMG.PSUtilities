@@ -1,3 +1,10 @@
+## [1.0.19] - 20th October 2025
+### Added
+- Support for `-ReturnJsonResponse` switch in `Invoke-PSUPromptOnPerplexityAi` to enforce JSON-only responses with strict formatting rules and examples included in the prompt.
+
+### Changed
+- Enhanced prompt construction in `Invoke-PSUPromptOnPerplexityAi` to instruct the Perplexity API to return a single, valid JSON object without any surrounding text, commentary, or markdown formatting.
+- Improved error handling in `Invoke-PSUPromptOnPerplexityAi` to throw an error if no content is received from the Perplexity API.
 ## [1.0.18] - 20th October 2025
 ### Changed
 - Modified default value assignment for `BaseBranch` parameter in `Get-PSUAiPoweredGitChangeSummary.ps1` to suppress error output and correctly extract the branch name by replacing the prefix `refs/remotes/origin/` instead of relying on `Split-Path` alone.
