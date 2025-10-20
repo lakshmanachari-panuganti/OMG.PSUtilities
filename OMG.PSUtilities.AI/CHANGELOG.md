@@ -1,3 +1,19 @@
+## [1.0.20] - 20th October 2025
+### Added
+- Added `[ValidateNotNullOrEmpty()]` validation to the `BaseBranch` and `FeatureBranch` parameters in `New-PSUAiPoweredPullRequest.ps1`.
+- Improved prompt construction in `New-PSUAiPoweredPullRequest.ps1` to explicitly render PR template content if provided.
+- Enhanced user interaction flow in `New-PSUAiPoweredPullRequest.ps1` by repeating the prompt until a valid choice is entered.
+- Added stricter error handling for missing keys in AI response within `New-PSUAiPoweredPullRequest.ps1`.
+- Trimmed remote URL value before provider matching in both submit and draft PR logic in `New-PSUAiPoweredPullRequest.ps1`.
+
+### Changed
+- Updated `New-PSUAiPoweredPullRequest.ps1` to use generic “AI assistance” instead of “Gemini AI”.
+- Improved warning message in `Update-PSUChangeLog.ps1` to prefix with module name for better context.
+- Refined PR template handling in `New-PSUAiPoweredPullRequest.ps1` to ensure template is used only if the path is specified and valid.
+- Changed logic in `New-PSUAiPoweredPullRequest.ps1` so PR template usage and verbose messaging are more robust.
+- Adjusted clipboard copy logic in `New-PSUAiPoweredPullRequest.ps1` to only copy the title and description together.
+- Refactored user choice prompt and processing in `New-PSUAiPoweredPullRequest.ps1` for clarity and correctness.
+- Improved provider detection in `New-PSUAiPoweredPullRequest.ps1` to use trimmed remote URLs consistently.
 ## [1.0.19] - 20th October 2025
 ### Added
 - Support for `-ReturnJsonResponse` switch in `Invoke-PSUPromptOnPerplexityAi` to enforce JSON-only responses with strict formatting rules and examples included in the prompt.
