@@ -1,7 +1,7 @@
 function New-PSUAiPoweredPullRequest {
     <#
     .SYNOPSIS
-        Uses Gemini AI to generate a professional Pull Request (PR) title and description from Git change summaries.
+        Uses AI assistance to generate a professional Pull Request (PR) title and description from Git change summaries.
 
     .DESCRIPTION
         This function takes Git change summaries and uses Invoke-PSUAiPrompt to produce 
@@ -54,12 +54,13 @@ function New-PSUAiPoweredPullRequest {
     )]
     param (
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$BaseBranch = $((git symbolic-ref refs/remotes/origin/HEAD) -replace '^refs/remotes/origin/', ''),
 
         [Parameter()]
+        [ValidateNotNullOrEmpty()]
         [string]$FeatureBranch = $(git branch --show-current),
 
-        # Add validation for template path
         [Parameter()]
         [ValidateScript({
                 if ($_ -and -not (Test-Path $_)) {
@@ -86,22 +87,20 @@ function New-PSUAiPoweredPullRequest {
         Start-Sleep -Seconds 3
     }
     $ChangeSummary = Get-PSUAiPoweredGitChangeSummary
-
     if (-not $ChangeSummary) {
-        Write-Warning "No changes found "
+        Write-Warning "No changes found."
         return
     }
 
-    # Convert summaries into a nice prompt for Gemini
+    # Convert summaries into a nice prompt for AI
     $formattedChanges = ($ChangeSummary | ForEach-Object {
-            "- File: $($_.File) | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
-        }) -join "`n"
+        "- File: $($_.File) | Change: $($_.TypeOfChange) | Summary: $($_.Summary)"
+    }) -join "`n"
 
-    # Handle PR template - check if file exists
+    # Handle PR template content
     $PRTemplateContent = ""
     $PRTemplateStatement = @()
-    
-    if (Test-Path $PullRequestTemplatePath) {
+    if ($PullRequestTemplatePath -and (Test-Path $PullRequestTemplatePath)) {
         try {
             $PRTemplateContent = Get-Content -Path $PullRequestTemplatePath -ErrorAction Stop | Out-String
             $PRTemplateStatement = @(
@@ -117,11 +116,12 @@ function New-PSUAiPoweredPullRequest {
             )
         } catch {
             Write-Warning "Could not read PR template file: $($_.Exception.Message)"
+        } else{
+            Write-Verbose "No PR template specified. Proceeding without template."
         }
-    } else {
-        Write-Verbose "No PR template specified. Proceeding without template."
     }
 
+    # Construct AI prompt
     $prompt = @"
 You are a professional software engineer and DevOps expert.
 Given the following Git change summaries, generate a concise and professional Pull Request title and a detailed description suitable for code review. The description should be written in a clear human tone, helpful to both developers and reviewers.
@@ -131,121 +131,110 @@ $formattedChanges
 
 Remove any repetition or duplicated information in the description.
 
-The ONLY valid response format is a single JSON object exactly like this (no markdown, no explanation, no commentary before or after):
+The ONLY valid response format is a single JSON object exactly like this:
 
 {
   "title": "<generated-title>",
-  "description": "<generated-description>"
+  "description": "This pull request introduces the following improvements:\n\n**FileName1 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n**FileName2 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n**FileName3 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n### **Additional Information**\n\n- **Feature/Change 1:** Detailed description of the improvement or change\n- **Feature/Change 2:** Detailed description of the improvement or change\n- **Feature/Change 3:** Detailed description of the improvement or change\n- **Feature/Change 4:** Detailed description of the improvement or change"
 }
 
 Do not wrap the JSON in markdown or code fences. The response must:
 - Start with "{"
 - End with "}"
 - Contain no text before "{" or after "}"
-- Not include phrases like "Here is your response" or "JSON output"
-- Not include markdown formatting, code fencing, bullet points, or commentary
+- Do NOT include phrases like "Here is your response" or "JSON output"
+- (Except in inside PR Description)Do NOT include markdown formatting, code fencing, bullet points, or commentary
 
-$PRTemplateStatement
+$($PRTemplateStatement -join "`n")
 
 If any rule is violated, regenerate the response until it strictly matches the required JSON format.
 "@.Trim()
 
-
-    # Call Gemini to generate PR content
+    # Call AI Assistant with prompt!
     $response = Invoke-PSUAiPrompt -Prompt $prompt -ReturnJsonResponse
 
-    # Try parsing the AI response as JSON
     try {
         $parsed = $response | ConvertFrom-Json -ErrorAction Stop
+
+        if (-not $parsed.title -or -not $parsed.description) {
+            throw "AI response missing required keys: title and/or description"
+        }
+
         $PRContent = [PSCustomObject]@{
             Title       = $parsed.title
             Description = $parsed.description
         }
-        ($parsed.title) + '`n ' + ($parsed.description) | Set-Clipboard
+
+        # Copy title + description to clipboard
+        "$($parsed.title)`n$($parsed.description)" | Set-Clipboard
+
+        # Generate HTML summary (optional)
         Convert-PSUPullRequestSummaryToHtml -Title $parsed.title -Description $parsed.description -OpenInBrowser
 
-        # Better user prompt with clearer options
-
-        Write-Host 'Choose an option:' -ForegroundColor Yellow
-        Write-Host '  Y - Submit the pull request now' -ForegroundColor Cyan
-        Write-Host '  N - Cancel and exit' -ForegroundColor Cyan
-        Write-Host '  R - Regenerate with new AI content' -ForegroundColor Cyan
-        Write-Host '  D - Draft the PR' -ForegroundColor Cyan
-
-        $readHost = Read-Host 'Enter your choice (Y/N/R/D)' -ForegroundColor Yellow
+        # Prompt user for action
+        do {
+            Write-Host 'Choose an option:' -ForegroundColor Yellow
+            Write-Host '  Y - Submit the pull request now' -ForegroundColor Cyan
+            Write-Host '  N - Cancel and exit' -ForegroundColor Cyan
+            Write-Host '  R - Regenerate with new AI content' -ForegroundColor Cyan
+            Write-Host '  D - Draft the PR' -ForegroundColor Cyan
+            $readHost = Read-Host 'Enter your choice (Y/N/R/D)' -ForegroundColor Yellow
+        } while ($readHost -notin 'Y','N','R','D')
 
         switch ($readHost) {
-            'Y' {                
-                # Determining the gitProvider
-                $remoteUrl = git remote get-url origin
+            'Y' {
+                $remoteUrl = (git remote get-url origin).Trim()
                 if ($remoteUrl -match 'github\.com') {
-                    Write-Host "Creating the GitHub pull request"
+                    Write-Host "Creating GitHub pull request..."
                     $params = @{
                         Title       = $PRContent.Title
                         Description = $PRContent.Description
                         Token       = $env:GITHUB_TOKEN
                     }
-                    if ($CompleteOnApproval) { 
-                        $params.CompleteOnApproval = $true 
-                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
                     New-PSUGithubPullRequest @params
                 } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
-                    Write-Host "Creating the Azure DevOps pull request"
+                    Write-Host "Creating Azure DevOps pull request..."
                     $params = @{
                         Title       = $PRContent.Title
                         Description = $PRContent.Description
                         PAT         = $env:PAT
                     }
-                    if ($CompleteOnApproval) { 
-                        $params.CompleteOnApproval = $true 
-                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
                     New-PSUADOPullRequest @params
                 } else {
                     Write-Warning "git url: $remoteUrl"
                     Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
                 }
             }
-            'N' {
-                Write-Host "Pull request submission canceled."
-            }
-            'R' {
-                Write-Host "Regenerating PR content..."
-                return (New-PSUAiPoweredPullRequest @PSBoundParameters)
-            }
+            'N' { Write-Host "Pull request submission canceled." }
+            'R' { Write-Host "Regenerating PR content..."; return (New-PSUAiPoweredPullRequest @PSBoundParameters) }
             'D' {
-                # Determining the $gitProvider for draft PR
-                $remoteUrl = git remote get-url origin
+                $remoteUrl = (git remote get-url origin).Trim()
                 if ($remoteUrl -match 'github\.com') {
-                    Write-Host "Creating draft GitHub pull request"
+                    Write-Host "Creating draft GitHub pull request..."
                     $params = @{
                         Title       = $PRContent.Title
                         Description = $PRContent.Description
                         Token       = $env:GITHUB_TOKEN
                         Draft       = $true
                     }
-                    if ($CompleteOnApproval) { 
-                        $params.CompleteOnApproval = $true 
-                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
                     New-PSUGithubPullRequest @params
                 } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
-                    Write-Host "Creating draft Azure DevOps pull request"
+                    Write-Host "Creating draft Azure DevOps pull request..."
                     $params = @{
                         Title       = $PRContent.Title
                         Description = $PRContent.Description
                         PAT         = $env:PAT
                         Draft       = $true
                     }
-                    if ($CompleteOnApproval) { 
-                        $params.CompleteOnApproval = $true 
-                    }
+                    if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
                     New-PSUADOPullRequest @params
                 } else {
                     Write-Warning "git url: $remoteUrl"
                     Write-Warning "Automatic pull request creation is not supported for this Git provider. Please create the PR manually."
                 }
-            }
-            default {
-                Write-Warning "Invalid choice. Please enter Y, N, R, or D."
             }
         }
 
@@ -253,4 +242,3 @@ If any rule is violated, regenerate the response until it strictly matches the r
         $PSCmdlet.ThrowTerminatingError($_)
     }
 }
-
