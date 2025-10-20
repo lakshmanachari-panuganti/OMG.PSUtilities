@@ -1,3 +1,11 @@
+## [1.0.16] - 20th October 2025
+### Added
+- Added `[ValidateNotNullOrEmpty()]` attribute to the `SourceBranch` parameter in `New-PSUADOPullRequest.ps1`.
+- Added `[ValidateNotNullOrEmpty()]` attribute to the `TargetBranch` parameter in `New-PSUADOPullRequest.ps1`.
+
+### Changed
+- Removed an extraneous closing brace in the parameter validation loop in `New-PSUADOPullRequest.ps1`.
+- Improved parameter validation logic by ensuring environment variable defaults for `SourceBranch` and `TargetBranch` are validated explicitly in `New-PSUADOPullRequest.ps1`.
 ## [1.0.15] - 19th October 2025
 ### Changed
 - The `SourceBranch` and `TargetBranch` parameters in `New-PSUADOPullRequest` now default to the current Git branch and the remote HEAD branch, respectively.
