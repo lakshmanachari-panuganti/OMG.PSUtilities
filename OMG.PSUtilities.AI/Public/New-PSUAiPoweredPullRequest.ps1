@@ -140,6 +140,8 @@ Finally remove any duplicate data in description and respond in the following JS
   "description": "<generated-description>"
 }
 $PRTemplateStatement
+
+Note: I REITERATE: REQUIRE THAT YOU REPLY STRICTLY IN JSON FORMAT WITH NO EXTRA TEXT AND NO MARKDOWN
 "@.Trim()
 
     # Call Gemini to generate PR content
