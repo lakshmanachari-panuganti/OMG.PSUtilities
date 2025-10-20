@@ -1,3 +1,6 @@
+## [1.0.18] - 20th October 2025
+### Changed
+- Modified default value assignment for `BaseBranch` parameter in `Get-PSUAiPoweredGitChangeSummary.ps1` to suppress error output and correctly extract the branch name by replacing the prefix `refs/remotes/origin/` instead of relying on `Split-Path` alone.
 ## [1.0.17] - 19th October 2025
 ### Changed
 - Updated `Invoke-PSUAiPrompt` to include parameter validation, verbose logging, and improved error handling.
