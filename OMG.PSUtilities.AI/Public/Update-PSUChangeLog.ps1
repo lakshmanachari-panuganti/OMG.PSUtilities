@@ -99,7 +99,7 @@ function Update-PSUChangeLog {
                 }
                 
                 if (-not $files) {
-                    Write-Warning "No $($filteredfiles)file changes detected between $BaseBranch and $FeatureBranch."
+                    Write-Warning "[$thisModuleName] No $($filteredfiles)file changes detected between $BaseBranch and $FeatureBranch."
                     return
                 }
 
