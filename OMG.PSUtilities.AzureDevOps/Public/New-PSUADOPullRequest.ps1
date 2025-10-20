@@ -187,7 +187,6 @@ function New-PSUADOPullRequest {
             } else {
                 Write-Verbose "  $($param.Key): $($param.Value)"
             }
-            }
         }
 
         # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
