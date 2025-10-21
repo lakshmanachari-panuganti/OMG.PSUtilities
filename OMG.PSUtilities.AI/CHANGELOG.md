@@ -1,3 +1,13 @@
+## [1.0.21] - 21st October 2025
+### Added
+- Added the `PAT` parameter to `New-PSUAiPoweredPullRequest` to allow specifying a Personal Access Token for Azure DevOps authentication. Default value is `$env:PAT`.
+
+### Changed
+- Updated the prompt given to the AI to generate more meaningful titles for pull requests.
+- Modified the AI prompt to suggest specific headings within the pull request description, such as "Feature/Change 1".
+- Refactored Azure DevOps pull request creation to parse the organization and project name from the remote URL.
+- Enhanced Azure DevOps pull request creation logic to include parameters for `RepositoryName`, `Project`, and `Organization`.
+
 ## [1.0.20] - 20th October 2025
 ### Added
 - Added `[ValidateNotNullOrEmpty()]` validation to the `BaseBranch` and `FeatureBranch` parameters in `New-PSUAiPoweredPullRequest.ps1`.
