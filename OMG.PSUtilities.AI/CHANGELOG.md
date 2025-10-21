@@ -1,3 +1,6 @@
+## [1.0.23] - 21st October 2025
+### Changed
+- In `Invoke-PSUGitCommit.ps1`, replaced the call to `Invoke-PSUAiPrompt` with a recursive call to `Invoke-PSUGitCommit` when the `$CustomCommitMsg` is `'R'`.
 ## [1.0.22] - 21st October 2025
 ### Changed
 - Updated commit message formatting guidelines in `Invoke-PSUGitCommit.ps1` to clarify that the response should not start or end with triple backticks or code block formatting.
