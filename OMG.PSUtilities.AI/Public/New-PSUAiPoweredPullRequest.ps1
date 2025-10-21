@@ -22,6 +22,10 @@ function New-PSUAiPoweredPullRequest {
     .PARAMETER CompleteOnApproval
         (Optional) Switch parameter to enable auto-completion when the pull request is approved.
         This will be passed to the underlying PR creation function.
+    
+    .PARAMETER PAT
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
 
     .OUTPUTS
         [PSCustomObject]
@@ -71,7 +75,11 @@ function New-PSUAiPoweredPullRequest {
         [string]$PullRequestTemplatePath,
 
         [Parameter()]
-        [switch]$CompleteOnApproval
+        [switch]$CompleteOnApproval,
+
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$PAT = $env:PAT
     )
 
     # Parameter display
@@ -134,8 +142,8 @@ Remove any repetition or duplicated information in the description.
 The ONLY valid response format is a single JSON object exactly like this:
 
 {
-  "title": "<generated-title>",
-  "description": "This pull request introduces the following improvements:\n\n**FileName1 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n**FileName2 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n**FileName3 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n### **Additional Information**\n\n- **Feature/Change 1:** Detailed description of the improvement or change\n- **Feature/Change 2:** Detailed description of the improvement or change\n- **Feature/Change 3:** Detailed description of the improvement or change\n- **Feature/Change 4:** Detailed description of the improvement or change"
+  "title": "<Meaningfull title, that matches the changes>",
+  "description": "This pull request introduces the following improvements:\n\n**FileName1 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n**FileName2 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n**FileName3 | Updated/New/Deleted**  \n*Short description of what changed in this file*\n\n### **Additional Information**\n\n- ** Small Heading (Example Feature/Change 1):** Detailed description of the improvement or change\n- **Small Heading (Example Feature/Change 2):** Detailed description of the improvement or change\n- **Small Heading (Example Feature/Change 3):** Detailed description of the improvement or change\n- **Small Heading (Example Feature/Change 4):** Detailed description of the improvement or change"
 }
 
 Do not wrap the JSON in markdown or code fences. The response must:
@@ -195,10 +203,21 @@ If any rule is violated, regenerate the response until it strictly matches the r
                     New-PSUGithubPullRequest @params
                 } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                     Write-Host "Creating Azure DevOps pull request..."
+                    $remoteUrl = (git remote get-url origin).Trim()
+
+                    if ($remoteUrl -match '^.+dev\.azure\.com[/:]([^/]+)/([^/]+)/_git/.+$') {
+                        $Organization = $matches[1]
+                        $projectNameEncoded = $matches[2]
+                    } else {
+                        throw "Cannot parse project name from $remoteUrl"
+                    }
                     $params = @{
                         Title       = $PRContent.Title
                         Description = $PRContent.Description
-                        PAT         = $env:PAT
+                        RepositoryName = (git rev-parse --show-toplevel | Split-Path -Leaf)
+                        Project        = [uri]::UnescapeDataString($projectNameEncoded)
+                        Organization   = $Organization
+                        PAT            = $PAT
                     }
                     if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
                     New-PSUADOPullRequest @params
@@ -223,11 +242,23 @@ If any rule is violated, regenerate the response until it strictly matches the r
                     New-PSUGithubPullRequest @params
                 } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                     Write-Host "Creating draft Azure DevOps pull request..."
+                    $remoteUrl = (git remote get-url origin).Trim()
+
+                    if ($remoteUrl -match '^.+dev\.azure\.com[/:]([^/]+)/([^/]+)/_git/.+$') {
+                        $Organization = $matches[1]
+                        $projectNameEncoded = $matches[2]
+                    } else {
+                        throw "Cannot parse project name from $remoteUrl"
+                    }
+
                     $params = @{
-                        Title       = $PRContent.Title
-                        Description = $PRContent.Description
-                        PAT         = $env:PAT
-                        Draft       = $true
+                        Title          = $PRContent.Title
+                        Description    = $PRContent.Description
+                        RepositoryName = (git rev-parse --show-toplevel | Split-Path -Leaf)
+                        Project        = [uri]::UnescapeDataString($projectNameEncoded)
+                        Organization   = $Organization
+                        Draft          = $true
+                        PAT            = $PAT
                     }
                     if ($CompleteOnApproval) { $params.CompleteOnApproval = $true }
                     New-PSUADOPullRequest @params
