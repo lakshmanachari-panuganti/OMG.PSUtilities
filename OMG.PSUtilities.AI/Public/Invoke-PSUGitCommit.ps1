@@ -200,10 +200,14 @@ fix: typo in function name in utils.ps1
 function which was causing a runtime failure in some
 environments.
 
-5. No detailed bullet points (too minimal):
-fix: typo fix
+---------------------------------------------------
+NOTE: 
+--> The response should not start or end with triple backticks (``` ) or any code block formatting. 
+--> Should not include any explanations or additional text outside the commit message.
+--> Should not include markdown formatting.
+--> Should only contain the commit message text as per the examples above.
 
-#----------------------------------------------------------------
+---------------------------------------------------
 
 Following are the git changes:
 "@
@@ -218,14 +222,22 @@ $($item.Diff)
         }
         $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
         $commitMessage = $commitMessage.Trim() | where-object { $_ }
-
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan
         Write-Host $CommitMessage -ForegroundColor DarkYellow
-        $CustomCommitMsg = Read-Host "Press enter to commit with this message or provide your own commit message"
 
-        if ($CustomCommitMsg) {
+        Write-Host "`n[Ctrl+C] --> Abort commit process!" -ForegroundColor Cyan
+        Write-Host "[R]      --> Regenerate a new commit message!" -ForegroundColor Cyan
+        Write-Host "[Enter]  --> Accept the above commit message!" -ForegroundColor Cyan
+
+        $CustomCommitMsg = Read-Host -Prompt "Enter your choice"
+        $CustomCommitMsg = ($CustomCommitMsg).Trim()
+
+        if ($CustomCommitMsg -ieq 'R') {
+            $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
+        } elseif ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }
+
         # Stage and commit
         git add . *> $null
         git commit -m "$commitMessage" *> $null

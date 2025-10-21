@@ -1,3 +1,7 @@
+## [1.0.22] - 21st October 2025
+### Changed
+- Updated commit message formatting guidelines in `Invoke-PSUGitCommit.ps1` to clarify that the response should not start or end with triple backticks or code block formatting.
+- Added explicit instructions in `Invoke-PSUGitCommit.ps1` to exclude markdown formatting and explanations from commit message outputs.
 ## [1.0.21] - 21st October 2025
 ### Added
 - Added the `PAT` parameter to `New-PSUAiPoweredPullRequest` to allow specifying a Personal Access Token for Azure DevOps authentication. Default value is `$env:PAT`.
