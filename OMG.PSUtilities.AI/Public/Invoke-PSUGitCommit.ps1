@@ -233,7 +233,7 @@ $($item.Diff)
         $CustomCommitMsg = ($CustomCommitMsg).Trim()
 
         if ($CustomCommitMsg -ieq 'R') {
-            $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
+            Invoke-PSUGitCommit
         } elseif ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }
