@@ -225,15 +225,15 @@ $($item.Diff)
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan
         Write-Host $CommitMessage -ForegroundColor DarkYellow
 
-        Write-Host "`n[Ctrl+C] --> Abort commit process!" -ForegroundColor Cyan
         Write-Host "[R]      --> Regenerate a new commit message!" -ForegroundColor Cyan
+        Write-Host "`n[Ctrl+C] --> Abort commit process!" -ForegroundColor Cyan
         Write-Host "[Enter]  --> Accept the above commit message!" -ForegroundColor Cyan
 
         $CustomCommitMsg = Read-Host -Prompt "Enter your choice"
         $CustomCommitMsg = ($CustomCommitMsg).Trim()
 
         if ($CustomCommitMsg -ieq 'R') {
-            $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
+            Invoke-PSUGitCommit
         } elseif ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }
