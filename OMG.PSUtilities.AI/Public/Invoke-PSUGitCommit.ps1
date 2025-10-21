@@ -200,10 +200,14 @@ fix: typo in function name in utils.ps1
 function which was causing a runtime failure in some
 environments.
 
-`n-------------------------------------------------`n
-NOTE: The response should not start or end with triple backticks (``` ) or any code block formatting. Should only contain the commit message text as per the examples above.
+---------------------------------------------------
+NOTE: 
+--> The response should not start or end with triple backticks (``` ) or any code block formatting. 
+--> Should not include any explanations or additional text outside the commit message.
+--> Should not include markdown formatting.
+--> Should only contain the commit message text as per the examples above.
 
-`n--------------------------------------------------
+---------------------------------------------------
 
 Following are the git changes:
 "@
