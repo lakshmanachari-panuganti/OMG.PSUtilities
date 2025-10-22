@@ -49,89 +49,194 @@ function Send-PSUNotificationEmail {
     }
 
     # Compose HTML body
-    $htmlBody = @"
+    # Compose HTML body
+$htmlBody = @"
 <!DOCTYPE html>
 <html>
-<body style="margin:0; padding:0; background-color:#f3f3f3; font-family:'Segoe UI', Arial, sans-serif;">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <!--[if mso]>
+  <style type="text/css">
+    body, table, td {font-family: Arial, sans-serif !important;}
+  </style>
+  <![endif]-->
+</head>
+<body style="margin:0; padding:0; background-color:#f3f3f3; font-family:Arial, sans-serif;">
 
-  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f3f3; padding:40px 0;">
+  <!-- Outer wrapper table -->
+  <table width="100%" cellpadding="0" cellspacing="0" border="0" style="background-color:#f3f3f3;">
     <tr>
-      <td align="center">
+      <td align="center" style="padding:40px 20px;">
 
-        <!-- Shadow simulation wrapper -->
-        <table width="720" cellpadding="0" cellspacing="0" border="0" style="
-          background: linear-gradient(to bottom right, rgba(0,0,0,0.08), rgba(0,0,0,0.03));
-          border-radius:16px;
-          box-shadow:0 8px 20px rgba(0,0,0,0.25);
-          padding:0;
-        ">
+        <!-- Main container - 600px width (Outlook safe) -->
+        <table width="600" cellpadding="0" cellspacing="0" border="0" style="background-color:#ffffff; border:1px solid #d0d0d0;">
+          
+          <!-- Red header bar -->
           <tr>
-            <td style="padding:3px;">
-
-              <!-- Main white card -->
-              <table width="714" cellpadding="0" cellspacing="0" border="0" style="
-                background-color:#ffffff;
-                border-radius:16px;
-                overflow:hidden;
-                box-shadow:0 8px 25px rgba(0,0,0,0.2);
-              ">
-
-                <!-- Header -->
+            <td style="background-color:#d9534f; padding:0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="background-color:#d9534f; padding:22px 25px; border-top-left-radius:16px; border-top-right-radius:16px;">
-                    <h2 style="margin:0; color:#ffffff; font-size:22px; font-weight:600;">Pipeline Failure Alert</h2>
-                    <p style="margin:6px 0 0 0; color:#ffffff; font-size:14px;">
-                      The <strong>$($HtmlTableContentHash.PipelineName)</strong> pipeline has failed and requires attention
+                  <td style="padding:24px 28px;">
+                    <h2 style="margin:0; padding:0; color:#ffffff; font-size:24px; font-weight:bold; line-height:1.3;">
+                      ⚠️ Pipeline Failure Alert
+                    </h2>
+                    <p style="margin:8px 0 0 0; padding:0; color:#ffffff; font-size:15px; line-height:1.4;">
+                      The <strong>$($HtmlTableContentHash.PipelineName)</strong> pipeline has failed and requires immediate attention.
                     </p>
                   </td>
                 </tr>
+              </table>
+            </td>
+          </tr>
 
-                <!-- Body -->
+          <!-- Main content area -->
+          <tr>
+            <td style="padding:28px 28px 20px 28px;">
+              
+              <!-- Section heading -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="padding:25px 30px 15px 30px;">
-                    <h3 style="margin:0 0 15px 0; font-size:18px; font-weight:700; color:#000000;">
-                      Some Content related to the table
+                  <td style="padding:0 0 16px 0;">
+                    <h3 style="margin:0; padding:0; font-size:18px; font-weight:bold; color:#333333; line-height:1.3;">
+                      Pipeline Details
                     </h3>
+                  </td>
+                </tr>
+              </table>
 
-                    <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; font-size:14px;">
-                      <tr><td width="180" style="background-color:#f8f9fa; padding:8px; font-weight:600;">Pipeline Name</td><td style="padding:8px;">$($HtmlTableContentHash.PipelineName)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Build Number</td><td style="padding:8px;">$($HtmlTableContentHash.BuildNumber)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Build ID</td><td style="padding:8px;">$($HtmlTableContentHash.BuildId)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Branch</td><td style="padding:8px;">$($HtmlTableContentHash.SourceBranch)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Triggered By</td><td style="padding:8px;">$($HtmlTableContentHash.RequestedFor)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Build Result</td><td style="padding:8px; font-weight:700; color:#d9534f;">$($HtmlTableContentHash.BuildResult)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Failed Task</td><td style="padding:8px;">$($HtmlTableContentHash.TaskDisplayName)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Timestamp</td><td style="padding:8px;">$($HtmlTableContentHash.Timestamp)</td></tr>
-                      <tr><td style="background-color:#f8f9fa; padding:8px; font-weight:600;">Source Version</td><td style="padding:8px;">$($HtmlTableContentHash.SourceVersion)</td></tr>
-                    </table>
+              <!-- Details table -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0" style="border-collapse:collapse; border:1px solid #e0e0e0;">
+                
+                <!-- Pipeline Name -->
+                <tr>
+                  <td width="180" style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Pipeline Name
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.PipelineName)
+                  </td>
+                </tr>
 
-                    <!-- CTA Button -->
-                    <table align="center" cellpadding="0" cellspacing="0" border="0" style="margin:25px auto 10px auto;">
+                <!-- Build Number -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Build Number
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.BuildNumber)
+                  </td>
+                </tr>
+
+                <!-- Build ID -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Build ID
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.BuildId)
+                  </td>
+                </tr>
+
+                <!-- Branch -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Branch
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.SourceBranch)
+                  </td>
+                </tr>
+
+                <!-- Triggered By -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Triggered By
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.RequestedFor)
+                  </td>
+                </tr>
+
+                <!-- Build Result (highlighted) -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Build Result
+                  </td>
+                  <td style="background-color:#ffe5e5; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#d9534f; vertical-align:top;">
+                    ❌ $($HtmlTableContentHash.BuildResult)
+                  </td>
+                </tr>
+
+                <!-- Failed Task -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Failed Task
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.TaskDisplayName)
+                  </td>
+                </tr>
+
+                <!-- Timestamp -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; border-bottom:1px solid #e0e0e0; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Timestamp
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-bottom:1px solid #e0e0e0; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.Timestamp)
+                  </td>
+                </tr>
+
+                <!-- Source Version -->
+                <tr>
+                  <td style="background-color:#f8f9fa; padding:10px 12px; font-size:14px; font-weight:bold; color:#333333; vertical-align:top;">
+                    Source Version
+                  </td>
+                  <td style="background-color:#ffffff; padding:10px 12px; border-left:1px solid #e0e0e0; font-size:14px; color:#333333; vertical-align:top;">
+                    $($HtmlTableContentHash.SourceVersion)
+                  </td>
+                </tr>
+
+              </table>
+
+              <!-- CTA Button -->
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td align="center" style="padding:28px 0 10px 0;">
+                    <table cellpadding="0" cellspacing="0" border="0">
                       <tr>
-                        <td align="center" bgcolor="#007bff" style="border-radius:8px;">
-                          <a href="$($EndButton.EndButtonUrl)" target="_blank"
-                             style="font-size:14px; color:#ffffff; text-decoration:none; 
-                                    padding:12px 24px; display:inline-block; font-weight:500;">
-                             $($EndButton.EndButtonText)
+                        <td align="center" bgcolor="#007bff" style="padding:14px 32px;">
+                          <a href="$($EndButton.EndButtonUrl)" target="_blank" style="font-size:15px; font-weight:bold; color:#ffffff; text-decoration:none; display:block;">
+                            $($EndButton.EndButtonText)
                           </a>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
-
-                <!-- Footer -->
-                <tr>
-                  <td style="background-color:#f8f9fa; padding:15px 25px; font-size:13px; color:#6c757d; border-top:1px solid #e0e0e0; border-bottom-left-radius:16px; border-bottom-right-radius:16px;">
-                    <p style="margin:0;"><strong>Automated Notification</strong> | Azure DevOps Pipeline</p>
-                    <p style="margin:4px 0 0 0;">This is an automated message from the Azure SQL Database Inventory pipeline. For questions or support, contact the DevOps team.</p>
-                  </td>
-                </tr>
-
               </table>
 
             </td>
           </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="background-color:#f8f9fa; padding:20px 28px; border-top:2px solid #e0e0e0;">
+              <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                <tr>
+                  <td style="font-size:13px; color:#6c757d; line-height:1.5;">
+                    <p style="margin:0 0 6px 0; padding:0; font-weight:bold; color:#495057;">
+                      Automated Notification | Azure DevOps Pipeline
+                    </p>
+                    <p style="margin:0; padding:0;">
+                      This is an automated message from the Azure SQL Database Inventory pipeline. For questions or support, contact the DevOps team.
+                    </p>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
         </table>
 
       </td>
@@ -171,8 +276,8 @@ function Send-PSUNotificationEmail {
 }
 
 
-#Example usage: 
-<#
+<#Example usage: 
+
 $Title = "Pipeline Failure Details"
 $Caption  = "The SO N SO pipeline has failed and requires attention"
 $ErrorDetailHtml = "<html><body><h1>Some Content related to the table </h1></body></html>"
