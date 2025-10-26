@@ -34,6 +34,31 @@ function Set-PSUDefaultAiEngine {
         [string]$Name
     )
 
+    $missingVars = @()
+    switch ($Name) {
+        "AzureOpenAi" {
+            if (-not $env:API_KEY_AZURE_OPENAI) { $missingVars += "API_KEY_AZURE_OPENAI" }
+            if (-not $env:AZURE_OPENAI_ENDPOINT) { $missingVars += "AZURE_OPENAI_ENDPOINT" }
+            if (-not $env:AZURE_OPENAI_DEPLOYMENT) { $missingVars += "AZURE_OPENAI_DEPLOYMENT" }
+        }
+        "GeminiAi" {
+            if (-not $env:API_KEY_GEMINI) { $missingVars += "API_KEY_GEMINI" }
+        }
+        "PerplexityAi" {
+            if (-not $env:API_KEY_PERPLEXITY) { $missingVars += "API_KEY_PERPLEXITY" }
+        }
+    }
+
+    if ($missingVars.Count -gt 0) {
+        Write-Warning "The following required environment variables are missing for $Name:"
+        $missingVars | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
+        Write-Host "Please set them using Set-PSUUserEnvironmentVariable before proceeding." -ForegroundColor Cyan
+        foreach ($var in $missingVars) {
+            Write-Host "Set-PSUUserEnvironmentVariable -Name '$var' -Value '<your-value>'" -ForegroundColor Magenta
+        }
+        return
+    }
+
     try {
         Set-PSUUserEnvironmentVariable -Name "DEFAULT_AI_ENGINE" -Value $Name
         Write-Host "Default AI Engine set to: $Name" -ForegroundColor Green
