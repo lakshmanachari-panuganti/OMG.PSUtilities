@@ -1,3 +1,10 @@
+## [1.0.24] - 26th October 2025
+### Added
+- Environment variable validation for each AI engine in `Set-PSUDefaultAiEngine.ps1`.  
+- User guidance and output commands for setting missing environment variables in `Set-PSUDefaultAiEngine.ps1`.
+
+### Changed
+- Adjusted the order and formatting of prompt instructions in `Invoke-PSUGitCommit.ps1` for improved clarity.
 ## [1.0.23] - 21st October 2025
 ### Changed
 - In `Invoke-PSUGitCommit.ps1`, replaced the call to `Invoke-PSUAiPrompt` with a recursive call to `Invoke-PSUGitCommit` when the `$CustomCommitMsg` is `'R'`.
