@@ -1,3 +1,16 @@
+## [1.0.13] - 26th October 2025
+### Added
+- `Send-PSUNotificationEmail--wip.ps1`: Initial implementation of `Send-PSUNotificationEmail` for sending richly formatted HTML email notifications, including pipeline failure details, dynamic tables, and action buttons.
+- Support in `Get-PSUUserSession.ps1` for querying user sessions on remote computers using the `ComputerName` and `Credential` parameters.
+- Support in `Remove-PSUUserSession.ps1` for logging off user sessions on remote computers via `ComputerName` and `Credential` parameters.
+- New parameters (`ComputerName`, `Credential`) and enhanced documentation for `Get-PSUUserSession.ps1` and `Remove-PSUUserSession.ps1`.
+
+### Changed
+- `Get-PSUUserSession.ps1`: Output objects now include a `ComputerName` property for both local and remote queries.
+- `Get-PSUUserSession.ps1`: Improved documentation with clearer parameter descriptions, examples, and more detailed notes.
+- `Remove-PSUUserSession.ps1`: Enhanced logic to handle local vs. remote session logoff, including user feedback and error handling per computer.
+- `Remove-PSUUserSession.ps1`: Improved parameter validation and updated documentation for clarity and consistency.
+- Updated `.NOTES` and `.LINK` sections in both `Get-PSUUserSession.ps1` and `Remove-PSUUserSession.ps1` for documentation consistency.
 ## [1.0.12] - 19th October 2025
 ### Added
 - New `Update-OMGModuleVersion` (Public) function to increment the version of a specified PowerShell module by Major, Minor, or Patch.

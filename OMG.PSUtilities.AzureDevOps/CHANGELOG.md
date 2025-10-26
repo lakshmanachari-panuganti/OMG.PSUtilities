@@ -1,3 +1,15 @@
+## [1.0.18] - 26th October 2025
+### Added
+- `Invoke-PSUADOPipeline.ps1`: Public function `Invoke-PSUADOPipeline` to trigger an Azure DevOps pipeline by pipeline ID and branch.
+- Support for specifying `Project`, `PipelineId`, optional `Branch`, `Organization`, and `PAT` parameters.
+- Returns pipeline run details as a `[PSCustomObject]` including run ID, status, and web URL.
+- Verbose output for parameter logging with sensitive data masking for `PAT`.
+- Throws errors if required `Organization` or `PAT` are missing.
+- Utilizes Azure DevOps REST API (`_apis/pipelines/{id}/runs`) for execution.
+- Option to set `Organization` and `PAT` using `Set-PSUUserEnvironmentVariable`.
+
+### Changed
+- No changed entries.
 ## [1.0.17] - 20th October 2025
 ### Added
 

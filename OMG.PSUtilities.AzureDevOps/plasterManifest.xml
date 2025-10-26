@@ -2,7 +2,7 @@
   <metadata>
     <name>OMG.PSUtilities.AzureDevOps</name>
     <id>ed60bf38-0851-42d2-ace1-f04f5b01988f</id>
-    <version>1.0.17</version>
+    <version>1.0.18</version>
     <title>OMG.PSUtilities.AzureDevOps</title>
     <description>Interact with Azure DevOps APIs, pipelines, repos, and work items.</description>
     <author>OMG IT Solutions</author>
