@@ -1,3 +1,7 @@
+<#
+    .Description
+        Login with both az login --use-device-code and Connect-AzAccount 
+#>
 function Update-AksKubeConfig {
     [CmdletBinding()]
     param(
