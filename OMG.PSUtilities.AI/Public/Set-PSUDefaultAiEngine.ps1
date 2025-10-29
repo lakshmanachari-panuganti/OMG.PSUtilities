@@ -50,7 +50,7 @@ function Set-PSUDefaultAiEngine {
     }
 
     if ($missingVars.Count -gt 0) {
-        Write-Warning "The following required environment variables are missing for $Name:"
+        Write-Warning "The following required environment variables are missing for $Name`:"
         $missingVars | ForEach-Object { Write-Host "  - $_" -ForegroundColor Yellow }
         Write-Host "Please set them using Set-PSUUserEnvironmentVariable before proceeding." -ForegroundColor Cyan
         foreach ($var in $missingVars) {
