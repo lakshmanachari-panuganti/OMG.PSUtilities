@@ -1,3 +1,15 @@
+## [1.0.15] - 1st November 2025
+### Added
+- Added `LastModified` property to the `PSCredential` object returned by `Get-PSUCredentialFromManager.ps1`.
+
+### Changed
+- Added `-Clipboard` parameter to `Get-PSUCredentialFromManager.ps1` to allow copying the password to the clipboard.
+- Updated `Get-PSUCredentialFromManager.ps1` to return a `PSCredential` object with added `LastModified` property.
+- Added `PSU.CredentialManager.Credential` to the `PSTypeNames` of the credential object in `Get-PSUCredentialFromManager.ps1`.
+- Added alias `fetchcred` for `Get-PSUCredentialFromManager.ps1`.
+- Added alias `listcred` for `Get-PSUCredentialManagerInventory.ps1`.
+- Added alias `setcred` for `Set-PSUCredentialToManager.ps1`.
+
 ## [1.0.14] - 31st October 2025
 ### Added
 - `Get-PSUCredentialFromManager`: Retrieves a credential (username, password, comment) from Windows Credential Manager by target name. Works in any logon session using Windows API.
