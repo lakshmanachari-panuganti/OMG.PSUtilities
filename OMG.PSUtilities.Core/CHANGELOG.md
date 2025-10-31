@@ -1,3 +1,9 @@
+## [1.0.14] - 31st October 2025
+### Added
+- `Get-PSUCredentialFromManager`: Retrieves a credential (username, password, comment) from Windows Credential Manager by target name. Works in any logon session using Windows API.
+- `Get-PSUCredentialManagerInventory`: Lists all credential target names stored in Windows Credential Manager. Useful for inventory and audit.
+- `Set-PSUCredentialToManager`: Stores a credential (username, password, comment) in Windows Credential Manager using Windows API. Supports both explicit username/password and `[PSCredential]` input. Works in any logon session.
+- `Remove-PSUCredentialFromManager`: Deletes a credential from Windows Credential Manager by target name. Implements `-Confirm` with high impact for safe deletion.
 ## [1.0.13] - 26th October 2025
 ### Added
 - `Send-PSUNotificationEmail--wip.ps1`: Initial implementation of `Send-PSUNotificationEmail` for sending richly formatted HTML email notifications, including pipeline failure details, dynamic tables, and action buttons.
