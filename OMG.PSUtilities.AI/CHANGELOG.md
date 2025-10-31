@@ -1,3 +1,7 @@
+## [1.0.25] - 31st October 2025
+### Fixed
+- Fixed typo in `Set-PSUDefaultAiEngine.ps1` Write-Warning message.
+
 ## [1.0.24] - 26th October 2025
 ### Added
 - Environment variable validation for each AI engine in `Set-PSUDefaultAiEngine.ps1`.  
