@@ -19,7 +19,6 @@ function Get-PSUCredentialFromManager {
 
     .EXAMPLE
         Get-PSUCredentialFromManager -Target "Computer01Cred" -Clipboard
-
         Retrieves the credential and copies the password to the clipboard.
 
     .OUTPUTS
@@ -38,6 +37,7 @@ function Get-PSUCredentialFromManager {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
         [string]$Target,
 
         [Parameter()]
@@ -47,19 +47,26 @@ function Get-PSUCredentialFromManager {
     process {
         try {
             $CredentialManager = [CredentialManager.CredMan]::Get($Target)
-            if ($CredentialManager) {
-                if ($Clipboard.IsPresent) {
-                    $CredentialManager.Password | Set-Clipboard
-                } 
-                $securePassword = ConvertTo-SecureString $CredentialManager.Password -AsPlainText -Force
-                New-Object System.Management.Automation.PSCredential (
-                    $CredentialManager.Username,
-                    $securePassword
-                )
-            } else {
+
+            if (-not $CredentialManager) {
                 throw "No credential found in Windows Credential Manager for target: $Target"
             }
-        } catch {
+
+            if ($Clipboard.IsPresent) {
+                $CredentialManager.Password | Set-Clipboard
+                Write-Verbose "Password copied to clipboard. Use with caution."
+            }
+
+            $securePassword = ConvertTo-SecureString $CredentialManager.Password -AsPlainText -Force
+            $credObj = New-Object System.Management.Automation.PSCredential (
+                $CredentialManager.Username,
+                $securePassword
+            )
+            $credObj | Add-Member -MemberType NoteProperty -Name LastModified -Value $CredentialManager.LastModified
+            $credObj.PSTypeNames.Insert(0, 'PSU.CredentialManager.Credential')
+            return $credObj | Select-Object UserName, Password, LastModified
+        }
+        catch {
             $PSCmdlet.ThrowTerminatingError($_)
         }
     }

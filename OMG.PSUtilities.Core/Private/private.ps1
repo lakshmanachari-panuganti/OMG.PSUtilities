@@ -1,5 +1,5 @@
-# Add Windows Credential Manager API wrapper
-Add-Type @"
+if (-not ('CredentialManager.CredMan' -as [type])) {
+    Add-Type @"
 using System;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -129,12 +129,15 @@ namespace CredentialManager
             if (CredRead(target, 1, 0, out credPtr))
             {
                 CREDENTIAL cred = (CREDENTIAL)Marshal.PtrToStructure(credPtr, typeof(CREDENTIAL));
+                long fileTime = ((long)cred.LastWritten.dwHighDateTime << 32) + cred.LastWritten.dwLowDateTime;
+                DateTime lastModified = DateTime.FromFileTime(fileTime);
                 var info = new CredentialInfo
                 {
                     Target = cred.TargetName,
                     Username = cred.UserName,
                     Password = Marshal.PtrToStringUni(cred.CredentialBlob, cred.CredentialBlobSize / 2),
-                    Comment = cred.Comment
+                    Comment = cred.Comment,
+                    LastModified = lastModified
                 };
                 CredFree(credPtr);
                 return info;
@@ -149,6 +152,8 @@ namespace CredentialManager
         public string Username { get; set; }
         public string Password { get; set; }
         public string Comment { get; set; }
+        public DateTime LastModified { get; set; }
     }
 }
 "@
+}
