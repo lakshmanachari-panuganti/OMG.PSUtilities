@@ -112,7 +112,9 @@ VariablesToExport = @()
 AliasesToExport = @(
     'fetchcred',
     'Get-WifiInfo',
+    'listcred',
     'Remove-PSUInstalledSoftware',
+    'setcred',
     'Uninstall-Software'
 )
 

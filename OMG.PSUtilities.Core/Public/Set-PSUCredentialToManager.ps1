@@ -38,6 +38,7 @@ function Set-PSUCredentialToManager {
     #>
 
     [CmdletBinding(DefaultParameterSetName = 'ByUserPass')]
+    [Alias("setcred")]
     param (
         [Parameter(Mandatory, ParameterSetName = 'ByUserPass')]
         [Parameter(Mandatory, ParameterSetName = 'ByCredential')]

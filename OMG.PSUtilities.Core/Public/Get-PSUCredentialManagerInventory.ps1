@@ -23,6 +23,7 @@ function Get-PSUCredentialManagerInventory {
     #>
 
     [CmdletBinding()]
+    [Alias("listcred")]
     param ()
 
     process {
