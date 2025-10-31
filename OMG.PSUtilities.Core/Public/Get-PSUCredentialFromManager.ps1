@@ -35,6 +35,7 @@ function Get-PSUCredentialFromManager {
     #>
 
     [CmdletBinding()]
+    [Alias("fetchcred")]
     param (
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]

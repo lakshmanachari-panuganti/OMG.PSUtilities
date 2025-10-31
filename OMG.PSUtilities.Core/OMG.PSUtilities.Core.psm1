@@ -49,6 +49,7 @@ $PublicFunctions = @(
 )
 
 $AliasesToExport = @(
+    'fetchcred',
     'Get-WifiInfo',
     'Remove-PSUInstalledSoftware',
     'Uninstall-Software'
