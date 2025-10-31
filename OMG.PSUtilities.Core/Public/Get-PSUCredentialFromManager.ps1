@@ -28,13 +28,19 @@ function Get-PSUCredentialFromManager {
     [CmdletBinding()]
     param (
         [Parameter(Mandatory)]
-        [string]$Target
+        [string]$Target,
+
+        [Parameter()]
+        [switch]$Clipboard
     )
 
     process {
         try {
             $CredentialManager = [CredentialManager.CredMan]::Get($Target)
             if ($CredentialManager) {
+                if ($Clipboard.IsPresent) {
+                    $CredentialManager.Password | Set-Clipboard
+                } 
                 $securePassword = ConvertTo-SecureString $CredentialManager.Password -AsPlainText -Force
                 New-Object System.Management.Automation.PSCredential (
                     $CredentialManager.Username,
