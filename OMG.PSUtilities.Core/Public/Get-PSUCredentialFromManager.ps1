@@ -4,13 +4,23 @@ function Get-PSUCredentialFromManager {
         Retrieves a credential from Windows Credential Manager by target name.
 
     .DESCRIPTION
-        Fetches the username, password, and comment stored under the specified target name.
+        Retrieves the PSCredential object stored under the specified target name in Windows Credential Manager.
+        If the -Clipboard switch is used, the password is copied to the clipboard.
 
     .PARAMETER Target
         (Mandatory) The name of the credential to retrieve.
 
+    .PARAMETER Clipboard
+        (Optional) If specified, copies the retrieved password to the Windows clipboard.
+        Use with caution: copying sensitive data to the clipboard may expose it to other applications or users on the system.
+
     .EXAMPLE
-        Get-PSUCredentialFromManager -Target "acred"
+        Get-PSUCredentialFromManager -Target "WindowsLogin"
+
+    .EXAMPLE
+        Get-PSUCredentialFromManager -Target "Computer01Cred" -Clipboard
+
+        Retrieves the credential and copies the password to the clipboard.
 
     .OUTPUTS
         [PSCredential]
