@@ -45,6 +45,31 @@ function Invoke-PSUGitCommit {
         [string]$RootPath = (Get-Location).Path
     )
 
+    $ignorePatterns = @(
+        "*.env", ".env", ".env.*",
+        ".gitignore",
+        "*.lock", "package-lock.json", "yarn.lock",
+        "*.tfstate", "*.tfstate.*", "*.tfvars", "*.tfvars.json",
+        "*.key", "*.pem", "*.crt",
+        "*.pfx",
+        "*.dll", "*.pdb", "*.exe",
+        "node_modules/*",
+        "dist/*", "build/*",
+        "bin/*", "obj/*",
+        "*.zip", "*.tar", "*.gz"
+    )
+
+    function Should-SkipFile($path) {
+        foreach ($pattern in $ignorePatterns) {
+            if ($path -like $pattern) {
+                return $true
+            }
+        }
+        return $false
+    }
+
+    # ------------------------------------------------------------------
+
     Push-Location $RootPath
     try {
         $gitOutput = git status --porcelain
@@ -54,12 +79,15 @@ function Invoke-PSUGitCommit {
             return
         }
 
+        # Apply ignore filtering to changed file list
         $changedItems = foreach ($line in $gitOutput) {
             $line = $line.Trim()
             $changeCode = $line.Split(' ')[0].Trim()
             $path = $line.Split(' ', 2)[1].Trim().Trim('"')
-            $fullPath = Join-Path -Path $RootPath -ChildPath $path
 
+            if (Should-SkipFile $path) { continue }
+
+            $fullPath = Join-Path -Path $RootPath -ChildPath $path
             $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
 
             $itemType = if ($changeCode -eq 'D' -or -not $itemInfo) {
@@ -92,6 +120,17 @@ function Invoke-PSUGitCommit {
             }
         }
 
+        # filter with the $ignorePatterns
+
+        $changedItems = $changedItems | Where-Object { -not (Should-SkipFile $_.Path) }
+
+        $popupResponse = Popup-SensitiveContent -Files ($changedItems | Where-Object { $_.ItemType -eq 'File' } | Select-Object -ExpandProperty Path)
+        if(-not $popupResponse){
+            Write-Host "Commit aborted due to sensitive content." -ForegroundColor Red
+            return
+        }
+
+        # Ignore files during diff extraction (SECOND filter)
         $fileChanges = $changedItems | ForEach-Object {
             $item = $_
             $status = $item.ChangeType
@@ -207,6 +246,12 @@ NOTE:
 --> Should not include markdown formatting.
 --> Should only contain the commit message text as per the examples above.
 
+IMPORTANT:
+If any file contains passwords, tokens, secrets, API keys, connection strings,
+client secrets, or ANY sensitive value, DO NOT include the actual value in the commit message.
+Summarize it generically (e.g., "updated credential configuration") 
+instead of exposing plaintext data.
+
 ---------------------------------------------------
 
 Following are the git changes:
@@ -220,6 +265,7 @@ Change Type: $($item.Status)
 $($item.Diff)
 "@
         }
+
         $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
         $commitMessage = $commitMessage.Trim() | where-object { $_ }
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan
@@ -237,7 +283,6 @@ $($item.Diff)
         } elseif ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }
-
         # Stage and commit
         git add . *> $null
         git commit -m "$commitMessage" *> $null
