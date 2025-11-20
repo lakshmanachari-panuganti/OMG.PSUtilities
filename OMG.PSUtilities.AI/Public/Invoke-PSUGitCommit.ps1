@@ -45,6 +45,31 @@ function Invoke-PSUGitCommit {
         [string]$RootPath = (Get-Location).Path
     )
 
+    $ignorePatterns = @(
+        "*.env", ".env", ".env.*",
+        ".gitignore",
+        "*.lock", "package-lock.json", "yarn.lock",
+        "*.tfstate", "*.tfstate.*", "*.tfvars", "*.tfvars.json",
+        "*.key", "*.pem", "*.crt",
+        "*.pfx",
+        "*.dll", "*.pdb", "*.exe",
+        "node_modules/*",
+        "dist/*", "build/*",
+        "bin/*", "obj/*",
+        "*.zip", "*.tar", "*.gz"
+    )
+
+    function Should-SkipFile($path) {
+        foreach ($pattern in $ignorePatterns) {
+            if ($path -like $pattern) {
+                return $true
+            }
+        }
+        return $false
+    }
+
+    # ------------------------------------------------------------------
+
     Push-Location $RootPath
     try {
         $gitOutput = git status --porcelain
@@ -54,12 +79,15 @@ function Invoke-PSUGitCommit {
             return
         }
 
+        # Apply ignore filtering to changed file list
         $changedItems = foreach ($line in $gitOutput) {
             $line = $line.Trim()
             $changeCode = $line.Split(' ')[0].Trim()
             $path = $line.Split(' ', 2)[1].Trim().Trim('"')
-            $fullPath = Join-Path -Path $RootPath -ChildPath $path
 
+            if (Should-SkipFile $path) { continue }
+
+            $fullPath = Join-Path -Path $RootPath -ChildPath $path
             $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
 
             $itemType = if ($changeCode -eq 'D' -or -not $itemInfo) {
@@ -92,8 +120,12 @@ function Invoke-PSUGitCommit {
             }
         }
 
+        # Ignore files during diff extraction (SECOND filter)
         $fileChanges = $changedItems | ForEach-Object {
             $item = $_
+
+            if (Should-SkipFile $item.Path) { return }
+
             $status = $item.ChangeType
             $path = $item.Path
             $itemType = $item.ItemType
@@ -220,6 +252,7 @@ Change Type: $($item.Status)
 $($item.Diff)
 "@
         }
+
         $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
         $commitMessage = $commitMessage.Trim() | where-object { $_ }
         Write-Host "Following is the Commit message!" -ForegroundColor Cyan
@@ -237,7 +270,6 @@ $($item.Diff)
         } elseif ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }
-
         # Stage and commit
         git add . *> $null
         git commit -m "$commitMessage" *> $null
