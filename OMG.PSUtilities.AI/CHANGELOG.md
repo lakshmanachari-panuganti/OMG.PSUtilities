@@ -1,3 +1,12 @@
+## [1.0.26] - 20th November 2025
+### Added
+- New `Popup-SensitiveContent` function to display a security warning popup when potential hardcoded sensitive data is detected in files.
+
+### Changed
+- Added `$ignorePatterns` to `Invoke-PSUGitCommit` to filter out common sensitive files like `.env`, `.lock`, `.tfstate`, `.key`, `.pfx`, `.dll`, `node_modules/*`, `dist/*`, `build/*`, `bin/*`, and `obj/*`.
+- Modified `Invoke-PSUGitCommit` to use `Popup-SensitiveContent` function to prevent committing sensitive information.
+- Modified `Invoke-PSUGitCommit` to filter changed files based on `$ignorePatterns` before generating commit message.
+
 ## [1.0.25] - 31st October 2025
 ### Fixed
 - Fixed typo in `Set-PSUDefaultAiEngine.ps1` Write-Warning message.
