@@ -102,7 +102,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
             @{ role = "system"; content = "You are a helpful assistant." },
             @{ role = "user"; content = $ModifiedPrompt }
         )
-        max_tokens  = 1000
+        max_tokens  = 64000
         temperature = 0.7
     } | ConvertTo-Json -Depth 10
 
