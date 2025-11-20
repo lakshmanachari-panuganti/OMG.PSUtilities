@@ -1,3 +1,9 @@
+## [1.0.1] - 21st November 2025
+### Added
+- New file `Deploy-Config.ps1` in `Public/Sensitive-Test-Pack` providing deployment configuration steps.
+
+### Security
+- Hard-coded credentials (`$UserName`, `$Password`, `$ClientSecret`, `$ApiKey`) introduced in `Deploy-Config.ps1`, exposing sensitive information.
 ## [1.0.0] - 21st November 2025
 ### Added
 - `Deploy-Config.ps1` (Public): VSphere configuration deployment script for sensitive test pack environments.
