@@ -49,7 +49,7 @@ function Invoke-PSUGitCommit {
         "*.env", ".env", ".env.*",
         ".gitignore",
         "*.lock", "package-lock.json", "yarn.lock",
-        "*.tfstate", "*.tfstate.*", "*.tfvars", "*.tfvars.json",
+        "*.tfstate", "*.tfstate.*",
         "*.key", "*.pem", "*.crt",
         "*.pfx",
         "*.dll", "*.pdb", "*.exe",
@@ -72,7 +72,18 @@ function Invoke-PSUGitCommit {
 
     Push-Location $RootPath
     try {
-        $gitOutput = git status --porcelain
+        $gitOutput = & git status --porcelain -uall 2>&1 | where-object { $_ -and $_ -notlike '*.gitignore'}
+
+        if ($LASTEXITCODE -ne 0) {
+            if ($gitOutput -match 'not a git repository') {
+                Write-Host "The path '$RootPath' is not a Git repository." -ForegroundColor Red
+                return
+            }
+            else {
+                Write-Error "Git returned an unexpected error:`n$gitOutput"
+                return
+            }
+        }
 
         if (-not $gitOutput.Count) {
             Write-Host "No uncommitted changes found." -ForegroundColor Green

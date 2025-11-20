@@ -1,3 +1,15 @@
+## [1.0.27] - 21st November 2025
+### Changed
+- Removed duplicate function declaration in `Popup-SensitiveContent.ps1`.
+- Removed `.log` extension from ignore list in `Popup-SensitiveContent.ps1`.
+- Enhanced sensitive data detection patterns in `Popup-SensitiveContent.ps1` to support JSON quoted keys, unquoted keys, and additional token formats (JWT, Bearer tokens).
+- Improved secret masking logic in `Popup-SensitiveContent.ps1` with consistent masking for different secret types.
+- Added Azure resource scope identifier filtering in `Popup-SensitiveContent.ps1` to reduce false positives.
+- Added variable assignment and cmdlet filtering in `Popup-SensitiveContent.ps1` to ignore PowerShell-specific patterns.
+- Enhanced `Invoke-PSUGitCommit.ps1` to use `& git status --porcelain -uall` with proper error handling and `.gitignore` filtering.
+- Added validation in `Invoke-PSUGitCommit.ps1` to detect non-Git repositories and provide user feedback.
+- Removed Terraform variable files (`*.tfvars`, `*.tfvars.json`) from ignore list in `Invoke-PSUGitCommit.ps1`.
+- Improved whitespace handling in `Get-ValidJson.ps1`.
 ## [1.0.26] - 20th November 2025
 ### Added
 - New `Popup-SensitiveContent` function to display a security warning popup when potential hardcoded sensitive data is detected in files.

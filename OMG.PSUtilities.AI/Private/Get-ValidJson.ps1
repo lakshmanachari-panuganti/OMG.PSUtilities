@@ -9,7 +9,7 @@ function Get-ValidJson {
         [hashtable]$Headers,
         [string]$Uri
     )
-        
+
     # Try to parse as-is first
     try {
         $null = ConvertFrom-Json $Text -ErrorAction Stop

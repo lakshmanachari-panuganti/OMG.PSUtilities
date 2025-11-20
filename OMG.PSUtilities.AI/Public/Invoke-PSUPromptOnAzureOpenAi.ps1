@@ -94,7 +94,6 @@ function Invoke-PSUPromptOnAzureOpenAi {
     }
 
     $Endpoint = $Endpoint.TrimEnd('/')
-    $Uri = "$Endpoint/openai/deployments/$Deployment/chat/completions?api-version=2025-01-01-preview"
     $Headers = @{ "api-key" = $ApiKey }
 
     $Body = @{
@@ -102,13 +101,13 @@ function Invoke-PSUPromptOnAzureOpenAi {
             @{ role = "system"; content = "You are a helpful assistant." },
             @{ role = "user"; content = $ModifiedPrompt }
         )
-        max_tokens  = 1000
+        max_tokens  = 64000
         temperature = 0.7
     } | ConvertTo-Json -Depth 10
 
     try {
         Write-Host "🧠 Thinking..." -ForegroundColor Cyan
-        $Response = Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -Body $Body -ContentType 'application/json'
+        $Response = Invoke-RestMethod -Method Post -Uri $Endpoint -Headers $Headers -Body $Body -ContentType 'application/json'
         $Text = $Response.choices[0].message.content
 
         if ($ReturnJsonResponse.IsPresent) {
