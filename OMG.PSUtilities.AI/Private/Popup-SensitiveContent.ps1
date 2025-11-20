@@ -1,5 +1,4 @@
 function Popup-SensitiveContent {
-    function Popup-SensitiveContent {
     <#
     .SYNOPSIS
     Displays a security warning popup when potential hardcoded sensitive data is detected in files.
