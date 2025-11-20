@@ -72,7 +72,18 @@ function Invoke-PSUGitCommit {
 
     Push-Location $RootPath
     try {
-        $gitOutput = git status --porcelain -uall
+        $gitOutput = & git status --porcelain -uall 2>&1
+
+        if ($LASTEXITCODE -ne 0) {
+            if ($gitOutput -match 'not a git repository') {
+                Write-Host "The path '$RootPath' is not a Git repository." -ForegroundColor Red
+                return
+            }
+            else {
+                Write-Error "Git returned an unexpected error:`n$gitOutput"
+                return
+            }
+        }
 
         if (-not $gitOutput.Count) {
             Write-Host "No uncommitted changes found." -ForegroundColor Green
