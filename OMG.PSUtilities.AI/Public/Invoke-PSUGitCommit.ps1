@@ -72,7 +72,7 @@ function Invoke-PSUGitCommit {
 
     Push-Location $RootPath
     try {
-        $gitOutput = & git status --porcelain -uall 2>&1
+        $gitOutput = & git status --porcelain -uall 2>&1 | where-object { $_ -and $_ -notlike '*.gitignore'}
 
         if ($LASTEXITCODE -ne 0) {
             if ($gitOutput -match 'not a git repository') {
