@@ -71,8 +71,7 @@ function Popup-SensitiveContent {
     $IgnoreExtensions = @(
         '.exe', '.dll', '.pdb', '.obj', '.class', '.o', '.so', '.a', '.lib', '.dylib', '.bin',
         '.tmp', '.temp', '.bak', '.old', '.swp', '.orig',
-        '.lock',
-        '.log'
+        '.lock'
     )
 
     # Filter files before scanning
@@ -85,15 +84,19 @@ function Popup-SensitiveContent {
 
     # Sensitive data patterns
     $Patterns = @(
-        '(?i)["'']?\s*(password|passwd|pwd)\s*["'']?\s*[:=]\s*["'']?[^"'']+["'']?',
-        '(?i)["'']?\s*(secret|clientsecret)\s*["'']?\s*[:=]\s*["'']?[^"'']+["'']?',
-        '(?i)["'']?\s*(apikey|api[_-]?key)\s*["'']?\s*[:=]\s*["'']?[^"'']+["'']?',
-        '(?i)["'']?\s*(token|accesstoken|authtoken)\s*["'']?\s*[:=]\s*["'']?[^"'']+["'']?',
-        '(?i)["'']?\s*(connectionstring|connstring|db[_-]?conn)\s*["'']?\s*[:=]\s*["'']?[^"'']+["'']?',
+        # Key-value patterns with = or : (supports JSON quoted keys and unquoted keys)
+        '(?i)["`''"]?(password|passwd|pwd|db_password)["`''"]?\s*[:=]\s*["`''"]?[^"`''"\r\n]+["`''"]?',
+        '(?i)["`''"]?(secret|clientsecret|client_secret)["`''"]?\s*[:=]\s*["`''"]?[^"`''"\r\n]+["`''"]?',
+        '(?i)["`''"]?(apikey|api[_-]?key|api_key)["`''"]?\s*[:=]\s*["`''"]?[^"`''"\r\n]+["`''"]?',
+        '(?i)["`''"]?(token|accesstoken|authtoken|access_token)["`''"]?\s*[:=]\s*["`''"]?[^"`''"\r\n]+["`''"]?',
+        '(?i)["`''"]?(connectionstring|connstring|db[_-]?conn)["`''"]?\s*[:=]\s*["`''"]?[^"`''"\r\n]+["`''"]?',
+        # Specific token/key patterns
         'AKIA[0-9A-Z]{16}',
         'ghp_[A-Za-z0-9]{36}',
         'github_pat_[A-Za-z0-9]{22,64}',
-        'AIza[0-9A-Za-z\-_]{35}'
+        'AIza[0-9A-Za-z\-_]{35}',
+        '(?i)eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+',
+        '(?i)bearer\s+[A-Za-z0-9\-._~+/]+=*'
     )
 
     # External file that users can add customize patterns at anytime!
@@ -115,18 +118,23 @@ function Popup-SensitiveContent {
         for ($i = 0; $i -lt $content.Count; $i++) {
             $line = $content[$i]
 
+            # Ignore Azure resource scope identifiers
             if ($line -match '(?i)(subscriptions\/|resourceGroups\/|managementGroups\/|providers\/Microsoft)') { continue }
+            # Ignore variable assignments and cmdlets
+            if ($line -match '(?i)\$\w+\s*=\s*(\$|Get-|Invoke-|ConvertTo-|ConvertFrom-)') { continue }
 
             foreach ($pattern in $Patterns) {
                 if ($line -match $pattern) {
 
-                    $raw = $Matches[0]
+                    $raw = $Matches[0].Trim()
 
                     # Ignore Azure DevOps variable references like $(VAR)
                     if ($raw -match '\$\([^)]+\)') { continue }
 
-                    if ($raw -match '[:=]\s*["''](.+?)["'']') {
-                        $secret = $Matches[1]
+                    # Extract the secret value after = or : (handles both quoted and unquoted)
+                    if ($raw -match '[:=]\s*["`''"]?([^"`''"\r\n]+?)["`''"]?\s*$') {
+                        $secret = $Matches[1].Trim().Trim('"').Trim("'")
+                        # Mask all but first 2 characters
                         if ($secret.Length -gt 2) {
                             $mask = $secret.Substring(0, 2) + ('*' * ($secret.Length - 2))
                         } else {
@@ -134,7 +142,14 @@ function Popup-SensitiveContent {
                         }
                         $masked = $raw -replace [regex]::Escape($secret), $mask
                     } else {
-                        $masked = $raw
+                        # For patterns without separators (like AWS keys, GitHub tokens, JWT)
+                        $secret = $raw
+                        if ($secret.Length -gt 4) {
+                            $mask = $secret.Substring(0, 4) + ('*' * ($secret.Length - 4))
+                        } else {
+                            $mask = '*' * $secret.Length
+                        }
+                        $masked = $mask
                     }
 
                     $findings += [pscustomobject]@{

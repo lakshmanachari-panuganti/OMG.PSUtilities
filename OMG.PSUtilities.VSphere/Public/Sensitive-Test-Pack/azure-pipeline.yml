@@ -1,0 +1,4 @@
+variables:
+  DB_PASSWORD: "P@ssw0rd!Prod"
+  API_TOKEN: "ghp_DUMMYGithubToken1234567890"
+  CLIENT_SECRET: "client-secret-hardcoded"

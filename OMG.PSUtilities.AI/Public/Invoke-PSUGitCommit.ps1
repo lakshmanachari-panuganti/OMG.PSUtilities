@@ -49,7 +49,7 @@ function Invoke-PSUGitCommit {
         "*.env", ".env", ".env.*",
         ".gitignore",
         "*.lock", "package-lock.json", "yarn.lock",
-        "*.tfstate", "*.tfstate.*", "*.tfvars", "*.tfvars.json",
+        "*.tfstate", "*.tfstate.*",
         "*.key", "*.pem", "*.crt",
         "*.pfx",
         "*.dll", "*.pdb", "*.exe",
@@ -72,7 +72,7 @@ function Invoke-PSUGitCommit {
 
     Push-Location $RootPath
     try {
-        $gitOutput = git status --porcelain
+        $gitOutput = git status --porcelain -uall
 
         if (-not $gitOutput.Count) {
             Write-Host "No uncommitted changes found." -ForegroundColor Green
