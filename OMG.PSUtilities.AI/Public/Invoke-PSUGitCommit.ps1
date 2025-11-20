@@ -120,12 +120,19 @@ function Invoke-PSUGitCommit {
             }
         }
 
+        # filter with the $ignorePatterns
+
+        $changedItems = $changedItems | Where-Object { -not (Should-SkipFile $_.Path) }
+
+        $popupResponse = Popup-SensitiveContent -Files ($changedItems | Where-Object { $_.ItemType -eq 'File' } | Select-Object -ExpandProperty Path)
+        if(-not $popupResponse){
+            Write-Host "Commit aborted due to sensitive content." -ForegroundColor Red
+            return
+        }
+
         # Ignore files during diff extraction (SECOND filter)
         $fileChanges = $changedItems | ForEach-Object {
             $item = $_
-
-            if (Should-SkipFile $item.Path) { return }
-
             $status = $item.ChangeType
             $path = $item.Path
             $itemType = $item.ItemType
@@ -238,6 +245,12 @@ NOTE:
 --> Should not include any explanations or additional text outside the commit message.
 --> Should not include markdown formatting.
 --> Should only contain the commit message text as per the examples above.
+
+IMPORTANT:
+If any file contains passwords, tokens, secrets, API keys, connection strings,
+client secrets, or ANY sensitive value, DO NOT include the actual value in the commit message.
+Summarize it generically (e.g., "updated credential configuration") 
+instead of exposing plaintext data.
 
 ---------------------------------------------------
 
