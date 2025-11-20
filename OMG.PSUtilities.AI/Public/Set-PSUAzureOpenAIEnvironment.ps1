@@ -10,7 +10,7 @@ function Set-PSUAzureOpenAIEnvironment {
         - GPT-4, GPT-4o, GPT-4-Turbo, or GPT-35-Turbo model deployment
         - Automatic retrieval of endpoint and API keys
         - Environment variable configuration for AI-powered utilities
-        
+
         PREREQUISITES:
         - Azure PowerShell modules (Az.Accounts, Az.Resources, Az.CognitiveServices)
         - Active Azure subscription with Azure OpenAI access approval
@@ -39,17 +39,17 @@ function Set-PSUAzureOpenAIEnvironment {
 
     .EXAMPLE
         Set-PSUAzureOpenAIEnvironment
-        
+
         Interactive mode - guides through all setup steps and automatically configures environment variables.
 
     .EXAMPLE
         Set-PSUAzureOpenAIEnvironment -ResourceGroupName "rg-ai-tools" -Location "eastus"
-        
+
         Creates Azure OpenAI resources in specified resource group and location with default GPT-4 model.
 
     .EXAMPLE
         Set-PSUAzureOpenAIEnvironment -ModelName "gpt-4o" -DeploymentName "gpt4o-deployment"
-        
+
         Deploys GPT-4o model with custom deployment name using interactive resource group selection.
 
     .OUTPUTS
@@ -59,7 +59,7 @@ function Set-PSUAzureOpenAIEnvironment {
         Author: Lakshmanachari Panuganti
         Date: 7th October 2025
         Requires: Azure OpenAI access approval for subscription (request at https://aka.ms/oai/access)
-        
+
         Environment Variables Set by this function:
         - API_KEY_AZURE_OPENAI: Azure OpenAI Service API key
         - AZURE_OPENAI_ENDPOINT: Azure OpenAI Service endpoint URL
@@ -79,17 +79,17 @@ function Set-PSUAzureOpenAIEnvironment {
     param(
         [Parameter()]
         [string]$ResourceGroupName,
-    
+
         [Parameter()]
         [ValidateSet('eastus', 'eastus2', 'westus', 'westus2')]
         [string]$Location = 'eastus',
-    
+
         [Parameter()]
         [string]$OpenAIServiceName,
-    
+
         [Parameter()]
         [string]$DeploymentName = 'gpt-4-deployment',
-    
+
         [Parameter()]
         [ValidateSet('gpt-4', 'gpt-35-turbo', 'gpt-4-turbo', 'gpt-4o')]
         [string]$ModelName = 'gpt-4'
@@ -100,7 +100,7 @@ function Set-PSUAzureOpenAIEnvironment {
             # Check if required modules are installed
             Write-Step "Checking required Azure PowerShell modules..."
             $requiredModules = @('Az.Accounts', 'Az.Resources', 'Az.CognitiveServices')
-            
+
             foreach ($module in $requiredModules) {
                 if (-not (Get-Module -ListAvailable -Name $module)) {
                     Write-Info "Module '$module' not found. Installing from PowerShell Gallery..."
@@ -151,16 +151,16 @@ function Set-PSUAzureOpenAIEnvironment {
                 for ($i = 0; $i -lt $existingRGs.Count; $i++) {
                     Write-Host "  [$($i + 2)] Use existing: $($existingRGs[$i].ResourceGroupName) ($($existingRGs[$i].Location))"
                 }
-            
+
                 $rgSelection = Read-Host "`nSelect option [1-$($existingRGs.Count + 1)]"
-            
+
                 if ($rgSelection -eq '1') {
                     $ResourceGroupName = Read-Host "Enter new resource group name"
                     $userLocation = Read-Host "Enter location (default: eastus)"
                     if (-not [string]::IsNullOrWhiteSpace($userLocation)) {
                         $Location = $userLocation
                     }
-                
+
                     Write-Info "Creating resource group: $ResourceGroupName in $Location..."
                     New-AzResourceGroup -Name $ResourceGroupName -Location $Location | Out-Null
                     Write-Success "Resource group created successfully"
@@ -201,13 +201,13 @@ function Set-PSUAzureOpenAIEnvironment {
                 ErrorAction       = 'SilentlyContinue'
             }
             $openAIService = Get-AzCognitiveServicesAccount @getAzCognitiveServicesParams
-            
+
             if ($openAIService) {
                 Write-Info "Azure OpenAI Service '$OpenAIServiceName' already exists"
             }
             else {
                 Write-Info "Creating Azure OpenAI Service in $Location... (This may take 2-3 minutes)"
-                
+
                 $newAzCognitiveServicesParams = @{
                     ResourceGroupName   = $ResourceGroupName
                     Name                = $OpenAIServiceName
@@ -216,7 +216,7 @@ function Set-PSUAzureOpenAIEnvironment {
                     Location            = $Location
                     CustomSubdomainName = $OpenAIServiceName
                 }
-                
+
                 try {
                     $openAIService = New-AzCognitiveServicesAccount @newAzCognitiveServicesParams
                     Write-Success "Azure OpenAI Service created successfully"
@@ -242,20 +242,20 @@ function Set-PSUAzureOpenAIEnvironment {
 
             # Create model deployment
             Write-Step "Creating model deployment: $DeploymentName ($ModelName)"
-            
+
             # Check if deployment already exists
             $deployments = az cognitiveservices account deployment list `
                 --resource-group $ResourceGroupName `
                 --name $OpenAIServiceName `
                 --query "[?name=='$DeploymentName'].name" `
                 --output tsv 2>$null
-            
+
             if ($deployments -contains $DeploymentName) {
                 Write-Info "Deployment '$DeploymentName' already exists"
             }
             else {
                 Write-Info "Creating deployment... (This may take 1-2 minutes)"
-                
+
                 # Model version mapping - using latest non-deprecated versions
                 $modelVersion = switch ($ModelName) {
                     'gpt-4' { 'turbo-2024-04-09' }
@@ -264,7 +264,7 @@ function Set-PSUAzureOpenAIEnvironment {
                     'gpt-35-turbo' { '0125' }
                     default { 'turbo-2024-04-09' }
                 }
-                
+
                 # Adjust model name for newer versions
                 $actualModelName = switch ($ModelName) {
                     'gpt-4' { 'gpt-4' }
@@ -273,7 +273,7 @@ function Set-PSUAzureOpenAIEnvironment {
                     'gpt-35-turbo' { 'gpt-35-turbo' }
                     default { 'gpt-4' }
                 }
-                
+
                 $deployOutput = az cognitiveservices account deployment create `
                     --resource-group $ResourceGroupName `
                     --name $OpenAIServiceName `
@@ -283,7 +283,7 @@ function Set-PSUAzureOpenAIEnvironment {
                     --model-format OpenAI `
                     --sku-capacity 1 `
                     --sku-name "Standard" 2>&1
-                
+
                 # Check for errors in output
                 if ($LASTEXITCODE -ne 0) {
                     Write-ErrorMsg "Deployment creation failed!"
@@ -307,11 +307,11 @@ function Set-PSUAzureOpenAIEnvironment {
 
             # Set environment variables
             Write-Step "Setting Environment Variables"
-            
+
             Set-PSUUserEnvironmentVariable -Name 'API_KEY_AZURE_OPENAI' -Value $apiKey
             Set-PSUUserEnvironmentVariable -Name 'AZURE_OPENAI_ENDPOINT' -Value $endpoint
             Set-PSUUserEnvironmentVariable -Name 'AZURE_OPENAI_DEPLOYMENT' -Value $DeploymentName
-                    
+
             Write-Success "Environment variables set successfully (User level)"
             Write-Info "Variables are now available in this session and will persist for your user account"
             Write-Info "To use in new PowerShell sessions, restart PowerShell or open a new window"
