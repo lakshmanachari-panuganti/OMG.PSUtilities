@@ -136,7 +136,7 @@ function Popup-SensitiveContent {
                         $secret = $Matches[1].Trim().Trim('"').Trim("'")
                         # Mask all but first 2 characters
                         if ($secret.Length -gt 2) {
-                            $mask = $secret.Substring(0, 2) + ('*' * ($secret.Length - 2))
+                            $mask = $secret.Substring(0, 2) + '**********'
                         } else {
                             $mask = '*' * $secret.Length
                         }
@@ -145,7 +145,7 @@ function Popup-SensitiveContent {
                         # For patterns without separators (like AWS keys, GitHub tokens, JWT)
                         $secret = $raw
                         if ($secret.Length -gt 4) {
-                            $mask = $secret.Substring(0, 4) + ('*' * ($secret.Length - 4))
+                            $mask = $secret.Substring(0, 4) + '********'
                         } else {
                             $mask = '*' * $secret.Length
                         }
