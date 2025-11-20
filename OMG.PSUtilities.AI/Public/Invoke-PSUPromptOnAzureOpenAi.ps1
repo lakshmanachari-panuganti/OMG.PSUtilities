@@ -94,7 +94,6 @@ function Invoke-PSUPromptOnAzureOpenAi {
     }
 
     $Endpoint = $Endpoint.TrimEnd('/')
-    $Uri = "$Endpoint/openai/deployments/$Deployment/chat/completions?api-version=2025-01-01-preview"
     $Headers = @{ "api-key" = $ApiKey }
 
     $Body = @{
@@ -108,7 +107,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
 
     try {
         Write-Host "🧠 Thinking..." -ForegroundColor Cyan
-        $Response = Invoke-RestMethod -Method Post -Uri $Uri -Headers $Headers -Body $Body -ContentType 'application/json'
+        $Response = Invoke-RestMethod -Method Post -Uri $Endpoint -Headers $Headers -Body $Body -ContentType 'application/json'
         $Text = $Response.choices[0].message.content
 
         if ($ReturnJsonResponse.IsPresent) {
