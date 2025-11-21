@@ -146,7 +146,7 @@ Just pure JSON that starts with { or [
             "api-key"      = $ApiKey
             "Content-Type" = "application/json"
         }
-        $MaxTokens = Get-OptimalMaxTokens -Prompt $ModifiedPrompt -ResponseSize "Medium"
+        if( -not $MaxTokens ) { $MaxTokens = Get-OptimalMaxTokens -Prompt $ModifiedPrompt -ResponseSize "Medium" }
         $requestBody = @{
             messages = @(
                 @{
@@ -169,7 +169,7 @@ Just pure JSON that starts with { or [
         Write-Host "🧠 Thinking..." -ForegroundColor Cyan
 
         try {
-            $TimeoutSeconds = Get-OptimalTimeout -Prompt $ModifiedPrompt -MaxTokens $MaxTokens
+            if( -not $TimeoutSeconds ) { $TimeoutSeconds = Get-OptimalTimeout -Prompt $ModifiedPrompt -MaxTokens $MaxTokens }
             $Response = Invoke-RestMethod `
                 -Method Post `
                 -Uri $fullUrl `
@@ -229,6 +229,7 @@ Just pure JSON that starts with { or [
 
             if ($statusCode) {
                 Write-Host "Status Code: $statusCode" -ForegroundColor Yellow
+                $ModifiedPrompt | Out-File -FilePath "$env:TEMP\LastAzureOpenAIPrompt.txt" -Encoding UTF8 #TODO: saving for debugging purposes
 
                 switch ($statusCode) {
                     400 {
