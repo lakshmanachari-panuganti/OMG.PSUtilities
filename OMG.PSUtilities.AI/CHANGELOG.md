@@ -1,3 +1,19 @@
+## [1.0.28] - 21st November 2025
+### Added
+- `Get-OptimalMaxTokens` (Private): Calculates optimal `MaxTokens` based on prompt size, desired response size, and model context window limits.
+- `Get-OptimalTimeout` (Private): Calculates optimal request timeout based on estimated input/output tokens, processing speed, and safety margin.
+
+### Changed
+- `Invoke-PSUPromptOnAzureOpenAi`: 
+  - Expanded `.DESCRIPTION` to include handling of large prompts and automatic calculation of `MaxTokens` and `TimeoutSeconds`.
+  - Added parameters: `MaxTokens`, `Temperature`, `TimeoutSeconds`, `ApiVersion`.
+  - Integrated calls to `Get-OptimalMaxTokens` and `Get-OptimalTimeout` when `MaxTokens` or `TimeoutSeconds` are not specified.
+  - Enhanced prompt modification for JSON responses with stricter instructions.
+  - Updated endpoint URL construction to use `$Endpoint/openai/deployments/...`.
+  - Improved error handling with detailed status code cases (400, 401, 404, 429, default) and troubleshooting guidance.
+  - Added verbose logging for request body size.
+  - Normalized and sanitized endpoint parameter.
+  - Reformatted comment-based help for consistent indentation and parameter descriptions.
 ## [1.0.27] - 21st November 2025
 ### Changed
 - Removed duplicate function declaration in `Popup-SensitiveContent.ps1`.

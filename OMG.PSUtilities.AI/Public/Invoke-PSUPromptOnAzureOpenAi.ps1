@@ -1,65 +1,78 @@
 function Invoke-PSUPromptOnAzureOpenAi {
     <#
-.SYNOPSIS
-    Sends a prompt to Azure OpenAI (Chat Completions API) and returns the generated response.
+    .SYNOPSIS
+        Sends a prompt to Azure OpenAI (Chat Completions API) and returns the generated response.
 
-.DESCRIPTION
-    This function interacts with Azure-hosted OpenAI (e.g., GPT-4.1) using the Chat Completions endpoint.
-    It supports structured JSON response parsing and optional override of environment credentials.
+    .DESCRIPTION
+        This function interacts with Azure-hosted OpenAI (e.g., GPT-4, GPT-4o, GPT-5) using the Chat Completions endpoint.
+        It supports structured JSON response parsing, handles large prompts, and automatically calculates optimal
+        MaxTokens and TimeoutSeconds based on prompt size if not specified.
 
-    How to configure:
-    -----------------
-    1. Go to Azure Portal → OpenAI Resource
-    2. Deploy a model (e.g., GPT-4.1)
-    3. Copy your API Key and Endpoint
-    4. Set credentials using:
+        How to configure:
+        -----------------
+        1. Go to Azure Portal → OpenAI Resource
+        2. Deploy a model (e.g., GPT-4o, GPT-5)
+        3. Copy your API Key and Endpoint
+        4. Set credentials using:
 
-        Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "<your-api-key>"
-        Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "<your-endpoint>"
-        Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"
+            Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "<your-api-key>"
+            Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "<your-endpoint>"
+            Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"
 
-.PARAMETER Prompt
-    (Mandatory) The message to send to Azure OpenAI for generating a response.
 
-.PARAMETER ApiKey
-    (Optional) The API key for Azure OpenAI authentication.
-    Default value is $env:API_KEY_AZURE_OPENAI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "your-api-key"
+    .PARAMETER Prompt
+        (Mandatory) The message to send to Azure OpenAI for generating a response.
 
-.PARAMETER Endpoint
-    (Optional) The Azure OpenAI endpoint URL.
-    Default value is $env:AZURE_OPENAI_ENDPOINT. Set using: Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "your-endpoint"
+    .PARAMETER ApiKey
+        (Optional) The API key for Azure OpenAI authentication.
+        Default value is $env:API_KEY_AZURE_OPENAI.
 
-.PARAMETER Deployment
-    (Optional) The Azure OpenAI deployment name.
-    Default value is $env:AZURE_OPENAI_DEPLOYMENT. Set using: Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "your-deployment-name"
+    .PARAMETER Endpoint
+        (Optional) The Azure OpenAI endpoint URL.
+        Default value is $env:AZURE_OPENAI_ENDPOINT.
 
-.PARAMETER ReturnJsonResponse
-    (Optional) Switch parameter to extract and return raw JSON from the response.
+    .PARAMETER Deployment
+        (Optional) The Azure OpenAI deployment name.
+        Default value is $env:AZURE_OPENAI_DEPLOYMENT.
 
-.EXAMPLE
-    API_KEY_AZURE_OPENAI -Prompt "Summarize Kubernetes in one line"
+    .PARAMETER MaxTokens
+        (Optional) Maximum tokens for the response. Default is 4096.
 
-.EXAMPLE
-    API_KEY_AZURE_OPENAI -Prompt "Return a JSON with name and city" -ReturnJsonResponse
+    .PARAMETER Temperature
+        (Optional) Controls randomness (0-2). Default is 0.7.
 
-.OUTPUTS
+    .PARAMETER TimeoutSeconds
+        (Optional) Request timeout in seconds. Default is 300 (5 minutes).
+
+    .PARAMETER ReturnJsonResponse
+        (Optional) Switch parameter to extract and return raw JSON from the response.
+
+    .PARAMETER ApiVersion
+        (Optional) Azure OpenAI API version. Default is "2024-08-01-preview".
+
+    .EXAMPLE
+        Invoke-PSUPromptOnAzureOpenAi -Prompt "Explain Azure in one sentence"
+
+    .EXAMPLE
+        Invoke-PSUPromptOnAzureOpenAi -Prompt "Return JSON with name and age" -ReturnJsonResponse
+
+    .OUTPUTS
     [String]
 
-.NOTES
-    Author: Lakshmanachari Panuganti
-    Date: 2025-08-01
-    API Version: 2025-01-01-preview
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Date: 2025-08-01
 
-.LINK
-    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
-    https://www.linkedin.com/in/lakshmanachari-panuganti/
-    https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
-    https://learn.microsoft.com/en-us/azure/ai-services/openai/reference
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
+        https://learn.microsoft.com/en-us/azure/ai-services/openai/reference
 
-#>
+    #>
 
     [CmdletBinding()]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',
         Justification = 'This is intended for this function to display formatted output to the user on the console'
@@ -78,56 +91,120 @@ function Invoke-PSUPromptOnAzureOpenAi {
         [string]$Deployment = $env:AZURE_OPENAI_DEPLOYMENT,
 
         [Parameter()]
-        [switch]$ReturnJsonResponse
+        [ValidateRange(1, 128000)]
+        [int]$MaxTokens,
+
+        [Parameter()]
+        [ValidateRange(0, 2)]
+        [double]$Temperature = 0.7,
+
+        [Parameter()]
+        [ValidateRange(30, 1800)]
+        [int]$TimeoutSeconds,
+
+        [Parameter()]
+        [switch]$ReturnJsonResponse,
+
+        [Parameter()]
+        [Validateset('2024-12-01-preview','2024-08-01-preview')]
+        [string]$ApiVersion = '2024-12-01-preview'
     )
 
-    if (-not $ApiKey -or -not $Endpoint -or -not $Deployment) {
-        Write-Error "Azure OpenAI credentials are missing. Please check environment variables or pass parameters directly."
-        return
-    }
+    process {
+        # Validate credentials
+        if (-not $ApiKey -or -not $Endpoint -or -not $Deployment) {
+            Write-Error "Azure OpenAI credentials are missing. Please check environment variables or pass parameters directly."
+            Write-Host "`nTo set environment variables, use:" -ForegroundColor Yellow
+            Write-Host '  Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "<your-api-key>"' -ForegroundColor Cyan
+            Write-Host '  Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "<your-endpoint>"' -ForegroundColor Cyan
+            Write-Host '  Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"' -ForegroundColor Cyan
+            return
+        }
 
-    $ModifiedPrompt = if ($ReturnJsonResponse.IsPresent) {
-        $Prompt + "`nRespond ONLY with valid JSON. No explanations. No markdown. Just raw JSON."
-    }
-    else {
-        $Prompt
-    }
+        # Normalize endpoint (remove trailing slash and any path)
+        $Endpoint = $Endpoint.TrimEnd('/')
 
-    $Endpoint = $Endpoint.TrimEnd('/')
-    $Headers = @{ "api-key" = $ApiKey }
+        # Remove common incorrect suffixes
+        $Endpoint = $Endpoint -replace '/openai.*$', ''
 
-    $Body = @{
-        messages    = @(
-            @{ role = "system"; content = "You are a helpful assistant." },
-            @{ role = "user"; content = $ModifiedPrompt }
-        )
-        max_tokens  = 64000
-        temperature = 0.7
-    } | ConvertTo-Json -Depth 10
+        # Construct proper URL
+        $fullUrl = "$Endpoint/openai/deployments/$Deployment/chat/completions?api-version=$ApiVersion"
 
-    try {
-        Write-Host "🧠 Thinking..." -ForegroundColor Cyan
-        $Response = Invoke-RestMethod -Method Post -Uri $Endpoint -Headers $Headers -Body $Body -ContentType 'application/json'
-        $Text = $Response.choices[0].message.content
+        # Modify prompt for JSON if needed
+        $ModifiedPrompt = if ($ReturnJsonResponse.IsPresent) {
+            @"
+$Prompt
 
-        if ($ReturnJsonResponse.IsPresent) {
-            if ($Text -match '(?s)```json\s*(\{.*?\}|\[.*?\])\s*```') {
-                return $matches[1]
-            }
-            elseif ($Text -match '(\{.*?\}|\[.*?\])') {
-                return $matches[1]
-            }
-            else {
-                Write-Warning "No JSON object found in response."
-                return $Text
-            }
+CRITICAL: Respond with ONLY valid JSON. No markdown, no code blocks, no explanations.
+Just pure JSON that starts with { or [
+"@
         }
         else {
-            return $Text
+            $Prompt
         }
 
-    }
-    catch {
-        Write-Error "Failed to get response from Azure OpenAI:`n$($_.Exception.Message)"
+        $Headers = @{
+            "api-key"      = $ApiKey
+            "Content-Type" = "application/json"
+        }
+        if( -not $MaxTokens ) { $MaxTokens = Get-OptimalMaxTokens -Prompt $ModifiedPrompt -ResponseSize "Medium" }
+        $requestBody = @{
+            messages = @(
+                @{
+                    role    = "user"
+                    content = $ModifiedPrompt
+                }
+            )
+            max_tokens  = $MaxTokens
+            temperature = $Temperature
+        }
+
+        try {
+            $Body = $requestBody | ConvertTo-Json -Depth 10 -Compress
+            Write-Verbose "Request body size: $($Body.Length) bytes"
+        } catch {
+            Write-Error "Failed to serialize request: $($_.Exception.Message)"
+            return
+        }
+
+        Write-Host "🧠 Thinking..." -ForegroundColor Cyan
+
+        try {
+            if( -not $TimeoutSeconds ) { $TimeoutSeconds = Get-OptimalTimeout -Prompt $ModifiedPrompt -MaxTokens $MaxTokens }
+            $Response = Invoke-RestMethod `
+                -Method Post `
+                -Uri $fullUrl `
+                -Headers $Headers `
+                -Body $Body `
+                -ContentType 'application/json' `
+                -TimeoutSec $TimeoutSeconds `
+                -ErrorAction Stop
+
+            $responseText = $Response.choices[0].message.content
+
+            if ($ReturnJsonResponse.IsPresent) {
+                # Remove markdown code blocks
+                $cleanedText = $responseText -replace '```json\s*', '' -replace '```\s*', ''
+                $cleanedText = $cleanedText.Trim()
+
+                # Try to extract JSON
+                if ($cleanedText -match '^\s*[\{\[]') {
+                    try {
+                        $null = $cleanedText | ConvertFrom-Json -ErrorAction Stop
+                        return $cleanedText
+                    } catch {
+                        Write-Warning "Response contains invalid JSON"
+                        return $responseText
+                    }
+                } else {
+                    Write-Warning "Response doesn't appear to be JSON"
+                    return $responseText
+                }
+            } else {
+                return $responseText
+            }
+        } catch {
+            $PSCmdlet.ThrowTerminatingError($_)
+        }
     }
 }
