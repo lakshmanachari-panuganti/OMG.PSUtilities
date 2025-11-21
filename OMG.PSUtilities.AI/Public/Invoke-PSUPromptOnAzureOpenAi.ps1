@@ -106,7 +106,8 @@ function Invoke-PSUPromptOnAzureOpenAi {
         [switch]$ReturnJsonResponse,
 
         [Parameter()]
-        [string]$ApiVersion = '2024-12-01-preview' #"2024-08-01-preview"
+        [Validateset('2024-12-01-preview','2024-08-01-preview')]
+        [string]$ApiVersion = '2024-12-01-preview'
     )
 
     process {
