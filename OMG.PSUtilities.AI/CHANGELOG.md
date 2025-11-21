@@ -1,3 +1,14 @@
+## [1.0.29] - 21st November 2025
+
+### Changed
+- Updated `Invoke-PSUPromptOnAzureOpenAi`:
+  - Supports newer Azure OpenAI models (GPT-4, GPT-4o, GPT-5).
+  - Automatically calculates `MaxTokens` and `TimeoutSeconds` based on prompt size if not specified, using `Get-OptimalMaxTokens` and `Get-OptimalTimeout`.
+  - Improved prompt modification for strict JSON output using an enforced instruction when `-ReturnJsonResponse` is specified.
+  - Added parameters: `MaxTokens`, `Temperature`, `TimeoutSeconds`, `ApiVersion`.
+  - Enhanced error handling and verbose logging for request body serialization and REST invocation.
+  - Cleans and validates JSON response output, with warnings on invalid JSON or non-JSON output.
+
 ## [1.0.28] - 21st November 2025
 ### Added
 - `Get-OptimalMaxTokens` (Private): Calculates optimal `MaxTokens` based on prompt size, desired response size, and model context window limits.
