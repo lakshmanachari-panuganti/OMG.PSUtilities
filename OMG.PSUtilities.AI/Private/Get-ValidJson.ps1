@@ -21,7 +21,7 @@ function Get-ValidJson {
     # Remove markdown code fences
     $cleaned = $Text -replace '(?s)^```json\s*', '' -replace '(?s)\s*```$', ''
     $cleaned = $cleaned -replace '(?s)^```\s*', '' -replace '(?s)\s*```$', ''
-        
+
     # Try after removing code fences
     try {
         $null = ConvertFrom-Json $cleaned -ErrorAction Stop
@@ -41,7 +41,7 @@ function Get-ValidJson {
             # Last attempt: find first { to last }
             $firstBrace = $cleaned.IndexOf('{')
             $lastBrace = $cleaned.LastIndexOf('}')
-                
+
             if ($firstBrace -ge 0 -and $lastBrace -gt $firstBrace) {
                 $extracted = $cleaned.Substring($firstBrace, $lastBrace - $firstBrace + 1)
                 try {
@@ -57,7 +57,7 @@ function Get-ValidJson {
     # If we have exhausted extraction attempts and haven't exceeded retry limit, asking AI to fix it!
     if ($RetryCount -lt $MaxRetries) {
         Write-Warning "Invalid JSON detected. Attempting AI-powered correction (Attempt $($RetryCount + 1)/$MaxRetries)..."
-            
+
         $fixPrompt = @"
 The following text is supposed to be valid JSON but is malformed or contains extra content.
 Your task: Extract or fix it to return ONLY valid, parseable JSON.
@@ -88,7 +88,7 @@ Return the corrected JSON:
                 Silent     = $true
             }
             $fixedJson = Invoke-PerplexityApiCall @invokeParams
-                
+
             # Recursively validate the fixed JSON using parameter splatting
             $nextParams = @{
                 Text       = $fixedJson
