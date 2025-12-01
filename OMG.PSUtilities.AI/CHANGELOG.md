@@ -1,3 +1,10 @@
+## [1.0.30] - 1st December 2025
+### Added
+- Ignore PowerShell variable references on token-like keys (e.g., `token`, `accesstoken`, `authtoken`, `access_token`) and Azure DevOps `$(VAR_NAME)` references in `Popup-SensitiveContent.ps1`.
+
+### Changed
+- Cleaned up extraneous whitespace in `Get-ValidJson.ps1` around code fence removal and AI correction logic.
+- Adjusted conditional block formatting in `New-PSUAiPoweredPullRequest.ps1` for better readability when no PR template is specified.
 ## [1.0.29] - 21st November 2025
 
 ### Changed
