@@ -122,6 +122,11 @@ function Popup-SensitiveContent {
             if ($line -match '(?i)(subscriptions\/|resourceGroups\/|managementGroups\/|providers\/Microsoft)') { continue }
             # Ignore variable assignments and cmdlets
             if ($line -match '(?i)\$\w+\s*=\s*(\$|Get-|Invoke-|ConvertTo-|ConvertFrom-)') { continue }
+            # Ignore PowerShell variable references on token-like keys
+            if ($line -match '^\s*["'']?(token|accesstoken|authtoken|access_token)["'']?\s*[:=]\s*\$[A-Za-z0-9:_]+') { continue }
+            # Ignore Azure DevOps $(VAR_NAME) references
+            if ($line -match '\$\([^)]+\)') { continue }
+
 
             foreach ($pattern in $Patterns) {
                 if ($line -match $pattern) {

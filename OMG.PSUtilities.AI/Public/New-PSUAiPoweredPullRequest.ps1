@@ -124,9 +124,9 @@ function New-PSUAiPoweredPullRequest {
             )
         } catch {
             Write-Warning "Could not read PR template file: $($_.Exception.Message)"
-        } else{
-            Write-Verbose "No PR template specified. Proceeding without template."
         }
+    } else{
+            Write-Verbose "No PR template specified. Proceeding without template."
     }
 
     # Construct AI prompt
