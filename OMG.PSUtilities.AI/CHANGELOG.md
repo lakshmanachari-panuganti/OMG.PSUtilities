@@ -1,3 +1,10 @@
+## [1.0.31] - 2nd December 2025
+### Changed
+- Removed `RootPath` parameter from `Invoke-PSUGitCommit.ps1` in favor of auto-detecting the Git repository root.
+- Implemented `git rev-parse --show-toplevel` to determine repository root path dynamically.
+- Added conversion of Unix-style paths to Windows format in `Invoke-PSUGitCommit.ps1`.
+- Updated location handling to store current directory and restore it after execution using `Set-Location` instead of `Push-Location`/`Pop-Location`.
+- Improved error messaging when not inside a Git repository in `Invoke-PSUGitCommit.ps1`.
 ## [1.0.30] - 1st December 2025
 ### Added
 - Ignore PowerShell variable references on token-like keys (e.g., `token`, `accesstoken`, `authtoken`, `access_token`) and Azure DevOps `$(VAR_NAME)` references in `Popup-SensitiveContent.ps1`.
