@@ -7,15 +7,8 @@ function Invoke-PSUGitCommit {
         Analyzes uncommitted changes in a Git repository, generates a conventional commit message using Gemini AI,
         commits those changes, pulls latest from remote with rebase, and pushes your new commit.
 
-    .PARAMETER RootPath
-        (Optional) Git repository root path.
-        Default value is the current directory from (Get-Location).Path.
-
     .EXAMPLE
         Invoke-PSUGitCommit
-
-    .EXAMPLE
-        Invoke-PSUGitCommit -RootPath "c:\repo"
 
     .OUTPUTS
         None
@@ -41,9 +34,7 @@ function Invoke-PSUGitCommit {
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
     [Alias("aigitcommit")]
-    param (
-        [string]$RootPath = (Get-Location).Path
-    )
+    param ( )
 
     $ignorePatterns = @(
         "*.env", ".env", ".env.*",
@@ -70,20 +61,23 @@ function Invoke-PSUGitCommit {
 
     # ------------------------------------------------------------------
 
-    Push-Location $RootPath
     try {
-        $gitOutput = & git status --porcelain -uall 2>&1 | where-object { $_ -and $_ -notlike '*.gitignore'}
+        $currentLocation = Get-Location
+        # Auto-detect git repository root
+        $gitRootOutput = git rev-parse --show-toplevel 2>&1
 
         if ($LASTEXITCODE -ne 0) {
-            if ($gitOutput -match 'not a git repository') {
-                Write-Host "The path '$RootPath' is not a Git repository." -ForegroundColor Red
-                return
-            }
-            else {
-                Write-Error "Git returned an unexpected error:`n$gitOutput"
-                return
-            }
+            Write-Host "Not in a git repository. Please run this command from within a git repository." -ForegroundColor Red
+            return
         }
+
+        # Convert Unix paths to Windows format
+        $RootPath = $gitRootOutput -replace '/', '\'
+        Write-Verbose "Git repository root: $RootPath"
+
+        Set-Location $RootPath
+
+        $gitOutput = git status --porcelain -uall 2>&1 | Where-Object { $_ -and $_ -notlike '*.gitignore' }
 
         if (-not $gitOutput.Count) {
             Write-Host "No uncommitted changes found." -ForegroundColor Green
@@ -169,7 +163,7 @@ Generate a clear, conventional commit message based on the following file change
 The message must start with one of: feat, fix, chore, docs, refactor, style, test.
 Limit to 1-5 lines, based on the number of files changes and based on scenario.
 
-Example: 
+Example:
 
 fix: typo in function name in utils.ps1!
 - Corrected a spelling error in the `Get-ConfigData` function which was causing a runtime failure in some environments.
@@ -251,8 +245,8 @@ function which was causing a runtime failure in some
 environments.
 
 ---------------------------------------------------
-NOTE: 
---> The response should not start or end with triple backticks (``` ) or any code block formatting. 
+NOTE:
+--> The response should not start or end with triple backticks (``` ) or any code block formatting.
 --> Should not include any explanations or additional text outside the commit message.
 --> Should not include markdown formatting.
 --> Should only contain the commit message text as per the examples above.
@@ -260,7 +254,7 @@ NOTE:
 IMPORTANT:
 If any file contains passwords, tokens, secrets, API keys, connection strings,
 client secrets, or ANY sensitive value, DO NOT include the actual value in the commit message.
-Summarize it generically (e.g., "updated credential configuration") 
+Summarize it generically (e.g., "updated credential configuration")
 instead of exposing plaintext data.
 
 ---------------------------------------------------
@@ -310,6 +304,6 @@ $($item.Diff)
         throw
     }
     finally {
-        Pop-Location
+        Set-Location $currentLocation
     }
 }
