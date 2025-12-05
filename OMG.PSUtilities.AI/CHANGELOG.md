@@ -1,3 +1,11 @@
+## [1.0.32] - 5th December 2025
+### Changed
+- Enhanced `Popup-SensitiveContent` to ignore additional sensitive content patterns such as ARM template parameters, Terraform variables, and placeholder values.
+- Updated documentation in `Invoke-PSUPromptOnAzureOpenAi` to clarify automatic mode selection and provided examples for usage.
+- Changed default API version in `Invoke-PSUPromptOnAzureOpenAi` from `2024-08-01-preview` to `2024-12-01-preview`.
+- Improved validation for the `Prompt` parameter in `Invoke-PSUPromptOnAzureOpenAi` to ensure it is not null or empty.
+- Removed redundant timeout validation logic in `Invoke-PSUPromptOnAzureOpenAi`.
+- Cleaned up whitespace in `Invoke-PSUPromptOnGeminiAi` for better readability.
 ## [1.0.31] - 2nd December 2025
 ### Changed
 - Removed `RootPath` parameter from `Invoke-PSUGitCommit.ps1` in favor of auto-detecting the Git repository root.
@@ -29,7 +37,7 @@
 - `Get-OptimalTimeout` (Private): Calculates optimal request timeout based on estimated input/output tokens, processing speed, and safety margin.
 
 ### Changed
-- `Invoke-PSUPromptOnAzureOpenAi`: 
+- `Invoke-PSUPromptOnAzureOpenAi`:
   - Expanded `.DESCRIPTION` to include handling of large prompts and automatic calculation of `MaxTokens` and `TimeoutSeconds`.
   - Added parameters: `MaxTokens`, `Temperature`, `TimeoutSeconds`, `ApiVersion`.
   - Integrated calls to `Get-OptimalMaxTokens` and `Get-OptimalTimeout` when `MaxTokens` or `TimeoutSeconds` are not specified.
@@ -66,7 +74,7 @@
 
 ## [1.0.24] - 26th October 2025
 ### Added
-- Environment variable validation for each AI engine in `Set-PSUDefaultAiEngine.ps1`.  
+- Environment variable validation for each AI engine in `Set-PSUDefaultAiEngine.ps1`.
 - User guidance and output commands for setting missing environment variables in `Set-PSUDefaultAiEngine.ps1`.
 
 ### Changed
