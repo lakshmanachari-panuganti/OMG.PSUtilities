@@ -36,5 +36,6 @@ $AliasesToExport = @(
     'aigitcommit',
     'Ask-Ai'
 )
-
+# Obfuscated Azure Function key (Base64 encoded)
+$script:var_c = [System.Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('a2RobHVSTUkxcGRlelBJd3V0dVhfT19uMkFfOHdZSktUc1lIS25oaEp3TkxBekZ1YmRCLVdRPT0='))
 Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport

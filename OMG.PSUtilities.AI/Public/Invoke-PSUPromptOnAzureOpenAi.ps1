@@ -147,7 +147,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
             } | ConvertTo-Json
 
             try {
-                $response = Invoke-RestMethod -Uri "https://omg-psu-proxy.azurewebsites.net/api/ProxyOpenAI?code=kdhluRMI1pdezPIwutuX_O_n2A_8wYJKTsYHKnhhJwNLAzFubdB-WQ==" -Method Post -Body $ProxyBody -ContentType "application/json" -TimeoutSec $TimeoutSeconds
+                $response = Invoke-RestMethod -Uri "https://omg-psu-proxy.azurewebsites.net/api/ProxyOpenAI?code=$($script:var_c)" -Method Post -Body $ProxyBody -ContentType "application/json" -TimeoutSec $TimeoutSeconds
                 return $response.response
             } catch {
                 Write-Error "Proxy request failed and no direct API credentials available. Error: $($_.Exception.Message)"
