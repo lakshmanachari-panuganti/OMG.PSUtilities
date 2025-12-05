@@ -1,3 +1,11 @@
+## [1.0.32] - 5th December 2025
+### Changed
+- Enhanced `Popup-SensitiveContent` to ignore additional sensitive content patterns such as ARM template parameters, Terraform variables, and placeholder values.
+- Updated documentation in `Invoke-PSUPromptOnAzureOpenAi` to clarify automatic mode selection and provided examples for usage.
+- Changed default API version in `Invoke-PSUPromptOnAzureOpenAi` from `2024-08-01-preview` to `2024-12-01-preview`.
+- Improved validation for the `Prompt` parameter in `Invoke-PSUPromptOnAzureOpenAi` to ensure it is not null or empty.
+- Removed redundant timeout validation logic in `Invoke-PSUPromptOnAzureOpenAi`.
+- Cleaned up whitespace in `Invoke-PSUPromptOnGeminiAi` for better readability.
 ## [1.0.31] - 2nd December 2025
 ### Changed
 - Removed `RootPath` parameter from `Invoke-PSUGitCommit.ps1` in favor of auto-detecting the Git repository root.
