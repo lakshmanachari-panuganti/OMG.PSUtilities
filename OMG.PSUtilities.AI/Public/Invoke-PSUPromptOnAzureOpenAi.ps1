@@ -8,22 +8,21 @@ function Invoke-PSUPromptOnAzureOpenAi {
         It supports structured JSON response parsing, handles large prompts, and automatically calculates optimal
         MaxTokens and TimeoutSeconds based on prompt size if not specified.
 
-        How to configure:
-        -----------------
-        1. Go to Azure Portal → OpenAI Resource
-        2. Deploy a model (e.g., GPT-4o, GPT-5)
-        3. Copy your API Key and Endpoint
-        4. Set credentials using:
+        AUTOMATIC MODE SELECTION:
+        ------------------------
+        The function automatically determines whether to use:
+        - PROXY MODE: If any Azure OpenAI environment variables are missing (recommended for most users)
+        - DIRECT API MODE: If all three environment variables are present (API_KEY_AZURE_OPENAI, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT)
 
+        For direct API access, configure:
+        
             Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "<your-api-key>"
             Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "<your-endpoint>"
             Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"
 
 
     .PARAMETER Prompt
-        (Mandatory) The message to send to Azure OpenAI for generating a response.
-
-    .PARAMETER ApiKey
+        (Mandatory) The message to send to Azure OpenAI for generating a response.    .PARAMETER ApiKey
         (Optional) The API key for Azure OpenAI authentication.
         Default value is $env:API_KEY_AZURE_OPENAI.
 
@@ -48,13 +47,19 @@ function Invoke-PSUPromptOnAzureOpenAi {
         (Optional) Switch parameter to extract and return raw JSON from the response.
 
     .PARAMETER ApiVersion
-        (Optional) Azure OpenAI API version. Default is "2024-08-01-preview".
+        (Optional) Azure OpenAI API version. Default is "2024-12-01-preview".
 
     .EXAMPLE
+        # Automatic mode - uses proxy if credentials not set
         Invoke-PSUPromptOnAzureOpenAi -Prompt "Explain Azure in one sentence"
 
     .EXAMPLE
-        Invoke-PSUPromptOnAzureOpenAi -Prompt "Return JSON with name and age" -ReturnJsonResponse
+        # With JSON response parsing
+        Invoke-PSUPromptOnAzureOpenAi -Prompt "Return JSON with name and age fields" -ReturnJsonResponse
+
+    .EXAMPLE
+        # Override with explicit credentials for direct API
+        Invoke-PSUPromptOnAzureOpenAi -Prompt "Hello" -ApiKey $key -Endpoint $endpoint -Deployment $deployment
 
     .OUTPUTS
     [String]
@@ -79,6 +84,13 @@ function Invoke-PSUPromptOnAzureOpenAi {
     )]
     param(
         [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [ValidateScript({
+            if ([string]::IsNullOrWhiteSpace($_)) {
+            throw "Prompt cannot be null, empty, or contain only whitespace."
+            }
+            return $true
+        })]
         [string]$Prompt,
 
         [Parameter()]
@@ -106,20 +118,45 @@ function Invoke-PSUPromptOnAzureOpenAi {
         [switch]$ReturnJsonResponse,
 
         [Parameter()]
-        [Validateset('2024-12-01-preview','2024-08-01-preview')]
         [string]$ApiVersion = '2024-12-01-preview'
     )
 
     process {
-        # Validate credentials
-        if (-not $ApiKey -or -not $Endpoint -or -not $Deployment) {
-            Write-Error "Azure OpenAI credentials are missing. Please check environment variables or pass parameters directly."
-            Write-Host "`nTo set environment variables, use:" -ForegroundColor Yellow
-            Write-Host '  Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "<your-api-key>"' -ForegroundColor Cyan
-            Write-Host '  Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "<your-endpoint>"' -ForegroundColor Cyan
-            Write-Host '  Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"' -ForegroundColor Cyan
-            return
+        # Calculate optimal MaxTokens if not provided
+        if (-not $MaxTokens) {
+            $MaxTokens = Get-OptimalMaxTokens -Prompt $Prompt -ResponseSize "Medium"
         }
+
+        # Calculate optimal timeout if not provided
+        if (-not $TimeoutSeconds) {
+            $TimeoutSeconds = Get-OptimalTimeout -Prompt $Prompt -MaxTokens $MaxTokens
+        }
+
+        # Check if all three environment variables are present for direct API access
+        $useDirectApi = ($ApiKey -and $Endpoint -and $Deployment)
+
+        if (-not $useDirectApi) {
+            # Use Proxy (one or more credentials missing)
+            Write-Verbose "One or more Azure OpenAI credentials missing. Using proxy mode."
+
+            $ProxyBody = @{
+                Prompt = $Prompt
+                MaxTokens = $MaxTokens
+                Temperature = $Temperature
+                ReturnJsonResponse = $ReturnJsonResponse.IsPresent
+            } | ConvertTo-Json
+
+            try {
+                $response = Invoke-RestMethod -Uri "https://omg-psu-proxy.azurewebsites.net/api/ProxyOpenAI?code=kdhluRMI1pdezPIwutuX_O_n2A_8wYJKTsYHKnhhJwNLAzFubdB-WQ==" -Method Post -Body $ProxyBody -ContentType "application/json" -TimeoutSec $TimeoutSeconds
+                return $response.response
+            } catch {
+                Write-Error "Proxy request failed and no direct API credentials available. Error: $($_.Exception.Message)"
+                return
+            }
+        }
+
+        # Direct API mode (all credentials present)
+        Write-Verbose "All Azure OpenAI credentials present. Using direct API mode."
 
         # Normalize endpoint (remove trailing slash and any path)
         $Endpoint = $Endpoint.TrimEnd('/')
@@ -147,7 +184,7 @@ Just pure JSON that starts with { or [
             "api-key"      = $ApiKey
             "Content-Type" = "application/json"
         }
-        if( -not $MaxTokens ) { $MaxTokens = Get-OptimalMaxTokens -Prompt $ModifiedPrompt -ResponseSize "Medium" }
+
         $requestBody = @{
             messages = @(
                 @{
@@ -170,7 +207,6 @@ Just pure JSON that starts with { or [
         Write-Host "🧠 Thinking..." -ForegroundColor Cyan
 
         try {
-            if( -not $TimeoutSeconds ) { $TimeoutSeconds = Get-OptimalTimeout -Prompt $ModifiedPrompt -MaxTokens $MaxTokens }
             $Response = Invoke-RestMethod `
                 -Method Post `
                 -Uri $fullUrl `

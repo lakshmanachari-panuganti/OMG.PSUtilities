@@ -126,6 +126,14 @@ function Popup-SensitiveContent {
             if ($line -match '^\s*["'']?(token|accesstoken|authtoken|access_token)["'']?\s*[:=]\s*\$[A-Za-z0-9:_]+') { continue }
             # Ignore Azure DevOps $(VAR_NAME) references
             if ($line -match '\$\([^)]+\)') { continue }
+            # Ignore ARM template parameter references like #{env.variable}#
+            if ($line -match '#\{[^}]+\}#') { continue }
+            # Ignore Terraform variable references like var.variable_name
+            if ($line -match '\bvar\.[A-Za-z0-9_]+') { continue }
+            # Ignore placeholder values like <YOUR_KEY>, <your-key>, <YOUR_SECRET>
+            if ($line -match '[:=]\s*["'']?<[A-Za-z0-9_-]+>["'']?') { continue }
+            # Ignore PowerShell variable assignments for api-key, secret, etc.
+            if ($line -match '["'']?(api-key|secret|password)["'']?\s*[=:]\s*\$[A-Za-z0-9_]+') { continue }
 
 
             foreach ($pattern in $Patterns) {

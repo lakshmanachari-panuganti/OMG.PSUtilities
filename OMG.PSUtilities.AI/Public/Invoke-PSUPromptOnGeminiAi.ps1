@@ -86,7 +86,7 @@ function Invoke-PSUPromptOnGeminiAi {
         $Prompt += "`nExample 2: { ""planet"": ""Mars"", ""distanceFromSun_km"": 227943824, ""hasAtmosphere"": true, ""moons"": 2 }"
         $Prompt += "`nExample 3: { ""fullName"": ""Asha Verma"", ""age"": 34, ""city"": ""Pune"", ""interests"": [""traveling"", ""reading"", ""music""] }"
     }
-    
+
     $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"
     $body = @{ contents = @(@{ parts = @(@{ text = $Prompt }) }) } | ConvertTo-Json -Depth 10
 
@@ -127,5 +127,5 @@ function Invoke-PSUPromptOnGeminiAi {
     }
     catch {
         Write-Error "Failed to get response from Gemini:`n$($_.Exception.Message)"
-    }  
+    }
 }
