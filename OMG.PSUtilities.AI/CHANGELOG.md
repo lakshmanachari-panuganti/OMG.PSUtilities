@@ -37,7 +37,7 @@
 - `Get-OptimalTimeout` (Private): Calculates optimal request timeout based on estimated input/output tokens, processing speed, and safety margin.
 
 ### Changed
-- `Invoke-PSUPromptOnAzureOpenAi`: 
+- `Invoke-PSUPromptOnAzureOpenAi`:
   - Expanded `.DESCRIPTION` to include handling of large prompts and automatic calculation of `MaxTokens` and `TimeoutSeconds`.
   - Added parameters: `MaxTokens`, `Temperature`, `TimeoutSeconds`, `ApiVersion`.
   - Integrated calls to `Get-OptimalMaxTokens` and `Get-OptimalTimeout` when `MaxTokens` or `TimeoutSeconds` are not specified.
@@ -74,7 +74,7 @@
 
 ## [1.0.24] - 26th October 2025
 ### Added
-- Environment variable validation for each AI engine in `Set-PSUDefaultAiEngine.ps1`.  
+- Environment variable validation for each AI engine in `Set-PSUDefaultAiEngine.ps1`.
 - User guidance and output commands for setting missing environment variables in `Set-PSUDefaultAiEngine.ps1`.
 
 ### Changed
