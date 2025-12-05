@@ -15,7 +15,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
         - DIRECT API MODE: If all three environment variables are present (API_KEY_AZURE_OPENAI, AZURE_OPENAI_ENDPOINT, AZURE_OPENAI_DEPLOYMENT)
 
         For direct API access, configure:
-        
+
             Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "<your-api-key>"
             Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "<your-endpoint>"
             Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"
