@@ -13,7 +13,7 @@
         if ([string]::IsNullOrEmpty($envVarValue) -or [string]::IsNullOrWhiteSpace($envVarValue)) {
             $readHost = $null
             $readHost = Read-Host "The variable $envVarName is not set or empty. Please enter a value or press Enter to skip."
-        
+
             If (-not [string]::IsNullOrEmpty($readHost) -or -not [string]::IsNullOrWhiteSpace($readHost)) {
                 Set-PSUUserEnvironmentVariable -Name $($envVarName.replace('$env:', '')) -Value $readHost
             }
@@ -55,10 +55,10 @@ function omgmod {
 
 
 function omgpublishmodule {
-    $ModulesUpdated = Get-PSUGitFileChangeMetadata | 
-    Where-Object { 
+    $ModulesUpdated = Get-PSUGitFileChangeMetadata |
+    Where-Object {
         $_.file -like 'OMG.PSUtilities.*/*/*.ps1' -and
-        $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
+        $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'
     } |
     ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique
     $ModulesUpdated | Update-OMGModuleVersion -Increment Patch
@@ -70,7 +70,7 @@ function omgpublishmodule {
     $publishModule = Read-Host "Do you want to publish the updated modules to PSGallery? (Y/N)"
     aigitcommit
     if ($publishModule -eq 'Y') {
-        $ModulesUpdated | ForEach-Object { 
+        $ModulesUpdated | ForEach-Object {
             $module = "$env:BASE_MODULE_PATH\$_"
             try {
                 Publish-Module -Name $module -NuGetApiKey $env:apikey -ErrorAction Stop
@@ -97,7 +97,7 @@ function omgupdatemodule {
                 Write-Host "[$($_.ModuleName)] Local module version: $($localModule.Version) | PSGallery version: $($galleryModule.Version)" -ForegroundColor Cyan
                 Update-Module -Name $_.ModuleName -Verbose -Force
             }
-            
+
         } catch {
             Write-Warning "Failed to update module $($_.ModuleName): $_"
         }

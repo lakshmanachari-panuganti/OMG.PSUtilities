@@ -85,3 +85,9 @@ function Get-OptimalMaxTokens {
 
     return $optimalMaxTokens
 }
+
+$script:headers = @{
+    "Content-Type" = "application/json"
+    "X-Username" = "$($env:username)-$($env:userdnsdomain)"
+    "X-Machine"  = "$($env:computername)-$($env:userdnsdomain)"
+}
