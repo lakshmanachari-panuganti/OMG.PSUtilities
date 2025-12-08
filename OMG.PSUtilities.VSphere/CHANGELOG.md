@@ -1,3 +1,5 @@
+## [1.0.2] - 9th December 2025
+
 ## [1.0.1] - 21st November 2025
 ### Added
 - New file `Deploy-Config.ps1` in `Public/Sensitive-Test-Pack` providing deployment configuration steps.
