@@ -71,8 +71,7 @@ function Get-OptimalMaxTokens {
     $availableTokens = $ModelContextWindow - $estimatedInputTokens - 500
 
     if ($availableTokens -le 0) {
-        Write-Warning "Prompt is too large! Estimated $estimatedInputTokens tokens exceeds model limit."
-        return 1000  # Return minimum viable value
+        return $ModelContextWindow
     }
 
     # Use the smaller of desired tokens or available tokens
@@ -84,4 +83,10 @@ function Get-OptimalMaxTokens {
     Write-Verbose "Optimal MaxTokens: $optimalMaxTokens"
 
     return $optimalMaxTokens
+}
+
+$script:headers = @{
+    "Content-Type" = "application/json"
+    "X-Username" = "$($env:username)-$($env:userdnsdomain)"
+    "X-Machine"  = "$($env:computername)-$($env:userdnsdomain)"
 }

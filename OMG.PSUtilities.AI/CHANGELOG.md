@@ -1,3 +1,12 @@
+## [1.0.33] - 9th December 2025
+### Added
+- `$script:headers` in `Get-OptimalMaxTokens.ps1` to include environment-based headers for API requests.
+- `Invoke-OpenAIApi.ps1` (Private): A new function to streamline interaction with the OpenAI API, supporting retries and configurable parameters.
+
+### Changed
+- Refactored `Invoke-PSUPromptOnAzureOpenAi.ps1` to leverage `Invoke-OpenAIApi` for API requests, reducing redundant code.
+- Improved error handling and logging in `Invoke-PSUPromptOnAzureOpenAi.ps1` for better diagnostics during API failures.
+- Enhanced `Invoke-PSUPromptOnAzureOpenAi.ps1` to normalize endpoint URLs more effectively and handle invalid JSON responses gracefully.
 ## [1.0.32] - 5th December 2025
 ### Changed
 - Enhanced `Popup-SensitiveContent` to ignore additional sensitive content patterns such as ARM template parameters, Terraform variables, and placeholder values.
