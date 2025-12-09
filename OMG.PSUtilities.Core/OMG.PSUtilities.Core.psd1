@@ -33,7 +33,7 @@ Copyright = '(c) Lakshmanachari Panuganti. All rights reserved.'
 Description = 'General purpose PowerShell utilities and system-level tools.'
 
 # Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '7.4'
+PowerShellVersion = '5.1'
 
 # Name of the PowerShell host required by this module
 # PowerShellHostName = ''
