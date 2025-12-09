@@ -22,13 +22,15 @@ function Invoke-OpenAIApi {
 
     for ($i = 1; $i -le $RetryCount; $i++) {
         try {
-            $response = Invoke-RestMethod `
-                -Method Post `
-                -Uri $ApiUrl `
-                -Body $body `
-                -Headers $headers `
-                -ContentType "application/json" `
-                -TimeoutSec $TimeoutSeconds
+            $invokeParams = @{
+                Method       = 'Post'
+                Uri          = $ApiUrl
+                Body         = $body
+                Headers      = $headers
+                ContentType  = 'application/json'
+                TimeoutSec   = $TimeoutSeconds
+            }
+            $response = Invoke-RestMethod @invokeParams
 
             Write-Verbose "`nRequest succeeded on attempt $i"
 
