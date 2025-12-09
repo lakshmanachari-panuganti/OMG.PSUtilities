@@ -9,7 +9,7 @@ function Invoke-OpenAIApi {
         [int] $TimeoutSeconds = 60,
         [int] $RetryCount = 3,
         [int] $RetryDelaySeconds = 2,
-        [string] $ApiUrl = "https://omg-openai-apim.azure-api.net/proxy/ProxyOpenAI"
+        [string] $ApiUrl = "https://omg-openai-proxy-func.azurewebsites.net/api/ProxyOpenAI"
     )
 
     $body = @{

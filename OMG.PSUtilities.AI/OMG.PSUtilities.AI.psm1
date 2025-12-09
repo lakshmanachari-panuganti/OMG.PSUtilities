@@ -34,7 +34,7 @@ $PublicFunctions = @(
 $AliasesToExport = @(
     'aichangelog',
     'aigitcommit',
-    'Ask-Ai'
+    'askai'
 )
 
 Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport

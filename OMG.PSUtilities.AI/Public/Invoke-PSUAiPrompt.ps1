@@ -28,8 +28,9 @@ function Invoke-PSUAiPrompt {
         Last Modified: 2025-10-19
     #>
     [CmdletBinding()]
+    [alias("askai")]
     param(
-        [Parameter(Mandatory)]
+        [Parameter(Mandatory, Position = 0)]
         [string]$Prompt,
 
         [Parameter()]

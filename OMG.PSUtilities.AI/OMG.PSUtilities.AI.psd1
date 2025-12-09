@@ -94,7 +94,7 @@ VariablesToExport = @()
 AliasesToExport = @(
     'aichangelog',
     'aigitcommit',
-    'Ask-Ai'
+    'askai'
 )
 
 # DSC resources to export from this module
