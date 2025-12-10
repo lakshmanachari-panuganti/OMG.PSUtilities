@@ -8,7 +8,7 @@ function Get-PSUGitFileChangeMetadata {
         It includes file paths, type of change (New, Modify, Delete, Rename), and supports rename detection with similarity scoring.
 
     .PARAMETER BaseBranch
-        (Optional) The name of the base branch to compare from. 
+        (Optional) The name of the base branch to compare from.
         Defaults to the remote HEAD (e.g., 'main' or 'master').
 
     .PARAMETER FeatureBranch
@@ -59,7 +59,7 @@ function Get-PSUGitFileChangeMetadata {
                 TypeOfChange = "Rename"
                 Comment      = "Renamed from '$OldFile' to '$NewFile' with $similarity % similarity in new file"
             }
-            
+
             <# else {
                 return @(
                     [PSCustomObject]@{
@@ -71,7 +71,7 @@ function Get-PSUGitFileChangeMetadata {
                         TypeOfChange = "New"
                     }
                 )
-            } 
+            }
             #>
         }
         else {

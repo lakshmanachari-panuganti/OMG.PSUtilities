@@ -1,3 +1,11 @@
+## [1.0.16] - 11th December 2025
+```markdown
+### Added
+
+### Changed
+- Cleaned up formatting: removed trailing whitespace, normalized blank lines, and refined comment indentation in `Get-PSUGitFileChangeMetadata.ps1`.
+- Cleaned up formatting: removed trailing whitespace and blank lines in `New-PSUGithubPullRequest.ps1`.
+```
 ## [1.0.15] - 1st November 2025
 ### Added
 - Added `LastModified` property to the `PSCredential` object returned by `Get-PSUCredentialFromManager.ps1`.
