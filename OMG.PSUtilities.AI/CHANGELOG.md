@@ -1,3 +1,12 @@
+## [1.0.34] - 11th December 2025
+### Added
+- New `Invoke-GeminiAIApi` function: Interacts with the Gemini AI API to process prompts.
+
+### Changed
+- Updated `Invoke-OpenAIApi` to increase the `TimeoutSeconds` parameter from 60 to 90.
+- Modified `Invoke-PSUAiPrompt` to set a default value for `DefaultAiEngine` as 'AzureOpenAi' if not provided.
+- Enhanced `Invoke-PSUPromptOnAzureOpenAi` with an alias `askazureopenai`.
+- Updated `Invoke-PSUPromptOnGeminiAi` to reflect the change in the Gemini model version from 2.0 to 2.5 and added an alias `askgemini`.
 ## [1.0.33] - 9th December 2025
 ### Added
 - `$script:headers` in `Get-OptimalMaxTokens.ps1` to include environment-based headers for API requests.
