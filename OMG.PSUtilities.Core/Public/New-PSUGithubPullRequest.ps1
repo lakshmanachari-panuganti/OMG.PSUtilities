@@ -107,7 +107,7 @@ function New-PSUGithubPullRequest {
 
         [Parameter()]
         [string]$Repository,
-        
+
         [Parameter()]
         [string]$SourceBranch = $((git branch --show-current).Trim()),
 
@@ -187,7 +187,7 @@ function New-PSUGithubPullRequest {
             Write-Verbose "API URI: $uri"
 
             $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $bodyJson -ContentType "application/json" -ErrorAction Stop
-            
+
             $pullRequestNumber = $response.number
             Write-Host "Pull Request created successfully. PR #$pullRequestNumber" -ForegroundColor Green
             Write-Host "PR URL: $($response.html_url)" -ForegroundColor Cyan
@@ -222,21 +222,21 @@ function New-PSUGithubPullRequest {
             if ($CompleteOnApproval) {
                 try {
                     $autoMergeUri = "https://api.github.com/repos/$Owner/$Repository/pulls/$pullRequestNumber/merge"
-                    $autoMergeBody = @{ 
+                    $autoMergeBody = @{
                         merge_method = "merge"
                     } | ConvertTo-Json
-                    
+
                     # Enable auto-merge using the GraphQL-style approach via REST
                     $autoMergeHeaders = $headers.Clone()
                     $autoMergeHeaders['Accept'] = 'application/vnd.github.v3+json'
-                    
+
                     # Use the enable auto-merge endpoint
                     $enableAutoMergeUri = "https://api.github.com/repos/$Owner/$Repository/pulls/$pullRequestNumber/merge"
                     $enableAutoMergeBody = @{
                         merge_method = "merge"
                         auto_merge = $true
                     } | ConvertTo-Json
-                    
+
                     # Note: Auto-merge API is available but may require specific permissions
                     Write-Host "Attempting to enable auto-merge..." -ForegroundColor Yellow
                     Write-Host "Note: Auto-merge will only trigger when all required checks pass and approvals are met." -ForegroundColor Cyan

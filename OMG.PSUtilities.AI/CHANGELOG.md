@@ -243,7 +243,7 @@
 - Invoke-PSUPromptOnGeminiAi (Public): Sends prompt to Gemini AI and returns response.
 - Invoke-PSUPromptOnPerplexityAi (Public): Sends prompt to Perplexity AI and returns response.
 - Convert-PSUMarkdownToHtml (Private): Converts Markdown text to HTML.
-- Convert-PSUPullRequestSummaryToHtml (Private): Converts pull request summary to HTML.
+- Convert-PSUPullRequestSummaryToHtml (Private): Converts pull request summary to HTML..
 
 ## [1.0.0] - 2025-07-10
 ### Added
