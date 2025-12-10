@@ -4,7 +4,7 @@ function Invoke-PSUPromptOnGeminiAi {
     Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response.
 
 .DESCRIPTION
-    This function interacts with Google's Generative Language API (Gemini 2.0 Flash model) to perform fast and
+    This function interacts with Google's Generative Language API (Gemini 2.5 Flash model) to perform fast and
     lightweight AI content generation.
 
     How to get started:
@@ -45,6 +45,7 @@ function Invoke-PSUPromptOnGeminiAi {
 
 #>
     [CmdletBinding()]
+    [alias("askgemini")]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',
@@ -52,6 +53,12 @@ function Invoke-PSUPromptOnGeminiAi {
     )]
     param(
         [Parameter(Mandatory)]
+        [ValidateScript({
+            if ([string]::IsNullOrWhiteSpace($_)) {
+                throw "Prompt cannot be null, empty, or contain only whitespace."
+            }
+            return $true
+        })]
         [string]$Prompt,
 
         [Parameter()]
@@ -61,14 +68,21 @@ function Invoke-PSUPromptOnGeminiAi {
         [switch]$ReturnJsonResponse
     )
 
-    #----------[Validating the 'ApiKey' inside the function body (instead of in the parameter block) is for clearer error messaging and better formatting]----------
+    #----------[Determine which API to use based on ApiKey availability]----------
 
     if ([string]::IsNullOrWhiteSpace($ApiKey)) {
-        Write-Host "    Please provide a valid Google Gemini API Key" -ForegroundColor Red
-        Write-Host "" -ForegroundColor Red
-        Write-Host "    If you are using it first time:" -ForegroundColor Yellow
-        Write-Host "    -------------------------------" -ForegroundColor Yellow
-        Write-Host @"
+        Write-Verbose "API_KEY_GEMINI not configured. Routing request through proxy..."
+
+        try {
+            $response = Invoke-GeminiAIApi -Prompt $Prompt -ReturnJsonResponse:$ReturnJsonResponse
+            return $response
+        }
+        catch {
+            Write-Error "Failed to get response from Gemini proxy: $($_.Exception.Message)"
+            Write-Host ""
+            Write-Host "    Alternatively, you can use direct Gemini API with your own key:" -ForegroundColor Yellow
+            Write-Host "    ---------------------------------------------------------------" -ForegroundColor Yellow
+            Write-Host @"
    1. Visit: https://makersuite.google.com/app/apikey
    2. Sign in with your Google account
    3. Click **"Create API Key"**
@@ -77,8 +91,12 @@ function Invoke-PSUPromptOnGeminiAi {
        Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "YOUR_API_KEY_VALUE"
 
 "@ -ForegroundColor Cyan
-        return
+            return
+        }
     }
+
+    # API key exists - use direct Gemini API
+    Write-Verbose "Using direct Gemini API with provided API key..."
 
     if ($ReturnJsonResponse.IsPresent) {
         $Prompt += "`nReturn only a valid JSON object. Exclude any additional text, explanations, or formatting such as triple backticks. The output must be raw JSON with appropriate properties."
@@ -87,7 +105,7 @@ function Invoke-PSUPromptOnGeminiAi {
         $Prompt += "`nExample 3: { ""fullName"": ""Asha Verma"", ""age"": 34, ""city"": ""Pune"", ""interests"": [""traveling"", ""reading"", ""music""] }"
     }
 
-    $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"
+    $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$ApiKey"
     $body = @{ contents = @(@{ parts = @(@{ text = $Prompt }) }) } | ConvertTo-Json -Depth 10
 
     try {

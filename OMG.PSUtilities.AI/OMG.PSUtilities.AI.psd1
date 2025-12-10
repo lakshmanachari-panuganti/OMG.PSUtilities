@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AI.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.33'
+ModuleVersion = '1.0.34'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -94,7 +94,9 @@ VariablesToExport = @()
 AliasesToExport = @(
     'aichangelog',
     'aigitcommit',
-    'askai'
+    'askai',
+    'askazureopenai',
+    'askgemini'
 )
 
 # DSC resources to export from this module
