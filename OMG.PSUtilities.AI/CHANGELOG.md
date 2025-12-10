@@ -1,3 +1,9 @@
+## [1.0.35] - 11th December 2025
+### Added
+- Added ignore list support to `Get-PSUAiPoweredGitChangeSummary.ps1`.
+
+### Changed
+- `Get-PSUAiPoweredGitChangeSummary.ps1` now filters out git changes matching `*CHANGELOG.md`, `*.psd1`, `*.psm1`, and `*plasterManifest.xml` when building the change summary.
 ## [1.0.34] - 11th December 2025
 ### Added
 - New `Invoke-GeminiAIApi` function: Interacts with the Gemini AI API to process prompts.
