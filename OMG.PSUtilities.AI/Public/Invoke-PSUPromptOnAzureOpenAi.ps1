@@ -77,6 +77,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
     #>
 
     [CmdletBinding()]
+    [alias("askazureopenai")]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',
@@ -86,11 +87,11 @@ function Invoke-PSUPromptOnAzureOpenAi {
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]
         [ValidateScript({
-            if ([string]::IsNullOrWhiteSpace($_)) {
-                throw "Prompt cannot be null, empty, or contain only whitespace."
-            }
-            return $true
-        })]
+                if ([string]::IsNullOrWhiteSpace($_)) {
+                    throw "Prompt cannot be null, empty, or contain only whitespace."
+                }
+                return $true
+            })]
         [string]$Prompt,
 
         [Parameter()]
@@ -132,113 +133,131 @@ function Invoke-PSUPromptOnAzureOpenAi {
             $TimeoutSeconds = Get-OptimalTimeout -Prompt $Prompt -MaxTokens $MaxTokens
         }
 
+        #----------[Determine which API to use based on credential availability]----------
+
         # Check if all three environment variables are present for direct API access
-        $useDirectApi = ($ApiKey -and $Endpoint -and $Deployment)
+        $useDirectApi = (-not [string]::IsNullOrWhiteSpace($ApiKey)) -and
+        (-not [string]::IsNullOrWhiteSpace($Endpoint)) -and
+        (-not [string]::IsNullOrWhiteSpace($Deployment))
 
         if (-not $useDirectApi) {
-            Write-Verbose "One or more Azure OpenAI credentials are missing. Using apim"
-            $openAIApiParams = @{
-                Prompt             = $Prompt
-                MaxTokens          = $MaxTokens
-                Temperature        = $Temperature
-                TimeoutSeconds     = $TimeoutSeconds
-                ReturnJsonResponse = $ReturnJsonResponse
+            # No credentials - use the proxy function
+            Write-Verbose "Azure OpenAI credentials not configured. Routing request through proxy..."
+
+            try {
+                $openAIApiParams = @{
+                    Prompt             = $Prompt
+                    MaxTokens          = $MaxTokens
+                    Temperature        = $Temperature
+                    TimeoutSeconds     = $TimeoutSeconds
+                    ReturnJsonResponse = $ReturnJsonResponse
+                }
+                $response = Invoke-OpenAIApi @openAIApiParams
+                return $response
+            } catch {
+                Write-Error "Failed to get response from Azure OpenAI proxy: $($_.Exception.Message)"
+                Write-Host ""
+                Write-Host "    Alternatively, you can use direct Azure OpenAI API with your own credentials:" -ForegroundColor Yellow
+                Write-Host "    ----------------------------------------------------------------------------" -ForegroundColor Yellow
+                Write-Host @"
+   Configure the following environment variables:
+
+       Set-PSUUserEnvironmentVariable -Name "API_KEY_AZURE_OPENAI" -Value "<your-api-key>"
+       Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_ENDPOINT" -Value "<your-endpoint>"
+       Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"
+
+"@ -ForegroundColor Cyan
+                return
             }
-            Invoke-OpenAIApi @openAIApiParams
         }
-        else {
-            # Direct API mode (all credentials present)
-            Write-Verbose "All Azure OpenAI credentials present. Using direct API mode."
 
-            # Normalize endpoint (remove trailing slash and any path)
-            $Endpoint = $Endpoint.TrimEnd('/')
+        # API credentials exist - use direct Azure OpenAI API
+        Write-Verbose "All Azure OpenAI credentials present. Using direct API mode."
 
-            # Remove common incorrect suffixes
-            $Endpoint = $Endpoint -replace '/openai.*$', ''
+        # Normalize endpoint (remove trailing slash and any path)
+        $Endpoint = $Endpoint.TrimEnd('/')
 
-            # Construct proper URL
-            $fullUrl = "$Endpoint/openai/deployments/$Deployment/chat/completions?api-version=$ApiVersion"
+        # Remove common incorrect suffixes
+        $Endpoint = $Endpoint -replace '/openai.*$', ''
 
-            # Modify prompt for JSON if needed
-            $ModifiedPrompt = if ($ReturnJsonResponse.IsPresent) {
-                @"
+        # Construct proper URL
+        $fullUrl = "$Endpoint/openai/deployments/$Deployment/chat/completions?api-version=$ApiVersion"
+
+        # Modify prompt for JSON if needed
+        $ModifiedPrompt = if ($ReturnJsonResponse.IsPresent) {
+            @"
 $Prompt
 
 CRITICAL: Respond with ONLY valid JSON. No markdown, no code blocks, no explanations.
 Just pure JSON that starts with { or [
 "@
+        } else {
+            $Prompt
+        }
+
+        $Headers = @{
+            "api-key"      = $ApiKey
+            "Content-Type" = "application/json"
+        }
+
+        $requestBody = @{
+            messages    = @(
+                @{
+                    role    = "user"
+                    content = $ModifiedPrompt
+                }
+            )
+            max_tokens  = $MaxTokens
+            temperature = $Temperature
+        }
+
+        try {
+            $Body = $requestBody | ConvertTo-Json -Depth 10 -Compress
+            Write-Verbose "Request body size: $($Body.Length) bytes"
+        } catch {
+            Write-Error "Failed to serialize request: $($_.Exception.Message)"
+            return
+        }
+
+        Write-Host "🧠 Thinking..." -ForegroundColor Cyan
+
+        try {
+            $invokeRestMethodParams = @{
+                Method      = 'Post'
+                Uri         = $fullUrl
+                Headers     = $Headers
+                Body        = $Body
+                ContentType = 'application/json'
+                TimeoutSec  = $TimeoutSeconds
+                ErrorAction = 'Stop'
             }
-            else {
-                $Prompt
-            }
+            $Response = Invoke-RestMethod @invokeRestMethodParams
 
-            $Headers = @{
-                "api-key"      = $ApiKey
-                "Content-Type" = "application/json"
-            }
+            $responseText = $Response.choices[0].message.content
 
-            $requestBody = @{
-                messages    = @(
-                    @{
-                        role    = "user"
-                        content = $ModifiedPrompt
-                    }
-                )
-                max_tokens  = $MaxTokens
-                temperature = $Temperature
-            }
+            if ($ReturnJsonResponse.IsPresent) {
+                # Remove markdown code blocks
+                $cleanedText = $responseText -replace '```json\s*', '' -replace '```\s*', ''
+                $cleanedText = $cleanedText.Trim()
 
-            try {
-                $Body = $requestBody | ConvertTo-Json -Depth 10 -Compress
-                Write-Verbose "Request body size: $($Body.Length) bytes"
-            }
-            catch {
-                Write-Error "Failed to serialize request: $($_.Exception.Message)"
-                return
-            }
-
-            Write-Host "🧠 Thinking..." -ForegroundColor Cyan
-
-            try {
-                $Response = Invoke-RestMethod `
-                    -Method Post `
-                    -Uri $fullUrl `
-                    -Headers $Headers `
-                    -Body $Body `
-                    -ContentType 'application/json' `
-                    -TimeoutSec $TimeoutSeconds `
-                    -ErrorAction Stop
-
-                $responseText = $Response.choices[0].message.content
-
-                if ($ReturnJsonResponse.IsPresent) {
-                    # Remove markdown code blocks
-                    $cleanedText = $responseText -replace '```json\s*', '' -replace '```\s*', ''
-                    $cleanedText = $cleanedText.Trim()
-
-                    # Try to extract JSON
-                    if ($cleanedText -match '^\s*[\{\[]') {
-                        try {
-                            $null = $cleanedText | ConvertFrom-Json -ErrorAction Stop
-                            return $cleanedText
-                        }
-                        catch {
-                            Write-Warning "Response contains invalid JSON"
-                            return $responseText
-                        }
-                    }
-                    else {
-                        Write-Warning "Response doesn't appear to be JSON"
+                # Try to extract JSON
+                if ($cleanedText -match '^\s*[\{\[]') {
+                    try {
+                        $null = $cleanedText | ConvertFrom-Json -ErrorAction Stop
+                        return $cleanedText
+                    } catch {
+                        Write-Warning "Response contains invalid JSON"
                         return $responseText
                     }
-                }
-                else {
+                } else {
+                    Write-Warning "Response doesn't appear to be JSON"
                     return $responseText
                 }
+            } else {
+                return $responseText
             }
-            catch {
-                $PSCmdlet.ThrowTerminatingError($_)
-            }
+        } catch {
+            $PSCmdlet.ThrowTerminatingError($_)
         }
     }
 }

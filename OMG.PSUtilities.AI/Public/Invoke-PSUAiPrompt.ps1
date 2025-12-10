@@ -50,7 +50,8 @@ function Invoke-PSUAiPrompt {
             throw "Prompt parameter is required."
         }
         if ([string]::IsNullOrWhiteSpace($DefaultAiEngine)) {
-            throw "DefaultAiEngine parameter is required. Set via: Set-PSUUserEnvironmentVariable -Name 'DEFAULT_AI_ENGINE' -Value '<engine>'"
+            Set-PSUUserEnvironmentVariable -Name 'DEFAULT_AI_ENGINE' -Value 'AzureOpenAi'
+            $DefaultAiEngine = 'AzureOpenAi'
         }
     }
 
