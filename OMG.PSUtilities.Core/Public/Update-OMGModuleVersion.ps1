@@ -97,7 +97,7 @@ function Update-OMGModuleVersion {
             Write-Host "Updated $newVersion in $plasterManifestPath " -ForegroundColor DarkCyan
         }
         else {
-            Write-Warning "plasterManifest.xml not found in $ModuleName — skipping update."
+            Write-Warning "plasterManifest.xml not found in $ModuleName - skipping update."
         }
 
         Return [psobject] @{
