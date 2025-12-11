@@ -89,7 +89,7 @@ Here are the file-level diffs:
 "@
 
     $ignorefiles = @("*CHANGELOG.md", "*.psd1", "*.psm1", "*plasterManifest.xml")
-    $gitChanges = $gitChanges | Where-Object {
+    $majorgitChanges = $gitChanges | Where-Object {
         $file = $_.File
         foreach ($pattern in $ignorefiles) {
             if ($file -like $pattern) {
@@ -98,7 +98,11 @@ Here are the file-level diffs:
         }
         return $true
     }
-    foreach ($item in $gitChanges) {
+    if($majorgitChanges.file.count -eq 0){
+        $majorgitChanges = $gitChanges
+    }
+
+    foreach ($item in $majorgitChanges) {
         $diff = if ($item.Type -eq "Delete") {
             "[Deleted File]"
         }
