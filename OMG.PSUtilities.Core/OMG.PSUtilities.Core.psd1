@@ -86,6 +86,7 @@ FunctionsToExport = @(
     'Get-PSUModule',
     'Get-PSUUserEnvironmentVariable',
     'Get-PSUUserSession',
+    'Get-PublicIP',
     'New-PSUGithubPullRequest',
     'New-PSUHTMLReport',
     'New-PSUOutlookMeeting',
