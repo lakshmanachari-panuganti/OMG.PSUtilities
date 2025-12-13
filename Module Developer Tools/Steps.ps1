@@ -1,7 +1,8 @@
 Write-Host "TODO"
-Write-Host "Sensitive Data Detection should ignore following"
-Write-Host 'FILE: C:\repos\OMG.PSUtilities\OMG.PSUtilities.AI\Private\Invoke-GeminiAIApi.ps1 --> $apiKey = New-PSUApiKey -ErrorAction Stop'
-Write-Host 'FILE: C:\repos\OMG.PSUtilities\OMG.PSUtilities.AI\Private\New-PSUApiKey.ps1 --> $script:PSU_API_KEY = $encoded
+Write-Host "Sensitive Data Detection should ignore following" -ForegroundColor Red
+Write-Host 'FILE: C:\repos\OMG.PSUtilities\OMG.PSUtilities.AI\Private\Invoke-GeminiAIApi.ps1 --> $apiKey = New-PSUApiKey -ErrorAction Stop' -ForegroundColor Red
+Write-Host 'FILE: C:\repos\OMG.PSUtilities\OMG.PSUtilities.AI\Private\New-PSUApiKey.ps1 --> $script:PSU_API_KEY = $encoded' -ForegroundColor Red
+
 # Check environment variables if not exist ask for create
 @(
     '$env:BASE_MODULE_PATH'

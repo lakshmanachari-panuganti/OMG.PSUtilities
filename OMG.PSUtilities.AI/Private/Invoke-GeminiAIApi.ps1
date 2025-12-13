@@ -149,6 +149,11 @@ function Invoke-GeminiAIApi {
             ReturnJsonResponse = [bool]$ReturnJsonResponse
         } | ConvertTo-Json -Depth 20
 
+        $Body = @{
+            Prompt = 'say Jai sreeram'
+            ReturnJsonResponse = $false
+        } | ConvertTo-Json
+
         $headers = @{
             "Authorization" = "Bearer $apiKey"
             "Content-Type"  = "application/json"
@@ -172,148 +177,28 @@ function Invoke-GeminiAIApi {
                 $invokeParams = @{
                     Method      = 'Post'
                     Uri         = $ApiUrl
-                    Body        = $body
+                    Body        = $Body
                     Headers     = $headers
-                    ContentType = 'application/json'
-                    TimeoutSec  = $TimeoutSeconds
+                    #TimeoutSec  = $TimeoutSeconds
                     ErrorAction = 'Stop'
                 }
 
                 Write-Host "Calling Gemini AI API (attempt $attempt)..." -ForegroundColor Cyan
                 $response = Invoke-RestMethod @invokeParams
 
-                Write-Host "✓ Request succeeded on attempt $attempt" -ForegroundColor Green
                 Write-Verbose "Response received successfully"
-
-                # ============================================
-                # 4. Process Response
-                # ============================================
-
-                # Check for error in response body (string responses)
-                if ($response -is [string]) {
-                    if ($response -like "*token limit exceeded*") {
-                        Write-Error "Rate limit exceeded: $response"
-                        return $null
-                    }
-
-                    if ($response -like "*expired*" -or $response -like "*unauthorized*") {
-                        Write-Warning "API key issue detected in response: $response"
-
-                        # Try refreshing API key once
-                        if (-not $apiKeyRefreshed -and $attempt -lt $maxAttempts) {
-                            Write-Host "Refreshing API key and retrying..." -ForegroundColor Yellow
-                            $apiKey = New-PSUApiKey -Force
-                            $headers["Authorization"] = "Bearer $apiKey"
-                            $apiKeyRefreshed = $true
-                            continue
-                        }
-
-                        throw "Authentication failed: $response"
-                    }
-
-                    # Return string response directly
-                    return $response
-                }
-
-                # Check for structured response with metadata
-                if ($response.PSObject.Properties['response']) {
-                    # Log metadata if available
-                    if ($response.metadata) {
-                        $meta = $response.metadata
-                        Write-Verbose "Response metadata:"
-                        Write-Verbose "  Model: $($meta.model)"
-                        Write-Verbose "  Duration: $($meta.durationMs)ms"
-                        Write-Verbose "  Tokens: $($meta.estimatedTokens)"
-
-                        if ($meta.quota) {
-                            Write-Verbose "  Hourly quota: $($meta.quota.hourly.used)/$($meta.quota.hourly.limit)"
-                            Write-Verbose "  Monthly quota: $($meta.quota.monthly.used)/$($meta.quota.monthly.limit)"
-                        }
-
-                        if ($meta.apiKey) {
-                            Write-Verbose "  API key expires in: $($meta.apiKey.hoursLeft) hours"
-                        }
-
-                        # Check quota warnings
-                        if ($meta.quota.hourly.remaining -lt 1000) {
-                            Write-Warning "Low hourly quota remaining: $($meta.quota.hourly.remaining) tokens"
-                        }
-
-                        if ($meta.quota.monthly.remaining -lt 10000) {
-                            Write-Warning "Low monthly quota remaining: $($meta.quota.monthly.remaining) tokens"
-                        }
-                    }
-
-                    return $response.response
-                }
-
-                # Fallback: return entire response
-                return $response
             }
             catch {
-                $statusCode = $null
-                $errorBody = $null
-
-                # Extract HTTP status code and response body
-                if ($_.Exception.Response) {
-                    $statusCode = [int]$_.Exception.Response.StatusCode
-
-                    try {
-                        $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
-                        $errorBody = $reader.ReadToEnd()
-                        $reader.Close()
-
-                        # Try to parse as JSON
-                        try {
-                            $errorJson = $errorBody | ConvertFrom-Json
-                            $errorMessage = $errorJson.message ?? $errorJson.error ?? $errorBody
-                        }
-                        catch {
-                            $errorMessage = $errorBody
-                        }
-                    }
-                    catch {
-                        $errorMessage = $_.Exception.Message
-                    }
-                }
-                else {
-                    $errorMessage = $_.Exception.Message
+                $errorMessage = $_
+                $errorMessageObj = $_ | ConvertFrom-json
+                if ($errorMessageObj.Error -like "Bad Request") {
+                    Write-Error "Invalid request: $errorMessage"
+                    return
                 }
 
-                Write-Warning "Attempt $attempt failed: $errorMessage"
-                Write-Verbose "Error details: $($_.Exception.GetType().FullName)"
-
-                # ============================================
-                # 5. Handle Specific Error Types
-                # ============================================
-
-                # 401 Unauthorized - Try refreshing API key once
-                if ($statusCode -eq 401 -and -not $apiKeyRefreshed -and $attempt -lt $maxAttempts) {
-                    Write-Host "Authentication failed. Refreshing API key..." -ForegroundColor Yellow
-
-                    try {
-                        $apiKey = New-PSUApiKey -Force
-                        $headers["Authorization"] = "Bearer $apiKey"
-                        $apiKeyRefreshed = $true
-                        Write-Host "API key refreshed. Retrying..." -ForegroundColor Cyan
-                        continue
-                    }
-                    catch {
-                        Write-Error "Failed to refresh API key: $($_.Exception.Message)"
-                        throw
-                    }
-                }
-
-                # 429 Rate Limit - Don't retry
-                if ($statusCode -eq 429) {
-                    Write-Error "Rate limit exceeded: $errorMessage"
-                    throw "Rate limit exceeded. Please try again later."
-                }
-
-                # 400 Bad Request - Don't retry (client error)
-                if ($statusCode -eq 400) {
-                    Write-Error "Bad request: $errorMessage"
-                    throw "Invalid request: $errorMessage"
+                if ($errorMessageObj.Error -like "Rate Limit Exceeded") {
+                    Write-Error "Invalid request: $errorMessage"
+                    return
                 }
 
                 # Last attempt - throw error
@@ -324,7 +209,7 @@ function Invoke-GeminiAIApi {
                 }
 
                 # Retry with delay
-                Write-Host "Retrying in $RetryDelaySeconds seconds..." -ForegroundColor Yellow
+                Write-Warning "Attempt $attempt failed: $errorMessage"
                 Start-Sleep -Seconds $RetryDelaySeconds
             }
         }

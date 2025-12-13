@@ -307,7 +307,8 @@ function New-PSUApiKey {
                 $publicIP,
                 $createdAt,
                 $expiresAt,
-                $serialNumber
+                $serialNumber,
+                (New-Guid).Guid
             )
 
             $combined = $parts -join '|'
