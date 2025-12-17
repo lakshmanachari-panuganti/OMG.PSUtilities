@@ -1,3 +1,19 @@
+## [1.0.36] - 17th December 2025
+### Added
+- **`New-PSUApiKey.ps1`**: Introduced a new function `New-PSUApiKey` for secure 24-hour API key generation, with caching and session reuse support.
+- Enhanced documentation, examples, and parameter validation for `Invoke-GeminiAIApi`.
+- Added comprehensive `.SYNOPSIS`, `.DESCRIPTION`, `.PARAMETER`, and `.EXAMPLE` sections to `Invoke-GeminiAIApi` to improve usability and clarity.
+
+### Changed
+- **`Get-OptimalMaxTokens.ps1`**: Removed unused `$script:headers` variable to reduce unnecessary global scope pollution.
+- **`Invoke-GeminiAIApi.ps1`**: 
+  - Improved parameter validation with `ValidateNotNullOrEmpty` and `ValidateRange` attributes.
+  - Enhanced retry logic with better error handling, including specific checks for rate limits and bad requests.
+  - Improved verbose logging and structured response handling.
+  - Added support for `ForceNewApiKey` parameter to explicitly refresh API keys.
+  - Updated documentation and examples for better clarity.
+  
+
 ## [1.0.35] - 11th December 2025
 ### Added
 - Added ignore list support to `Get-PSUAiPoweredGitChangeSummary.ps1`.
