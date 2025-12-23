@@ -35,7 +35,7 @@ function Get-PSUADORepositories {
         https://www.github.com/lakshmanachari-panuganti
         https://www.linkedin.com/in/lakshmanachari-panuganti
         https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
-        Install-Module -Name OMG.PSUtilities.AzureDevOps
+        Install-Module -Name OMG.PSUtilities.AzureDevOps -Repository PSGallery
     #>
 
     [CmdletBinding()]
