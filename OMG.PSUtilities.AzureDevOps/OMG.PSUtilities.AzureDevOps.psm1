@@ -28,6 +28,7 @@ $PublicFunctions = @(
     'Get-PSUADOPullRequestInventory',
     'Get-PSUADORepoBranchList',
     'Get-PSUADORepositories',
+    'Get-PSUADOVariableGroup',
     'Get-PSUADOVariableGroupInventory',
     'Get-PSUADOWorkItem',
     'Get-PSUADOWorkItemStates',
@@ -44,7 +45,6 @@ $PublicFunctions = @(
     'Set-PSUADOSpike',
     'Set-PSUADOTask',
     'Set-PSUADOUserStory',
-    'Set-PSUADOVariable',
     'Set-PSUADOVariableGroup'
 )
 

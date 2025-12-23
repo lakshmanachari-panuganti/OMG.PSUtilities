@@ -149,11 +149,6 @@ function Invoke-GeminiAIApi {
             ReturnJsonResponse = [bool]$ReturnJsonResponse
         } | ConvertTo-Json -Depth 20
 
-        $Body = @{
-            Prompt = 'say Jai sreeram'
-            ReturnJsonResponse = $false
-        } | ConvertTo-Json
-
         $headers = @{
             "Authorization" = "Bearer $apiKey"
             "Content-Type"  = "application/json"
@@ -166,7 +161,6 @@ function Invoke-GeminiAIApi {
         # ============================================
         $maxAttempts = $RetryCount
         $attempt = 0
-        $apiKeyRefreshed = $false
 
         while ($attempt -lt $maxAttempts) {
             $attempt++
@@ -177,9 +171,9 @@ function Invoke-GeminiAIApi {
                 $invokeParams = @{
                     Method      = 'Post'
                     Uri         = $ApiUrl
-                    Body        = $Body
+                    Body        = $body
                     Headers     = $headers
-                    #TimeoutSec  = $TimeoutSeconds
+                    TimeoutSec  = $TimeoutSeconds
                     ErrorAction = 'Stop'
                 }
 
@@ -187,18 +181,25 @@ function Invoke-GeminiAIApi {
                 $response = Invoke-RestMethod @invokeParams
 
                 Write-Verbose "Response received successfully"
+                return $response
             }
             catch {
-                $errorMessage = $_
-                $errorMessageObj = $_ | ConvertFrom-json
-                if ($errorMessageObj.Error -like "Bad Request") {
-                    Write-Error "Invalid request: $errorMessage"
-                    return
-                }
+                $errorMessage = $_.Exception.Message
 
-                if ($errorMessageObj.Error -like "Rate Limit Exceeded") {
-                    Write-Error "Invalid request: $errorMessage"
-                    return
+                # Try to parse error as JSON for specific error handling
+                try {
+                    $errorMessageObj = $_ | ConvertFrom-Json -ErrorAction Stop
+                    if ($errorMessageObj.Error -like "*Bad Request*") {
+                        Write-Error "Invalid request: $errorMessage"
+                        return
+                    }
+                    if ($errorMessageObj.Error -like "*Rate Limit Exceeded*") {
+                        Write-Error "Rate limit exceeded: $errorMessage"
+                        return
+                    }
+                }
+                catch {
+                    Write-Verbose "Error response was not JSON format"
                 }
 
                 # Last attempt - throw error
@@ -214,8 +215,8 @@ function Invoke-GeminiAIApi {
             }
         }
 
-        # Should never reach here, but just in case
-        throw "Maximum retry attempts reached without success"
+        # Should never reach here if retry logic works correctly
+        Write-Warning "Retry loop completed without success or failure"
     }
 
     end {
