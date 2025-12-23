@@ -1,3 +1,9 @@
+## [1.0.17] - 17th December 2025
+### Added
+- `Get-PublicIP` (Public): Retrieves the public IP address of the current machine using DNS and HTTP methods with caching options.
+
+### Changed
+- Corrected a typo in `Update-OMGModuleVersion` where a special character was replaced with a standard dash in a `Write-Warning` message.
 ## [1.0.16] - 11th December 2025
 ```markdown
 ### Added
