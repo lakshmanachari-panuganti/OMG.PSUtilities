@@ -1,3 +1,21 @@
+## [1.0.37] - 24th December 2025
+### Added
+- Automatic detection of the Git repository root using `git rev-parse --show-toplevel` in `New-PSUAiPoweredPullRequest`.
+- Prompted execution of `Update-PSUChangeLog` within `New-PSUAiPoweredPullRequest` for updating `ChangeLog.md`.
+- Restoration of the original working directory in `New-PSUAiPoweredPullRequest` using `Set-Location` in a `finally` block.
+- Immediate return of response upon successful API call in `Invoke-GeminiAIApi`.
+
+### Changed
+- Enabled the `TimeoutSec` parameter for `Invoke-RestMethod` calls in `Invoke-GeminiAIApi`.
+- Improved error handling in `Invoke-GeminiAIApi` to better parse and respond to JSON and non-JSON error messages from the API, including specific handling for "Bad Request" and "Rate Limit Exceeded" errors.
+- Refined the retry loop exit condition in `Invoke-GeminiAIApi` to explicitly return on success.
+- Updated the final failure message in `Invoke-GeminiAIApi` from a terminating error to a warning when maximum retry attempts are reached.
+- Minor adjustments to comment-based help documentation in `New-PSUAiPoweredPullRequest`.
+- Added verbose output for `PullRequestTemplatePath` and `CompleteOnApproval` parameters in `New-PSUAiPoweredPullRequest`.
+
+### Removed
+- Removed hardcoded default prompt and return format from the API request body in `Invoke-GeminiAIApi`.
+- Removed an unused `$apiKeyRefreshed` variable from `Invoke-GeminiAIApi`.
 ## [1.0.36] - 17th December 2025
 ### Added
 - **`New-PSUApiKey.ps1`**: Introduced a new function `New-PSUApiKey` for secure 24-hour API key generation, with caching and session reuse support.

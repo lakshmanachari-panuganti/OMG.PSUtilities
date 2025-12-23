@@ -1,3 +1,14 @@
+## [1.0.19] - 24th December 2025
+### Added
+- `Get-PSUADOVariableGroup` (Public): Retrieves Azure DevOps Variable Groups for a specified project, or by Variable Group ID or Name.
+
+### Changed
+- `Get-PSUADORepositories`: Updated `Install-Module` command in help documentation to include `-Repository PSGallery`.
+- `Set-PSUADOVariableGroup` (Public): Refactored to accept pipeline input from `Get-PSUADOVariableGroup` for updating variable group metadata and variables.
+- `Set-PSUADOVariableGroup`: Updated parameter set to use `InputObject` for a more object-oriented approach, streamlining updates.
+
+### Removed
+- Removed `Set-PSUADOVariable` cmdlet, which was used to update individual variables within a Variable Group.
 ## [1.0.18] - 26th October 2025
 ### Added
 - `Invoke-PSUADOPipeline.ps1`: Public function `Invoke-PSUADOPipeline` to trigger an Azure DevOps pipeline by pipeline ID and branch.
