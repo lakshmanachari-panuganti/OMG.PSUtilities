@@ -2,19 +2,23 @@
 
 PowerShell utilities for AI-powered automation and reporting.
 
-> Module version: 1.0.9 | Last updated: 19th August 2025
+> Module version: 1.0.37 | Last updated: 23rd December 2025
 
 ## 📋 Available Functions
 
 | Function                               | Description                                  |
 |-----------------------------------------|----------------------------------------------|
-| `Get-PSUAiPoweredGitChangeSummary`      | Summarizes file-level changes between two Git branches using Google Gemini AI |
-| `Invoke-PSUGitCommit`                   | Generates and commits a conventional Git commit message using Gemini AI, then syncs with remote |
+| `Get-PSUAiPoweredGitChangeSummary`      | Summarizes file-level changes between two Git branches using AI |
+| `Invoke-PSUAiPrompt`                    | Routes prompts to the selected AI provider (Azure OpenAI, Gemini, Perplexity) |
+| `Invoke-PSUGitCommit`                   | Generates and commits a conventional Git commit message using AI, then syncs with remote |
 | `Invoke-PSUPromptOnAzureOpenAi`         | Sends a prompt to Azure OpenAI (Chat Completions API) and returns the generated response |
-| `Invoke-PSUPromptOnGeminiAi`            | Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response |
+| `Invoke-PSUPromptOnGeminiAi`            | Sends a text prompt to the Google Gemini AI model and returns the generated response |
 | `Invoke-PSUPromptOnPerplexityAi`        | Sends a text prompt to the Perplexity AI API and returns the generated response |
-| `New-PSUAiPoweredPullRequest`           | Uses Gemini AI to generate a professional Pull Request title and description from Git change summaries |
-| `Start-PSUGeminiChat`                   | Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API |
+| `New-PSUAiPoweredPullRequest`           | Uses AI to generate a professional Pull Request title and description from Git changes |
+| `Set-PSUAzureOpenAIEnvironment`         | Automates Azure OpenAI Service setup and environment variable configuration |
+| `Set-PSUDefaultAiEngine`                | Sets and persists the default AI engine for module use |
+| `Start-PSUGeminiChat`                   | Interactive Gemini chatbot using Google's Generative Language API |
+| `Update-PSUChangeLog`                   | Uses AI to generate and prepend a changelog entry based on file diffs |
 
 ## 📦 Installation
 
