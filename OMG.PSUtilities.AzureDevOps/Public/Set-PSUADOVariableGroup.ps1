@@ -1,9 +1,11 @@
+function Set-PSUADOVariableGroup {
 <#
 .SYNOPSIS
     Updates an existing Azure DevOps Variable Group.
 
 .DESCRIPTION
-    Updates Variable Group metadata (Name, Description) and values of existing variables.
+    Updates Variable Group metadata (Name, Description) and variable configurations.
+    This cmdlet replaces the entire variable set of the Variable Group.
     Designed to accept pipeline input from Get-PSUADOVariableGroup.
 
 .PARAMETER InputObject
@@ -11,19 +13,19 @@
 
 .PARAMETER Organization
     (Optional) Azure DevOps organization name.
-    Default value is $env:ORGANIZATION.
+    Defaults to the value of the ORGANIZATION environment variable.
 
 .PARAMETER PAT
-    (Optional) Personal Access Token for Azure DevOps authentication.
-    Default value is $env:PAT.
+    (Optional) Personal Access Token (PAT) for Azure DevOps authentication.
+    Defaults to the value of the PAT environment variable.
 
 .EXAMPLE
-    $vg = Get-PSUADOVariableGroup -Project "EnterpriseData" -Name "IaC-EnterpriseData-Terraform-Stage2"
+    $vg = Get-PSUADOVariableGroup -Project "EnterpriseData" -Name "IaC-Stage2"
     $vg.Description = "Updated description"
     $vg | Set-PSUADOVariableGroup
 
 .EXAMPLE
-    $vg = Get-PSUADOVariableGroup -Project "EnterpriseData" -Name "IaC-EnterpriseData-Terraform-Stage2"
+    $vg = Get-PSUADOVariableGroup -Project "EnterpriseData" -Name "IaC-Stage2"
     $vg.Variables["location"].value = "centralus"
     $vg | Set-PSUADOVariableGroup
 
@@ -31,13 +33,22 @@
     [PSCustomObject]
 
 .NOTES
-    Author: Lakshmanachari Panuganti
-    Created: August 2025
+    Author  : Lakshmanachari Panuganti
+    Created : August 2025
+
+    This cmdlet replaces the entire Variables object in Azure DevOps.
+    Ensure all existing variables are present to avoid accidental deletion.
+
+    Secret variable values are preserved unless explicitly changed.
 
 .LINK
+    https://www.github.com/lakshmanachari-panuganti
+    https://www.linkedin.com/in/lakshmanachari-panuganti
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+    Install-Module -Name OMG.PSUtilities.AzureDevOps -Repository PSGallery
     https://learn.microsoft.com/en-us/rest/api/azure/devops/distributedtask/variablegroups/update
 #>
-function Set-PSUADOVariableGroup {
+
     [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(
@@ -57,14 +68,12 @@ function Set-PSUADOVariableGroup {
     )
 
     begin {
-        # Validate Organization
         if (-not $Organization) {
-            throw "The default value for the 'ORGANIZATION' environment variable is not set."
+            throw "The 'ORGANIZATION' environment variable is not set."
         }
 
-        # Validate PAT
         if (-not $PAT) {
-            throw "The default value for the 'PAT' environment variable is not set."
+            throw "The 'PAT' environment variable is not set."
         }
 
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
@@ -72,14 +81,12 @@ function Set-PSUADOVariableGroup {
 
     process {
         try {
-            # Required fields validation
             foreach ($field in 'Id', 'Name', 'Project', 'Variables') {
-                if (-not $InputObject.$field) {
-                    throw "InputObject is missing required property: '$field'. Ensure it comes from Get-PSUADOVariableGroup."
+                if (-not $InputObject.PSObject.Properties[$field]) {
+                    throw "InputObject is missing required property '$field'. Ensure it comes from Get-PSUADOVariableGroup."
                 }
             }
 
-            # Escape project name
             $escapedProject = if ($InputObject.Project -match '%[0-9A-Fa-f]{2}') {
                 $InputObject.Project
             } else {
@@ -94,8 +101,8 @@ function Set-PSUADOVariableGroup {
                 $var = $InputObject.Variables[$key]
 
                 $variables[$key] = @{
-                    value     = $var.value
-                    isSecret  = [bool]$var.isSecret
+                    value    = $var.value
+                    isSecret = [bool]$var.isSecret
                 }
             }
 
@@ -107,12 +114,14 @@ function Set-PSUADOVariableGroup {
                 variables   = $variables
             }
 
-            if ($PSCmdlet.ShouldProcess($InputObject.Name, "Update Variable Group")) {
+            if ($PSCmdlet.ShouldProcess(
+                "$($InputObject.Name) [$($InputObject.Id)]",
+                "Update Azure DevOps Variable Group"
+            )) {
                 $json = $body | ConvertTo-Json -Depth 10
                 Invoke-RestMethod -Uri $uri -Headers $headers -Method Put -Body $json -ContentType "application/json"
             }
 
-            # Return updated object
             Get-PSUADOVariableGroup `
                 -Project $InputObject.Project `
                 -Id $InputObject.Id `
