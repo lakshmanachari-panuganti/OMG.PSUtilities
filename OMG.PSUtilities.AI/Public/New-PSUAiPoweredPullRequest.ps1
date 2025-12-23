@@ -4,7 +4,7 @@ function New-PSUAiPoweredPullRequest {
         Uses AI assistance to generate a professional Pull Request (PR) title and description from Git change summaries.
 
     .DESCRIPTION
-        This function takes Git change summaries and uses Invoke-PSUAiPrompt to produce 
+        This function takes Git change summaries and uses Invoke-PSUAiPrompt to produce
         a meaningful PR title and description written from a developer or DevOps perspective.
 
     .PARAMETER BaseBranch
@@ -22,7 +22,7 @@ function New-PSUAiPoweredPullRequest {
     .PARAMETER CompleteOnApproval
         (Optional) Switch parameter to enable auto-completion when the pull request is approved.
         This will be passed to the underlying PR creation function.
-    
+
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
         Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
@@ -88,6 +88,20 @@ function New-PSUAiPoweredPullRequest {
     Write-Host "PullRequestTemplatePath: $PullRequestTemplatePath" -ForegroundColor Cyan
     Write-Host "CompleteOnApproval: $CompleteOnApproval" -ForegroundColor Cyan
 
+    $currentLocation = Get-Location
+    # Auto-detect git repository root
+    $gitRootOutput = git rev-parse --show-toplevel 2>&1
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Not in a git repository. Please run this command from within a git repository." -ForegroundColor Red
+        return
+    }
+
+    # Convert Unix paths to Windows format
+    $RootPath = $gitRootOutput -replace '/', '\'
+    Write-Verbose "Git repository root: $RootPath"
+
+    Set-Location $RootPath
     $UpdateChangeLog = Read-Host "Do you want me to update ChangeLog.md file with the changes? (Y/N)"
     if ($UpdateChangeLog -eq 'Y') {
         Update-PSUChangeLog
@@ -271,5 +285,7 @@ If any rule is violated, regenerate the response until it strictly matches the r
 
     } catch {
         $PSCmdlet.ThrowTerminatingError($_)
+    } finally {
+        Set-Location $currentLocation
     }
 }
