@@ -80,6 +80,7 @@ FunctionsToExport = @(
     'Get-PSUADOPullRequestInventory',
     'Get-PSUADORepoBranchList',
     'Get-PSUADORepositories',
+    'Get-PSUADOVariableGroup',
     'Get-PSUADOVariableGroupInventory',
     'Get-PSUADOWorkItem',
     'Get-PSUADOWorkItemStates',
@@ -96,7 +97,6 @@ FunctionsToExport = @(
     'Set-PSUADOSpike',
     'Set-PSUADOTask',
     'Set-PSUADOUserStory',
-    'Set-PSUADOVariable',
     'Set-PSUADOVariableGroup'
 )
 
