@@ -75,7 +75,7 @@ function Invoke-GeminiAIApi {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$ApiUrl = "https://omg-geminiai-proxy-func.azurewebsites.net/api/ProxyGeminiAI",
+        [string]$ApiUrl = "https://omg-gemini.azurewebsites.net/api/proxy",
 
         [Parameter()]
         [switch]$ForceNewApiKey
@@ -149,12 +149,15 @@ function Invoke-GeminiAIApi {
             ReturnJsonResponse = [bool]$ReturnJsonResponse
         } | ConvertTo-Json -Depth 20
 
-        $headers = @{
-            "Authorization" = "Bearer $apiKey"
-            "Content-Type"  = "application/json"
+        # Validate required headers are present
+        if (-not $headers['psu-clientusername'] -or -not $headers['psu-clientdevice'] -or -not $headers['psu-clientip']) {
+            throw "Missing required authentication metadata. Ensure New-PSUApiKey has been called successfully."
         }
 
-        Write-Verbose "Request prepared with Authorization header"
+        Write-Verbose "Request prepared with Authorization and custom headers"
+        Write-Verbose "Username: $($headers['psu-clientusername'])"
+        Write-Verbose "Device: $($headers['psu-clientdevice'])"
+        Write-Verbose "IP: $($headers['psu-clientip'])"
 
         # ============================================
         # 3. Retry Logic with API Key Refresh
@@ -177,7 +180,7 @@ function Invoke-GeminiAIApi {
                     ErrorAction = 'Stop'
                 }
 
-                Write-Host "Calling Gemini AI API (attempt $attempt)..." -ForegroundColor Cyan
+                Write-Verbose "Calling Gemini AI API (attempt $attempt)..."
                 $response = Invoke-RestMethod @invokeParams
 
                 Write-Verbose "Response received successfully"
@@ -185,32 +188,87 @@ function Invoke-GeminiAIApi {
             }
             catch {
                 $errorMessage = $_.Exception.Message
+                $statusCode = 0
 
-                # Try to parse error as JSON for specific error handling
-                try {
-                    $errorMessageObj = $_ | ConvertFrom-Json -ErrorAction Stop
-                    if ($errorMessageObj.Error -like "*Bad Request*") {
-                        Write-Error "Invalid request: $errorMessage"
-                        return
-                    }
-                    if ($errorMessageObj.Error -like "*Rate Limit Exceeded*") {
-                        Write-Error "Rate limit exceeded: $errorMessage"
-                        return
-                    }
-                }
-                catch {
-                    Write-Verbose "Error response was not JSON format"
+                # Extract status code if available
+                if ($_.Exception.Response) {
+                    $statusCode = $_.Exception.Response.StatusCode.value__
                 }
 
-                # Last attempt - throw error
+                # Try to parse error details from response body
+                $errorDetails = $null
+                if ($_.ErrorDetails.Message) {
+                    try {
+                        $errorDetails = $_.ErrorDetails.Message | ConvertFrom-Json -ErrorAction Stop
+
+                        Write-Verbose "Error details received from API:"
+                        Write-Verbose ($errorDetails | ConvertTo-Json -Depth 5)
+
+                        # Handle specific error types
+                        if ($errorDetails.error -eq "Rate Limit Exceeded") {
+                            $resetTime = if ($errorDetails.quota.resetTime) { $errorDetails.quota.resetTime } else { "unknown" }
+                            $fullMessage = "Rate limit exceeded: $($errorDetails.message). Reset in: $resetTime"
+                            Write-Error $fullMessage
+                            throw $fullMessage
+                        }
+
+                        if ($statusCode -eq 401) {
+                            $fullMessage = "Authentication failed: $($errorDetails.message)"
+                            if ($errorDetails.correlationId) {
+                                $fullMessage += " (CorrelationID: $($errorDetails.correlationId))"
+                            }
+                            Write-Error $fullMessage
+                            throw $fullMessage
+                        }
+
+                        if ($statusCode -eq 400) {
+                            $fullMessage = "Bad request: $($errorDetails.message)"
+                            if ($errorDetails.correlationId) {
+                                $fullMessage += " (CorrelationID: $($errorDetails.correlationId))"
+                            }
+                            Write-Error $fullMessage
+                            throw $fullMessage
+                        }
+
+                        # Generic error with details - use the actual message from response
+                        $errorMessage = $errorDetails.message
+                        if ($errorDetails.correlationId) {
+                            $errorMessage += " (CorrelationID: $($errorDetails.correlationId))"
+                        }
+
+                        # For verbose output, show full error object
+                        Write-Verbose "Parsed error message: $errorMessage"
+                    }
+                    catch {
+                        Write-Verbose "Could not parse error details as JSON: $($_.Exception.Message)"
+                        Write-Verbose "Raw error body: $($_.ErrorDetails.Message)"
+                    }
+                }
+
+                # Last attempt - throw error with full details
                 if ($attempt -ge $maxAttempts) {
                     $finalError = "All $maxAttempts retry attempts failed. Last error: $errorMessage"
+
+                    # If we have error details, show them
+                    if ($errorDetails) {
+                        Write-Host "`nError Details:" -ForegroundColor Red
+                        Write-Host "  Error: $($errorDetails.error)" -ForegroundColor Yellow
+                        Write-Host "  Message: $($errorDetails.message)" -ForegroundColor Yellow
+                        if ($errorDetails.correlationId) {
+                            Write-Host "  CorrelationID: $($errorDetails.correlationId)" -ForegroundColor Yellow
+                        }
+                    }
+
                     Write-Error $finalError
                     throw $finalError
                 }
 
-                # Retry with delay
-                Write-Warning "Attempt $attempt failed: $errorMessage"
+                # Retry with delay (unless it's an auth error or rate limit)
+                if ($statusCode -eq 401 -or ($errorDetails -and $errorDetails.error -eq "Rate Limit Exceeded")) {
+                    throw $errorMessage
+                }
+
+                Write-Warning "Attempt $attempt failed (status: $statusCode): $errorMessage"
                 Start-Sleep -Seconds $RetryDelaySeconds
             }
         }

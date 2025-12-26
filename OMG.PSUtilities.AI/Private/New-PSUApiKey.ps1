@@ -66,287 +66,103 @@ function New-PSUApiKey {
             }
 
             # ============================================
-            # 1. Get Username (REQUIRED - NO FALLBACK)
+            # 6. Call Token Issuer Service
             # ============================================
-            Write-Verbose "Retrieving username..."
-            $username = $null
+            $tokenIssuerUrl = "https://omgissuetoken.azurewebsites.net/api/IssueToken-Dev"
+            $timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
+            $tokenUrl = "$tokenIssuerUrl`?t=$timestamp"
 
-            # Try environment variables first (cross-platform)
-            $username = $env:USERNAME  # Windows
-            if (-not $username) {
-                $username = $env:USER  # Linux/macOS
-            }
-
-            # Try .NET method (Windows)
-            if (-not $username) {
-                try {
-                    $identity = [System.Security.Principal.WindowsIdentity]::GetCurrent()
-                    if ($identity -and $identity.Name) {
-                        $username = $identity.Name.Split('\')[-1]  # Get username part only
-                    }
-                }
-                catch {
-                    Write-Verbose "WindowsIdentity method failed: $($_.Exception.Message)"
-                }
-            }
-
-            # Try whoami command (Linux/macOS fallback)
-            if (-not $username) {
-                try {
-                    $username = (whoami 2>$null)
-                    if ($username) {
-                        $username = $username.Split('\')[-1].Trim()
-                    }
-                }
-                catch {
-                    Write-Verbose "whoami command failed: $($_.Exception.Message)"
-                }
-            }
-
-            # Try id command (Linux/macOS alternative)
-            if (-not $username) {
-                try {
-                    $idOutput = (id -un 2>$null)
-                    if ($idOutput) {
-                        $username = $idOutput.Trim()
-                    }
-                }
-                catch {
-                    Write-Verbose "id command failed: $($_.Exception.Message)"
-                }
-            }
-
-            # Validate username
-            if ([string]::IsNullOrWhiteSpace($username)) {
-                throw "CRITICAL: Unable to determine username. This is required for API key generation."
-            }
-
-            Write-Verbose "Username: $username"
-
-            # ============================================
-            # 2. Get Computer Name (REQUIRED - NO FALLBACK)
-            # ============================================
-            Write-Verbose "Retrieving computer name..."
-            $computer = $null
-
-            # Try environment variables
-            $computer = $env:COMPUTERNAME  # Windows
-            if (-not $computer) {
-                $computer = $env:HOSTNAME  # Linux/macOS
-            }
-
-            # Try .NET DNS method
-            if (-not $computer) {
-                try {
-                    $computer = [System.Net.Dns]::GetHostName()
-                }
-                catch {
-                    Write-Verbose "DNS GetHostName failed: $($_.Exception.Message)"
-                }
-            }
-
-            # Try hostname command (cross-platform)
-            if (-not $computer) {
-                try {
-                    $computer = (hostname 2>$null)
-                    if ($computer) {
-                        $computer = $computer.Trim()
-                    }
-                }
-                catch {
-                    Write-Verbose "hostname command failed: $($_.Exception.Message)"
-                }
-            }
-
-            # Try uname command (Linux/macOS)
-            if (-not $computer) {
-                try {
-                    $computer = (uname -n 2>$null)
-                    if ($computer) {
-                        $computer = $computer.Trim()
-                    }
-                }
-                catch {
-                    Write-Verbose "uname command failed: $($_.Exception.Message)"
-                }
-            }
-
-            # Validate computer name
-            if ([string]::IsNullOrWhiteSpace($computer)) {
-                throw "CRITICAL: Unable to determine computer name. This is required for API key generation."
-            }
-
-            Write-Verbose "Computer name: $computer"
-
-            # ============================================
-            # 3. Get Public IP (REQUIRED - NO FALLBACK)
-            # ============================================
-            Write-Verbose "Retrieving public IP address..."
-
-            # Check if Get-PublicIP function exists
-            if (-not (Get-Command -Name Get-PublicIP -ErrorAction SilentlyContinue)) {
-                throw "CRITICAL: Get-PublicIP function not found. Please ensure it is loaded in the current session."
-            }
+            Write-Verbose "Calling token issuer service..."
+            Write-Verbose "URL: $tokenUrl"
 
             try {
-                $publicIP = Get-PublicIP -TimeoutSec 5 -ErrorAction Stop
+                $tokenResponse = Invoke-RestMethod -Uri $tokenUrl -Method Post -TimeoutSec 30 -ErrorAction Stop
 
-                # Validate IP format
-                if ([string]::IsNullOrWhiteSpace($publicIP) -or $publicIP -eq "0.0.0.0") {
-                    throw "Invalid public IP address returned: $publicIP"
+                if (-not $tokenResponse.HeaderScript) {
+                    throw "Token issuer did not return HeaderScript"
                 }
 
-                # Validate IP format with regex
-                if ($publicIP -notmatch '^\d{1,3}(\.\d{1,3}){3}$') {
-                    throw "Invalid IP address format: $publicIP"
+                # Execute the header script to set local variables
+                Write-Verbose "Executing header script from token issuer..."
+                Invoke-Expression $tokenResponse.HeaderScript
+
+                # Extract the authorization token from $Headers (set by HeaderScript)
+                if (-not $Headers -or -not $Headers['Authorization']) {
+                    throw "HeaderScript did not set Authorization header"
                 }
 
-                # Validate octets are in valid range (0-255)
-                $octets = $publicIP -split '\.'
-                foreach ($octet in $octets) {
-                    if ([int]$octet -gt 255) {
-                        throw "Invalid IP address (octet > 255): $publicIP"
-                    }
-                }
+                $apiKey = $Headers['Authorization'] -replace '^Bearer\s+', ''
+                $clientUsername = $Headers['psu-clientusername']
+                $clientDevice = $Headers['psu-clientdevice']
+                $clientIP = $Headers['psu-clientip']
 
-                Write-Verbose "Public IP: $publicIP"
+                Write-Verbose "Token received from issuer service"
+                Write-Verbose "Username: $clientUsername"
+                Write-Verbose "Device: $clientDevice"
+                Write-Verbose "IP: $clientIP"
             }
             catch {
-                $errorMsg = "CRITICAL: Failed to retrieve public IP address. This is required for API key generation.`n"
-                $errorMsg += "Error: $($_.Exception.Message)`n"
-                $errorMsg += "Ensure you have internet connectivity and the Get-PublicIP function is working correctly."
+                $errorMsg = "Failed to retrieve token from issuer service: $($_.Exception.Message)"
                 throw $errorMsg
             }
 
             # ============================================
-            # 4. Get Timestamps
+            # 7. Parse expiry from token (if possible)
             # ============================================
-            $utcNow = [DateTime]::UtcNow
-            $createdAt = $utcNow.ToString("o")
-            $expiresAt = $utcNow.AddHours($ExpireTimeHours).ToString("o")
-            Write-Verbose "Created: $createdAt"
-            Write-Verbose "Expires: $expiresAt"
+            try {
+                # Token format: IP|xx|startISO|xx|endISO|xx|signature (Base64 encoded)
+                $decoded = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($apiKey))
+                $parts = $decoded -split '\|xx\|'
 
-            # ============================================
-            # 5. Get Hardware Serial Number (OPTIONAL - CAN FALLBACK)
-            # ============================================
-            Write-Verbose "Retrieving hardware serial number..."
-            $serialNumber = "Unknown"
-
-            # Windows: Try CIM/WMI
-            if ($IsWindows -or $PSVersionTable.PSVersion.Major -le 5) {
-                try {
-                    # Try baseboard serial first
-                    $baseboard = Get-CimInstance -ClassName Win32_BaseBoard -ErrorAction Stop
-                    $serialNumber = $baseboard.SerialNumber
-
-                    # If empty, try system UUID
-                    if ([string]::IsNullOrWhiteSpace($serialNumber) -or $serialNumber -match '^(None|To be filled)') {
-                        $cs = Get-CimInstance -ClassName Win32_ComputerSystemProduct -ErrorAction Stop
-                        $serialNumber = $cs.UUID
-                    }
-
-                    # If still empty, try BIOS serial
-                    if ([string]::IsNullOrWhiteSpace($serialNumber) -or $serialNumber -match '^(None|To be filled)') {
-                        $bios = Get-CimInstance -ClassName Win32_BIOS -ErrorAction Stop
-                        $serialNumber = $bios.SerialNumber
-                    }
-
-                    Write-Verbose "Windows serial number: $serialNumber"
+                if ($parts.Count -ge 3) {
+                    $expiryISO = $parts[2]
+                    $expiryDate = [DateTimeOffset]::Parse($expiryISO)
+                    $script:PSU_API_KEY_EXPIRY = $expiryDate.UtcDateTime
+                    Write-Verbose "Token expires: $expiryISO"
                 }
-                catch {
-                    Write-Verbose "Windows CIM query failed: $($_.Exception.Message)"
+                else {
+                    # Default to requested expiry time
+                    $script:PSU_API_KEY_EXPIRY = [DateTime]::UtcNow.AddHours($ExpireTimeHours)
+                    Write-Verbose "Using default expiry: $ExpireTimeHours hours from now"
                 }
             }
-
-            # Linux: Try DMI
-            if (($IsLinux -or $serialNumber -eq "Unknown") -and (Test-Path "/sys/class/dmi/id/product_uuid" -ErrorAction SilentlyContinue)) {
-                try {
-                    $uuid = Get-Content "/sys/class/dmi/id/product_uuid" -ErrorAction Stop
-                    if ($uuid -and $uuid -ne "Unknown") {
-                        $serialNumber = $uuid.Trim()
-                        Write-Verbose "Linux DMI UUID: $serialNumber"
-                    }
-                }
-                catch {
-                    Write-Verbose "Linux DMI read failed: $($_.Exception.Message)"
-                }
+            catch {
+                # If parsing fails, use default expiry
+                $script:PSU_API_KEY_EXPIRY = [DateTime]::UtcNow.AddHours($ExpireTimeHours)
+                Write-Verbose "Token parsing failed, using default expiry"
             }
-
-            # macOS: Try system_profiler
-            if (($IsMacOS -or $serialNumber -eq "Unknown") -and (Get-Command "system_profiler" -ErrorAction SilentlyContinue)) {
-                try {
-                    $hwInfo = system_profiler SPHardwareDataType 2>$null | Select-String "Serial Number"
-                    if ($hwInfo) {
-                        $serial = ($hwInfo.ToString() -replace '.*:\s*', '').Trim()
-                        if ($serial) {
-                            $serialNumber = $serial
-                            Write-Verbose "macOS serial number: $serialNumber"
-                        }
-                    }
-                }
-                catch {
-                    Write-Verbose "macOS system_profiler failed: $($_.Exception.Message)"
-                }
-            }
-
-            # Final fallback is acceptable for serial number
-            if ([string]::IsNullOrWhiteSpace($serialNumber)) {
-                $serialNumber = "Unknown"
-            }
-
-            Write-Verbose "Hardware serial: $serialNumber"
-
-            # ============================================
-            # 6. Build API Key String
-            # ============================================
-            # Format: username|computer|publicIP|createdAt|expiresAt|serialNumber
-            $parts = @(
-                $username,
-                $computer,
-                $publicIP,
-                $createdAt,
-                $expiresAt,
-                $serialNumber,
-                (New-Guid).Guid
-            )
-
-            $combined = $parts -join '|'
-            Write-Verbose "Key components: $combined"
-
-            # ============================================
-            # 7. Encode to Base64
-            # ============================================
-            $bytes = [System.Text.Encoding]::UTF8.GetBytes($combined)
-            $encoded = [Convert]::ToBase64String($bytes)
 
             # ============================================
             # 8. Cache the key for session reuse
             # ============================================
-            $script:PSU_API_KEY = $encoded
-            $script:PSU_API_KEY_EXPIRY = $utcNow.AddHours($ExpireTimeHours)
-            $script:PSU_API_KEY_USERNAME = $username
-            $script:PSU_API_KEY_COMPUTER = $computer
-            $script:PSU_API_KEY_IP = $publicIP
+            $script:PSU_API_KEY = $apiKey
+            $script:PSU_API_KEY_USERNAME = $clientUsername
+            $script:PSU_API_KEY_COMPUTER = $clientDevice
+            $script:PSU_API_KEY_IP = $clientIP
 
             # ============================================
             # 9. Display success message
             # ============================================
+            $expiryDisplay = if ($script:PSU_API_KEY_EXPIRY) {
+                $script:PSU_API_KEY_EXPIRY.ToString("o")
+            } else {
+                "Unknown"
+            }
+
             Write-Host ""
             Write-Host "╔════════════════════════════════════════════════════════╗" -ForegroundColor Cyan
-            Write-Host "║         ✓ API Key Generated Successfully              ║" -ForegroundColor Cyan
+            Write-Host "║         ✓ API Key Generated Successfully               ║" -ForegroundColor Cyan
             Write-Host "╠════════════════════════════════════════════════════════╣" -ForegroundColor Cyan
-            Write-Host "║  User      : $($username.PadRight(40)) ║" -ForegroundColor White
-            Write-Host "║  Computer  : $($computer.PadRight(40)) ║" -ForegroundColor White
-            Write-Host "║  Public IP : $($publicIP.PadRight(40)) ║" -ForegroundColor White
-            Write-Host "║  Hardware  : $($serialNumber.Substring(0, [Math]::Min(40, $serialNumber.Length)).PadRight(40)) ║" -ForegroundColor Gray
-            Write-Host "║  Expires   : $($expiresAt.PadRight(40)) ║" -ForegroundColor Yellow
-            Write-Host "║  Cached    : Yes (session-wide reuse enabled)         ║" -ForegroundColor Green
+            Write-Host "║  User      : $($clientUsername.PadRight(40))  ║" -ForegroundColor White
+            Write-Host "║  Computer  : $($clientDevice.PadRight(40))  ║" -ForegroundColor White
+            Write-Host "║  Public IP : $($clientIP.PadRight(40))  ║" -ForegroundColor White
+            Write-Host "║  Expires   : $($expiryDisplay.PadRight(40))  ║" -ForegroundColor Yellow
+            Write-Host "║  Cached    : Yes (session-wide reuse enabled)          ║" -ForegroundColor Green
             Write-Host "╚════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
             Write-Host ""
-            Write-Verbose "API key length: $($encoded.Length) characters"
+            Write-Verbose "API key length: $($apiKey.Length) characters"
 
-            return $encoded
+            return $apiKey
         }
         catch {
             # Clear any partial cache on error
