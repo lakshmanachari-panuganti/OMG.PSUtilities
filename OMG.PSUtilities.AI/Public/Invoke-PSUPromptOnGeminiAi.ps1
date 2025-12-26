@@ -74,8 +74,8 @@ function Invoke-PSUPromptOnGeminiAi {
         Write-Verbose "API_KEY_GEMINI not configured. Routing request through proxy..."
 
         try {
-            $response = Invoke-GeminiAIApi -Prompt $Prompt -ReturnJsonResponse:$ReturnJsonResponse
-            return $response
+            $geminiresponse = Invoke-GeminiAIApi -Prompt $Prompt -ReturnJsonResponse:$ReturnJsonResponse
+            return $geminiresponse.response
         }
         catch {
             Write-Error "Failed to get response from Gemini proxy: $($_.Exception.Message)"

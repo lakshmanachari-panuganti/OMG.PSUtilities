@@ -1,3 +1,13 @@
+## [1.0.38] - 26th December 2025
+### Changed
+-   Updated `Invoke-GeminiAIApi` to use a new API endpoint URL `https://omg-gemini.azurewebsites.net/api/proxy`.
+-   Enhanced error handling within `Invoke-GeminiAIApi` to include more detailed parsing of API error responses, explicit handling for `400` (Bad Request), `401` (Authentication Failed), and "Rate Limit Exceeded" errors, preventing retries for these specific cases.
+-   `Invoke-GeminiAIApi` now validates for required client metadata headers (`psu-clientusername`, `psu-clientdevice`, `psu-clientip`) before making API calls.
+-   Adjusted logging verbosity in `Invoke-GeminiAIApi` for API call attempts from `Write-Host` to `Write-Verbose`.
+-   Refactored `New-PSUApiKey` to use an external token issuer service (`https://omgissuetoken.azurewebsites.net/api/IssueToken-Dev`) for generating and retrieving API keys.
+-   Removed local logic in `New-PSUApiKey` for retrieving username, computer name, public IP, hardware serial number, and constructing the API key string.
+-   `New-PSUApiKey` now extracts the API key, client username, device, IP, and parses the expiry directly from the token issuer's response.
+-   `Invoke-PSUPromptOnGeminiAi` adjusted to extract the `.response` property from the object returned by `Invoke-GeminiAIApi`.
 ## [1.0.37] - 24th December 2025
 ### Added
 - Automatic detection of the Git repository root using `git rev-parse --show-toplevel` in `New-PSUAiPoweredPullRequest`.
