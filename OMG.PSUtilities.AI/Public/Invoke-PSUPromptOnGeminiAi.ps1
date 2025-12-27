@@ -67,13 +67,17 @@ function Invoke-PSUPromptOnGeminiAi {
         [string]$ApiKey = $env:API_KEY_GEMINI,
 
         [Parameter()]
-        [switch]$ReturnJsonResponse
+        [switch]$ReturnJsonResponse,
+
+        [Parameter()]
+        [switch]$UseProxy
     )
 
     #----------[Determine which API to use based on ApiKey availability]----------
 
-    if ([string]::IsNullOrWhiteSpace($ApiKey)) {
-        Write-Verbose "API_KEY_GEMINI not configured. Routing request through proxy..."
+    if ([string]::IsNullOrWhiteSpace($ApiKey) -or $UseProxy.IsPresent) {
+        if(-not $ApiKey) { Write-Verbose "API_KEY_GEMINI not configured - Routing request through proxy..." }
+        if($UseProxy.IsPresent) { Write-Verbose "UseProxy parameter enforced - Routing request through proxy..." }
 
         try {
             $geminiresponse = Invoke-GeminiAIApi -Prompt $Prompt -ReturnJsonResponse:$ReturnJsonResponse

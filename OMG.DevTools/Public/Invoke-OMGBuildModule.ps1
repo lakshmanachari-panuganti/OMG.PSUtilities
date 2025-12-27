@@ -31,6 +31,7 @@ function Invoke-OMGBuildModule {
         [switch]$SkipScriptAnalyzer = $true,
 
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName, position=0)]
+        [ValidateSet('AI','AzureCore','AzureDevOps','Core','ServiceNow','VSphere','ActiveDirectory')]
         [string[]]$ModuleName
     )
 
@@ -46,19 +47,27 @@ function Invoke-OMGBuildModule {
     }
 
     process {
+        # Map short names to full module names
+        $moduleMap = @{
+            'AI' = 'OMG.PSUtilities.AI'
+            'AzureCore' = 'OMG.PSUtilities.AzureCore'
+            'AzureDevOps' = 'OMG.PSUtilities.AzureDevOps'
+            'Core' = 'OMG.PSUtilities.Core'
+            'ServiceNow' = 'OMG.PSUtilities.ServiceNow'
+            'VSphere' = 'OMG.PSUtilities.VSphere'
+            'ActiveDirectory' = 'OMG.PSUtilities.ActiveDirectory'
+        }
+
         # Get modules to build
         if ($ModuleName) {
-            $modules = Get-OMGModule | Where-Object {
-                if ($ModuleName) {
-                    $_.ModuleName -like "*.$ModuleName"
-                }
-                else {
-                    $true
+            $modulesToBuild = $ModuleName | ForEach-Object {
+                if ($moduleMap.ContainsKey($_)) {
+                    $moduleMap[$_]
+                } else {
+                    $_  # Use as-is if not in map (allows full names too)
                 }
             }
-            $modulesToBuild = $modules.ModuleName
-        }
-        else {
+        } else {
             $modulesToBuild = (Get-OMGModule).ModuleName
         }
 

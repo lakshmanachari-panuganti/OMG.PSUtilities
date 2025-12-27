@@ -111,7 +111,7 @@ function Build-OMGModuleLocally {
             # Remove the module if already loaded
             $existingModule = Get-Module -Name $ModuleName -ListAvailable
             if ($existingModule) {
-                $existingModule | Remove-Module -Force -ErrorAction SilentlyContinue
+                Remove-Module -Name $ModuleName -Force -ErrorAction SilentlyContinue
                 Write-Host "REMOVED: Existed '$ModuleName' successfully removed." -ForegroundColor Green
             }
 
