@@ -24,6 +24,9 @@ function Invoke-OMGUpdateModule {
     [CmdletBinding(SupportsShouldProcess)]
     [Alias('omgupdate')]
     param(
+        [Parameter(Position=0)]
+        [ValidateSet('AI','AzureCore','AzureDevOps','Core','ServiceNow','VSphere','ActiveDirectory')]
+        [string]$Name,
         [Parameter()]
         [switch]$Force
     )
@@ -39,7 +42,14 @@ function Invoke-OMGUpdateModule {
     }
 
     process {
-        $modules = Get-OMGModule
+        $modules = Get-OMGModule | Where-Object {
+            if ($Name) {
+                $_.ModuleName -like "*.$Name"
+            }
+            else {
+                $true
+            }
+        }
 
         if (-not $modules) {
             Write-Warning "No OMG modules found to update"

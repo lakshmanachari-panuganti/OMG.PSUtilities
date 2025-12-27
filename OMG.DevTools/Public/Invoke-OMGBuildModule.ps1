@@ -30,7 +30,7 @@ function Invoke-OMGBuildModule {
         [Parameter()]
         [switch]$SkipScriptAnalyzer = $true,
 
-        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
+        [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName, position=0)]
         [string[]]$ModuleName
     )
 
@@ -48,7 +48,15 @@ function Invoke-OMGBuildModule {
     process {
         # Get modules to build
         if ($ModuleName) {
-            $modulesToBuild = $ModuleName
+            $modules = Get-OMGModule | Where-Object {
+                if ($ModuleName) {
+                    $_.ModuleName -like "*.$ModuleName"
+                }
+                else {
+                    $true
+                }
+            }
+            $modulesToBuild = $modules.ModuleName
         }
         else {
             $modulesToBuild = (Get-OMGModule).ModuleName
