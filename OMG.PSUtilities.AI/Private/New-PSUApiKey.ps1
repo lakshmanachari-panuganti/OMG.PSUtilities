@@ -68,7 +68,7 @@ function New-PSUApiKey {
             # ============================================
             # 6. Call Token Issuer Service
             # ============================================
-            $tokenIssuerUrl = "https://omgissuetoken.azurewebsites.net/api/IssueToken-Dev"
+            $tokenIssuerUrl = "https://omg-gemini.azurewebsites.net/api/issuetoken"
             $timestamp = [DateTimeOffset]::UtcNow.ToUnixTimeSeconds()
             $tokenUrl = "$tokenIssuerUrl`?t=$timestamp"
 
