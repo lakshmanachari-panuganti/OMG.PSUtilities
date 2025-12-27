@@ -1,3 +1,10 @@
+## [1.0.40] - 27th December 2025
+### Added
+- New `-UseProxy` switch parameter to `Invoke-PSUPromptOnGeminiAi`.
+
+### Changed
+- Enhanced proxy routing logic in `Invoke-PSUPromptOnGeminiAi` to support the new `-UseProxy` parameter.
+- Added verbose output to `Invoke-PSUPromptOnGeminiAi` to indicate the reason for proxy usage.
 ## [1.0.39] - 27th December 2025
 ### Changed
 - Restructured comment-based help in `Invoke-PSUPromptOnGeminiAi` by moving the `.LINK` section to its own top-level block.
