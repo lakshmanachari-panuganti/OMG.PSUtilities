@@ -76,10 +76,10 @@
             }
 
             # Remove the module if already loaded
-            $existingModule = Get-Module -Name $ModuleName -ListAvailable
+            $existingModule = Get-Module -Name $ModuleName
             if ($existingModule) {
-                $existingModule | Remove-Module -Force -ErrorAction SilentlyContinue
-                Write-Host "REMOVED: Existed '$ModuleName' successfully removed." -ForegroundColor Green
+                Remove-Module -Name $ModuleName -Force
+                Write-Host "REMOVED: Existing '$ModuleName' successfully removed." -ForegroundColor Green
             }
 
             # Import the module locally

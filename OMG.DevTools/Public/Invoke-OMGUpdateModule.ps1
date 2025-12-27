@@ -27,6 +27,9 @@ function Invoke-OMGUpdateModule {
         [Parameter(Position=0)]
         [ValidateSet('AI','AzureCore','AzureDevOps','Core','ServiceNow','VSphere','ActiveDirectory')]
         [string]$Name,
+
+        [Parameter()]
+        [switch]$UninstallOldVersion,
         [Parameter()]
         [switch]$Force
     )
@@ -42,13 +45,28 @@ function Invoke-OMGUpdateModule {
     }
 
     process {
-        $modules = Get-OMGModule | Where-Object {
-            if ($Name) {
-                $_.ModuleName -like "*.$Name"
+        # Map short names to full module names
+        $moduleMap = @{
+            'AI' = 'OMG.PSUtilities.AI'
+            'AzureCore' = 'OMG.PSUtilities.AzureCore'
+            'AzureDevOps' = 'OMG.PSUtilities.AzureDevOps'
+            'Core' = 'OMG.PSUtilities.Core'
+            'ServiceNow' = 'OMG.PSUtilities.ServiceNow'
+            'VSphere' = 'OMG.PSUtilities.VSphere'
+            'ActiveDirectory' = 'OMG.PSUtilities.ActiveDirectory'
+        }
+
+        # Get modules to update
+        if ($Name) {
+            $fullModuleName = if ($moduleMap.ContainsKey($Name)) {
+                $moduleMap[$Name]
+            } else {
+                $Name  # Use as-is if not in map (allows full names too)
             }
-            else {
-                $true
-            }
+            $modules = Get-OMGModule | Where-Object { $_.ModuleName -eq $fullModuleName }
+        }
+        else {
+            $modules = Get-OMGModule
         }
 
         if (-not $modules) {
@@ -94,11 +112,49 @@ function Invoke-OMGUpdateModule {
                             NewVersion = $galleryModule.Version
                         }
                         Write-Host "  ✓ Updated successfully" -ForegroundColor Green
+
+                        # Uninstall old versions if requested
+                        if ($UninstallOldVersion) {
+                            $allVersions = Get-Module -ListAvailable -Name $module.ModuleName | Sort-Object Version -Descending
+                            $oldVersions = $allVersions | Select-Object -Skip 1
+
+                            if ($oldVersions) {
+                                Write-Host "  Uninstalling $($oldVersions.Count) old version(s)..." -ForegroundColor Yellow
+                                foreach ($oldModule in $oldVersions) {
+                                    try {
+                                        Uninstall-Module -Name $module.ModuleName -RequiredVersion $oldModule.Version -Force -ErrorAction Stop
+                                        Write-Host "    ✓ Removed version $($oldModule.Version)" -ForegroundColor Gray
+                                    }
+                                    catch {
+                                        Write-Warning "    ⚠ Could not remove version $($oldModule.Version): $_"
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
                 else {
                     Write-Host "  ✓ Already up to date ($($localModule.Version))" -ForegroundColor Green
                     $updateResults.UpToDate += $module.ModuleName
+
+                    # Uninstall old versions even if already up to date
+                    if ($UninstallOldVersion) {
+                        $allVersions = Get-Module -ListAvailable -Name $module.ModuleName | Sort-Object Version -Descending
+                        $oldVersions = $allVersions | Select-Object -Skip 1
+
+                        if ($oldVersions) {
+                            Write-Host "  Uninstalling $($oldVersions.Count) old version(s)..." -ForegroundColor Yellow
+                            foreach ($oldModule in $oldVersions) {
+                                try {
+                                    Uninstall-Module -Name $module.ModuleName -RequiredVersion $oldModule.Version -Force -ErrorAction Stop
+                                    Write-Host "    ✓ Removed version $($oldModule.Version)" -ForegroundColor Gray
+                                }
+                                catch {
+                                    Write-Warning "    ⚠ Could not remove version $($oldModule.Version): $_"
+                                }
+                            }
+                        }
+                    }
                 }
             }
             catch {
