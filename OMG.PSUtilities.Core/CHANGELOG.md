@@ -1,6 +1,9 @@
+## [1.0.18] - 27th December 2025
+### Added
+- New `Get-PSUPublicIP` (Public): Retrieves the public IP address of the current machine using DNS lookup (OpenDNS) and parallel HTTP requests to multiple endpoints, with caching capabilities and configurable timeout.
 ## [1.0.17] - 17th December 2025
 ### Added
-- `Get-PublicIP` (Public): Retrieves the public IP address of the current machine using DNS and HTTP methods with caching options.
+- `Get-PSUPublicIP` (Public): Retrieves the public IP address of the current machine using DNS and HTTP methods with caching options.
 
 ### Changed
 - Corrected a typo in `Update-OMGModuleVersion` where a special character was replaced with a standard dash in a `Write-Warning` message.

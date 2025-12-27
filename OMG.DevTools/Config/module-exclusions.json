@@ -1,0 +1,19 @@
+{
+  "excludedModules": [
+    "*.Tests",
+    "*-wip",
+    "*.backup"
+  ],
+  "excludedFiles": [
+    "*--wip.ps1",
+    "*.bak",
+    "*.tmp"
+  ],
+  "excludedDirectories": [
+    ".git",
+    ".vscode",
+    "node_modules",
+    "bin",
+    "obj"
+  ]
+}

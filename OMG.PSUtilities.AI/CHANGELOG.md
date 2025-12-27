@@ -1,3 +1,6 @@
+## [1.0.39] - 27th December 2025
+### Changed
+- Restructured comment-based help in `Invoke-PSUPromptOnGeminiAi` by moving the `.LINK` section to its own top-level block.
 ## [1.0.38] - 26th December 2025
 ### Changed
 -   Updated `Invoke-GeminiAIApi` to use a new API endpoint URL `https://omg-gemini.azurewebsites.net/api/proxy`.

@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.Core.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.17'
+ModuleVersion = '1.0.18'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -84,9 +84,9 @@ FunctionsToExport = @(
     'Get-PSUGitFileChangeMetadata',
     'Get-PSUInstalledSoftware',
     'Get-PSUModule',
+    'Get-PSUPublicIP',
     'Get-PSUUserEnvironmentVariable',
     'Get-PSUUserSession',
-    'Get-PublicIP',
     'New-PSUGithubPullRequest',
     'New-PSUHTMLReport',
     'New-PSUOutlookMeeting',
