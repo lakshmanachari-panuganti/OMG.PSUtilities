@@ -28,7 +28,7 @@ function Invoke-OMGBuildModule {
     [Alias('omgbuild')]
     param(
         [Parameter()]
-        [switch]$SkipScriptAnalyzer,
+        [switch]$SkipScriptAnalyzer = $true,
 
         [Parameter(ValueFromPipeline, ValueFromPipelineByPropertyName)]
         [string[]]$ModuleName

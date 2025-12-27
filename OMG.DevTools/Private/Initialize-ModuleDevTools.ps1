@@ -16,6 +16,15 @@ function Initialize-ModuleDevTools {
         return
     }
 
+    # Check if BASE_MODULE_PATH is set
+    if (-not $env:BASE_MODULE_PATH) {
+        throw "BASE_MODULE_PATH environment variable is not set. Run Initialize-OMGEnvironment first."
+    }
+
+    if (-not (Test-Path $env:BASE_MODULE_PATH)) {
+        throw "BASE_MODULE_PATH does not exist: $env:BASE_MODULE_PATH"
+    }
+
     try {
         Write-Verbose "Loading Module Developer Tools..."
 
