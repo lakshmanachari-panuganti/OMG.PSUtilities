@@ -78,6 +78,7 @@ function Invoke-PSUPromptOnPerplexityAi {
         '',
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
+    [alias("askperplexity")]
     param(
         [Parameter(Mandatory)]
         [ValidateNotNullOrEmpty()]

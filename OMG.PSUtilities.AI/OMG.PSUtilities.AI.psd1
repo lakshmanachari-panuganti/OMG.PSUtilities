@@ -96,7 +96,8 @@ AliasesToExport = @(
     'aigitcommit',
     'askai',
     'askazureopenai',
-    'askgemini'
+    'askgemini',
+    'askperplexity'
 )
 
 # DSC resources to export from this module

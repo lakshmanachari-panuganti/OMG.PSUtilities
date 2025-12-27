@@ -36,7 +36,8 @@ $AliasesToExport = @(
     'aigitcommit',
     'askai',
     'askazureopenai',
-    'askgemini'
+    'askgemini',
+    'askperplexity'
 )
 
 Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport
