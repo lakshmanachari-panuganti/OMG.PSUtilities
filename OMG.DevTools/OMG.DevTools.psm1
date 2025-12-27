@@ -66,36 +66,16 @@ foreach ($import in @($publicFunctions + $privateFunctions)) {
 # Export Module Members
 # ============================================================================
 
-# Export public functions only
+# Export public functions and their aliases
 if ($publicFunctions) {
-    Export-ModuleMember -Function $publicFunctions.BaseName
+    Export-ModuleMember -Function $publicFunctions.BaseName -Alias @(
+        'omgmod'
+        'omgenv'
+        'omgpublish'
+        'omgupdate'
+        'omgbuild'
+    )
 }
-
-# ============================================================================
-# Create Aliases
-# ============================================================================
-
-# Create convenient aliases
-$aliases = @{
-    'omgmod' = 'Get-OMGModule'
-    'omgenv' = 'Initialize-OMGEnvironment'
-    'omgpublish' = 'Invoke-OMGPublishModule'
-    'omgupdate' = 'Invoke-OMGUpdateModule'
-    'omgbuild' = 'Invoke-OMGBuildModule'
-}
-
-foreach ($alias in $aliases.GetEnumerator()) {
-    try {
-        New-Alias -Name $alias.Key -Value $alias.Value -Description "Alias for $($alias.Value)" -Force
-        Write-Verbose "Created alias: $($alias.Key) → $($alias.Value)"
-    }
-    catch {
-        Write-Warning "Failed to create alias '$($alias.Key)': $_"
-    }
-}
-
-# Export aliases
-Export-ModuleMember -Alias $aliases.Keys
 
 # ============================================================================
 # Module Initialization
@@ -141,7 +121,8 @@ $ExecutionContext.SessionState.Module.OnRemove = {
     }
 
     # Remove aliases
-    foreach ($aliasName in $aliases.Keys) {
+    $aliasNames = @('omgmod', 'omgenv', 'omgpublish', 'omgupdate', 'omgbuild')
+    foreach ($aliasName in $aliasNames) {
         if (Get-Alias -Name $aliasName -ErrorAction SilentlyContinue) {
             Remove-Alias -Name $aliasName -Force -ErrorAction SilentlyContinue
         }

@@ -29,7 +29,7 @@ function Invoke-OMGPublishModule {
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
-    [alias("publishomgmodule")]
+    [Alias('omgpublish')]
     param(
         [Parameter()]
         [switch]$SkipChangelog,

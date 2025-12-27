@@ -23,7 +23,7 @@ function Get-OMGModule {
     #>
 
     [CmdletBinding()]
-    [alias("getomgmodules")]
+    [Alias('omgmod')]
     [OutputType([PSCustomObject[]])]
     param(
         [Parameter()]

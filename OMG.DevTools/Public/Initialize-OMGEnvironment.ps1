@@ -26,7 +26,7 @@ function Initialize-OMGEnvironment {
     #>
 
     [CmdletBinding()]
-    [alias("checkomgenvironment")]
+    [Alias('omgenv')]
     [OutputType([hashtable])]
     param(
         [Parameter()]
@@ -67,12 +67,12 @@ function Initialize-OMGEnvironment {
                     if (-not [string]::IsNullOrWhiteSpace($readHost)) {
                         try {
                             [Environment]::SetEnvironmentVariable($varName, $readHost, 'User')
-                            $env:$varName = $readHost  # Set for current session
+                            Set-Item -Path "env:$varName" -Value $readHost  # Set for current session
                             $results.Created += $varName
                             Write-Host "✓ Set $varName successfully" -ForegroundColor Green
                         }
                         catch {
-                            Write-Error "Failed to set $varName: $_"
+                            Write-Error "Failed to set ${varName}: $_"
                         }
                     }
                 }

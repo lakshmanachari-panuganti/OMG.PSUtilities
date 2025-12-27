@@ -25,7 +25,7 @@ function Invoke-OMGBuildModule {
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
-    [alias("buildomgmodule")]
+    [Alias('omgbuild')]
     param(
         [Parameter()]
         [switch]$SkipScriptAnalyzer,

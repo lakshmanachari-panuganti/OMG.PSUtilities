@@ -22,7 +22,7 @@ function Invoke-OMGUpdateModule {
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
-    [alias("updateomgmodule")]
+    [Alias('omgupdate')]
     param(
         [Parameter()]
         [switch]$Force
