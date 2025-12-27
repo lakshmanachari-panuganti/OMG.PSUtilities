@@ -1,0 +1,29 @@
+{
+  "aliases": [
+    {
+      "name": "omgmod",
+      "command": "Get-OMGModule",
+      "description": "Quick access to list OMG modules"
+    },
+    {
+      "name": "omgenv",
+      "command": "Initialize-OMGEnvironment",
+      "description": "Initialize environment variables"
+    },
+    {
+      "name": "omgpublish",
+      "command": "Invoke-OMGPublishModule",
+      "description": "Publish modules to PSGallery"
+    },
+    {
+      "name": "omgupdate",
+      "command": "Invoke-OMGUpdateModule",
+      "description": "Update modules from PSGallery"
+    },
+    {
+      "name": "omgbuild",
+      "command": "Invoke-OMGBuildModule",
+      "description": "Build modules locally"
+    }
+  ]
+}

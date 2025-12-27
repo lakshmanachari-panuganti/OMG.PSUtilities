@@ -1,4 +1,4 @@
-function Get-PublicIP {
+function Get-PSUPublicIP {
     <#
     .SYNOPSIS
         Retrieves the public IP address of the current machine.
@@ -19,11 +19,11 @@ function Get-PublicIP {
         How long to cache the IP address. Default is 5 minutes.
 
     .EXAMPLE
-        Get-PublicIP
+        Get-PSUPublicIP
         # Returns: 203.0.113.42
 
     .EXAMPLE
-        Get-PublicIP -NoCache -TimeoutSec 5
+        Get-PSUPublicIP -NoCache -TimeoutSec 5
         # Forces fresh lookup with 5 second timeout
 
     .NOTES
@@ -80,8 +80,7 @@ function Get-PublicIP {
         'https://ifconfig.me/ip'
     )
 
-    $jobs = $endpoints | ForEach-Object {
-        $endpoint = $_
+    $jobs = foreach ( $endpoint in $endpoints ) {
         Start-ThreadJob -ScriptBlock {
             param($url, $timeout)
             try {

@@ -1,0 +1,58 @@
+{
+  "module": {
+    "name": "OMG.DevTools",
+    "version": "1.0.0",
+    "description": "Development tools for OMG PowerShell modules",
+    "author": "Your Name"
+  },
+  "cache": {
+    "enabled": true,
+    "expirationMinutes": 5,
+    "autoRefresh": false
+  },
+  "git": {
+    "autoCommit": true,
+    "commitMessageTemplate": "chore: update modules [automated]",
+    "requireCleanWorkingDirectory": false
+  },
+  "publish": {
+    "confirmByDefault": true,
+    "skipChangelogByDefault": false,
+    "skipGitCommitByDefault": false,
+    "autoIncrementVersion": true,
+    "defaultVersionIncrement": "Patch"
+  },
+  "build": {
+    "skipScriptAnalyzerByDefault": false,
+    "runTestsByDefault": false,
+    "parallelBuild": false
+  },
+  "update": {
+    "checkOnStartup": false,
+    "autoUpdate": false,
+    "includePrerelease": false
+  },
+  "requiredEnvironmentVariables": [
+    "BASE_MODULE_PATH",
+    "API_KEY_GEMINI",
+    "API_KEY_CLAUDE",
+    "API_KEY_OPENAI",
+    "API_KEY_PERPLEXITY",
+    "API_KEY_PSGALLERY"
+  ],
+  "optionalEnvironmentVariables": [
+    "GIT_USER_NAME",
+    "GIT_USER_EMAIL"
+  ],
+  "logging": {
+    "enabled": true,
+    "verboseByDefault": false,
+    "logFilePath": "",
+    "maxLogSizeMB": 10
+  },
+  "performance": {
+    "parallelOperations": true,
+    "maxParallelJobs": 5,
+    "timeoutSeconds": 300
+  }
+}
