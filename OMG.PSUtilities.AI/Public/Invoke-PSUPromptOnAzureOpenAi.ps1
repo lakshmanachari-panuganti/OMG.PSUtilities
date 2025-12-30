@@ -22,7 +22,9 @@ function Invoke-PSUPromptOnAzureOpenAi {
 
 
     .PARAMETER Prompt
-        (Mandatory) The message to send to Azure OpenAI for generating a response.    .PARAMETER ApiKey
+        (Mandatory) The message to send to Azure OpenAI for generating a response.
+
+    .PARAMETER ApiKey
         (Optional) The API key for Azure OpenAI authentication.
         Default value is $env:API_KEY_AZURE_OPENAI.
 
@@ -66,7 +68,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
 
     .NOTES
         Author: Lakshmanachari Panuganti
-        Date: 2025-08-01
+        Date: 2025-12-30
 
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AI
@@ -84,8 +86,8 @@ function Invoke-PSUPromptOnAzureOpenAi {
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
     param(
+        # Mandatory business parameters
         [Parameter(Mandatory)]
-        [ValidateNotNullOrEmpty()]
         [ValidateScript({
                 if ([string]::IsNullOrWhiteSpace($_)) {
                     throw "Prompt cannot be null, empty, or contain only whitespace."
@@ -94,15 +96,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
             })]
         [string]$Prompt,
 
-        [Parameter()]
-        [string]$ApiKey = $env:API_KEY_AZURE_OPENAI,
-
-        [Parameter()]
-        [string]$Endpoint = $env:AZURE_OPENAI_ENDPOINT,
-
-        [Parameter()]
-        [string]$Deployment = $env:AZURE_OPENAI_DEPLOYMENT,
-
+        # Optional business parameters
         [Parameter()]
         [ValidateRange(1, 128000)]
         [int]$MaxTokens,
@@ -118,32 +112,58 @@ function Invoke-PSUPromptOnAzureOpenAi {
         [Parameter()]
         [switch]$ReturnJsonResponse,
 
+        # Configuration parameters
         [Parameter()]
         [string]$ApiVersion = '2024-12-01-preview',
 
         [Parameter()]
-        [switch]$UseProxy
+        [switch]$UseProxy,
+
+        # Infrastructure parameters (LAST)
+        [Parameter()]
+        [string]$ApiKey = $env:API_KEY_AZURE_OPENAI,
+
+        [Parameter()]
+        [string]$Endpoint = $env:AZURE_OPENAI_ENDPOINT,
+
+        [Parameter()]
+        [string]$Deployment = $env:AZURE_OPENAI_DEPLOYMENT
     )
 
-    process {
+    begin {
+        # Display parameters (mask ApiKey)
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        foreach ($param in $PSBoundParameters.GetEnumerator()) {
+            if ($param.Key -eq 'ApiKey') {
+                $maskedKey = if ($param.Value -and $param.Value.Length -ge 3) {
+                    $param.Value.Substring(0, 3) + "********"
+                } else { "****" }
+                Write-Verbose "  $($param.Key) = $maskedKey"
+            } else {
+                Write-Verbose "  $($param.Key) = $($param.Value)"
+            }
+        }
+
         # Calculate optimal MaxTokens if not provided
         if (-not $MaxTokens) {
             $MaxTokens = Get-OptimalMaxTokens -Prompt $Prompt -ResponseSize "Medium"
+            Write-Verbose "Calculated MaxTokens: $MaxTokens"
         }
 
         # Calculate optimal timeout if not provided
         if (-not $TimeoutSeconds) {
             $TimeoutSeconds = Get-OptimalTimeout -Prompt $Prompt -MaxTokens $MaxTokens
+            Write-Verbose "Calculated TimeoutSeconds: $TimeoutSeconds"
         }
 
-        #----------[Determine which API to use based on credential availability]----------
+        # Determine which API to use based on credential availability
+        $UseDirectApi = (-not [string]::IsNullOrWhiteSpace($ApiKey)) -and
+                        (-not [string]::IsNullOrWhiteSpace($Endpoint)) -and
+                        (-not [string]::IsNullOrWhiteSpace($Deployment))
+    }
 
-        # Check if all three environment variables are present for direct API access
-        $useDirectApi = (-not [string]::IsNullOrWhiteSpace($ApiKey)) -and
-        (-not [string]::IsNullOrWhiteSpace($Endpoint)) -and
-        (-not [string]::IsNullOrWhiteSpace($Deployment))
-
-        if (-not $useDirectApi -or $UseProxy.IsPresent) {
+    process {
+        if (-not $UseDirectApi -or $UseProxy.IsPresent) {
             # No credentials or proxy requested - use the proxy function
             Write-Verbose "Azure OpenAI credentials not configured or proxy requested. Routing request through proxy..."
 
@@ -158,7 +178,8 @@ function Invoke-PSUPromptOnAzureOpenAi {
                 $response = Invoke-OpenAIApi @openAIApiParams
                 return $response
             } catch {
-                Write-Error "Failed to get response from Azure OpenAI proxy: $($_.Exception.Message)"
+                $errorMsg = "Failed to get response from Azure OpenAI proxy: $($_.Exception.Message)"
+                Write-Error $errorMsg
                 Write-Host ""
                 Write-Host "    Alternatively, you can use direct Azure OpenAI API with your own credentials:" -ForegroundColor Yellow
                 Write-Host "    ----------------------------------------------------------------------------" -ForegroundColor Yellow
@@ -170,7 +191,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
        Set-PSUUserEnvironmentVariable -Name "AZURE_OPENAI_DEPLOYMENT" -Value "<your-deployment-name>"
 
 "@ -ForegroundColor Cyan
-                return
+                throw $errorMsg
             }
         }
 
