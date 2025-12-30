@@ -18,6 +18,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name
 
 # Export public functions
 $PublicFunctions = @(
+    'Convert-PSUContext',
     'Get-PSUAiPoweredGitChangeSummary',
     'Invoke-PSUAiPrompt',
     'Invoke-PSUGitCommit',
@@ -37,7 +38,8 @@ $AliasesToExport = @(
     'askai',
     'askazureopenai',
     'askgemini',
-    'askperplexity'
+    'askperplexity',
+    'rephrase'
 )
 
 Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport
