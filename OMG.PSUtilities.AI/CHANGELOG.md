@@ -1,3 +1,10 @@
+## [1.0.41] - 30th December 2025
+### Added
+- `Convert-PSUContext` (Public): Rephrases text into specified length and tone using AI API, with aliases `rephrase`.
+
+### Changed
+- Updated token issuer URL in `New-PSUApiKey` (Private) from dev endpoint to `https://omg-gemini.azurewebsites.net/api/issuetoken`.
+- Added `askperplexity` alias to `Invoke-PSUPromptOnPerplexityAi` (Public).
 ## [1.0.40] - 27th December 2025
 ### Added
 - New `-UseProxy` switch parameter to `Invoke-PSUPromptOnGeminiAi`.
