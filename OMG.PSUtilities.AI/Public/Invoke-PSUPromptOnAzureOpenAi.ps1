@@ -119,7 +119,10 @@ function Invoke-PSUPromptOnAzureOpenAi {
         [switch]$ReturnJsonResponse,
 
         [Parameter()]
-        [string]$ApiVersion = '2024-12-01-preview'
+        [string]$ApiVersion = '2024-12-01-preview',
+
+        [Parameter()]
+        [switch]$UseProxy
     )
 
     process {
@@ -140,9 +143,9 @@ function Invoke-PSUPromptOnAzureOpenAi {
         (-not [string]::IsNullOrWhiteSpace($Endpoint)) -and
         (-not [string]::IsNullOrWhiteSpace($Deployment))
 
-        if (-not $useDirectApi) {
-            # No credentials - use the proxy function
-            Write-Verbose "Azure OpenAI credentials not configured. Routing request through proxy..."
+        if (-not $useDirectApi -or $UseProxy.IsPresent) {
+            # No credentials or proxy requested - use the proxy function
+            Write-Verbose "Azure OpenAI credentials not configured or proxy requested. Routing request through proxy..."
 
             try {
                 $openAIApiParams = @{
