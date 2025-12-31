@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.AI.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.40'
+ModuleVersion = '1.0.41'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -71,6 +71,7 @@ RequiredModules = @('OMG.PSUtilities.Core')
 
 # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
 FunctionsToExport = @(
+    'Convert-PSUContext',
     'Get-PSUAiPoweredGitChangeSummary',
     'Invoke-PSUAiPrompt',
     'Invoke-PSUGitCommit',
@@ -96,7 +97,9 @@ AliasesToExport = @(
     'aigitcommit',
     'askai',
     'askazureopenai',
-    'askgemini'
+    'askgemini',
+    'askperplexity',
+    'rephrase'
 )
 
 # DSC resources to export from this module

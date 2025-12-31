@@ -1,3 +1,10 @@
+## [1.0.41] - 30th December 2025
+### Added
+- `Convert-PSUContext` (Public): Rephrases text into specified length and tone using AI API, with aliases `rephrase`.
+
+### Changed
+- Updated token issuer URL in `New-PSUApiKey` (Private) from dev endpoint to `https://omg-gemini.azurewebsites.net/api/issuetoken`.
+- Added `askperplexity` alias to `Invoke-PSUPromptOnPerplexityAi` (Public).
 ## [1.0.40] - 27th December 2025
 ### Added
 - New `-UseProxy` switch parameter to `Invoke-PSUPromptOnGeminiAi`.
@@ -14,7 +21,7 @@
 -   Enhanced error handling within `Invoke-GeminiAIApi` to include more detailed parsing of API error responses, explicit handling for `400` (Bad Request), `401` (Authentication Failed), and "Rate Limit Exceeded" errors, preventing retries for these specific cases.
 -   `Invoke-GeminiAIApi` now validates for required client metadata headers (`psu-clientusername`, `psu-clientdevice`, `psu-clientip`) before making API calls.
 -   Adjusted logging verbosity in `Invoke-GeminiAIApi` for API call attempts from `Write-Host` to `Write-Verbose`.
--   Refactored `New-PSUApiKey` to use an external token issuer service (`https://omgissuetoken.azurewebsites.net/api/IssueToken-Dev`) for generating and retrieving API keys.
+-   Refactored `New-PSUApiKey` to use an external token issuer service (`https://omg-gemini.azurewebsites.net/api/issuetoken`) for generating and retrieving API keys.
 -   Removed local logic in `New-PSUApiKey` for retrieving username, computer name, public IP, hardware serial number, and constructing the API key string.
 -   `New-PSUApiKey` now extracts the API key, client username, device, IP, and parses the expiry directly from the token issuer's response.
 -   `Invoke-PSUPromptOnGeminiAi` adjusted to extract the `.response` property from the object returned by `Invoke-GeminiAIApi`.

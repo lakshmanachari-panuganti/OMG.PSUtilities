@@ -1,3 +1,8 @@
+## [1.0.19] - 31st December 2025
+### Changed
+- Added support for untracked files in `Get-PSUGitFileChangeMetadata` (Public): auto-stages by default as "New", marks as "Untracked" with `-ExcludeUntrackedFiles`.
+- Enhanced documentation in `Get-PSUGitFileChangeMetadata.ps1` with new parameter description and example for `-ExcludeUntrackedFiles`.
+- Added `-ExcludeUntrackedFiles` switch parameter to `Get-PSUGitFileChangeMetadata`.
 ## [1.0.18] - 27th December 2025
 ### Added
 - New `Get-PSUPublicIP` (Public): Retrieves the public IP address of the current machine using DNS lookup (OpenDNS) and parallel HTTP requests to multiple endpoints, with caching capabilities and configurable timeout.

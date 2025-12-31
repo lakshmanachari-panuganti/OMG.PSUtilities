@@ -6,6 +6,8 @@ function Get-PSUGitFileChangeMetadata {
     .DESCRIPTION
         Compares two Git branches using `git diff --name-status` and returns structured metadata.
         It includes file paths, type of change (New, Modify, Delete, Rename), and supports rename detection with similarity scoring.
+        By default, untracked files are automatically staged using `git add .` and marked as "New".
+        Use -ExcludeUntrackedFiles to prevent auto-staging and exclude untracked files from output.
 
     .PARAMETER BaseBranch
         (Optional) The name of the base branch to compare from.
@@ -14,6 +16,10 @@ function Get-PSUGitFileChangeMetadata {
     .PARAMETER FeatureBranch
         (Optional) The name of the feature or current working branch to compare against the base.
         Defaults to the currently checked-out branch.
+
+    .PARAMETER ExcludeUntrackedFiles
+        (Optional) When specified, prevents automatic staging of untracked files.
+        Untracked files will appear in the output with TypeOfChange = "Untracked" without being staged.
 
     .EXAMPLE
         Get-PSUGitFileChangeMetadata
@@ -26,6 +32,10 @@ function Get-PSUGitFileChangeMetadata {
     .EXAMPLE
         $changes = Get-PSUGitFileChangeMetadata
         $changes | Where-Object TypeOfChange -eq 'Rename'
+
+    .EXAMPLE
+        Get-PSUGitFileChangeMetadata -ExcludeUntrackedFiles
+        Returns all changes without staging untracked files. Untracked files appear as TypeOfChange = "Untracked".
 
     .OUTPUTS
         [PSCustomObject]
@@ -43,7 +53,8 @@ function Get-PSUGitFileChangeMetadata {
     [CmdletBinding()]
     param (
         [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD | Split-Path -Leaf),
-        [string]$FeatureBranch = $(git branch --show-current)
+        [string]$FeatureBranch = $(git branch --show-current),
+        [switch]$ExcludeUntrackedFiles
     )
 
     git diff --name-status $BaseBranch $FeatureBranch | ForEach-Object {
@@ -86,6 +97,32 @@ function Get-PSUGitFileChangeMetadata {
                 File         = $parts[-1]
                 TypeOfChange = $typeOfChange
                 Comment      = $null
+            }
+        }
+    }
+
+    # Get untracked files and stage them by default
+    $untrackedFiles = git ls-files --others --exclude-standard
+    if ($untrackedFiles) {
+        if ($ExcludeUntrackedFiles) {
+            $untrackedFiles | ForEach-Object {
+                [PSCustomObject]@{
+                    File         = $_
+                    TypeOfChange = "Untracked"
+                    Comment      = "New file not yet added to git"
+                }
+            }
+        }
+        else {
+            Write-Verbose "Staging $(@($untrackedFiles).Count) untracked file(s)..."
+            git add .
+
+            $untrackedFiles | ForEach-Object {
+                [PSCustomObject]@{
+                    File         = $_
+                    TypeOfChange = "New"
+                    Comment      = "New file staged to git"
+                }
             }
         }
     }
