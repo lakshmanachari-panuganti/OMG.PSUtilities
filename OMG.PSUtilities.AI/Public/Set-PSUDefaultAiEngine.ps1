@@ -27,7 +27,12 @@ function Set-PSUDefaultAiEngine {
     .LINK
         https://github.com/lakshmanachari-panuganti/OMG.PSUtilities
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'Function is interactive and provides user feedback during configuration'
+    )]
     param (
         [Parameter(Mandatory)]
         [ValidateSet("AzureOpenAi", "GeminiAi", "PerplexityAi")]
@@ -56,6 +61,11 @@ function Set-PSUDefaultAiEngine {
         foreach ($var in $missingVars) {
             Write-Host "Set-PSUUserEnvironmentVariable -Name '$var' -Value '<your-value>'" -ForegroundColor Magenta
         }
+        return
+    }
+
+    # ShouldProcess check
+    if (-not $PSCmdlet.ShouldProcess("DEFAULT_AI_ENGINE", "Set default AI engine to $Name")) {
         return
     }
 

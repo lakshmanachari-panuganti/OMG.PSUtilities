@@ -1,4 +1,4 @@
-function Invoke-PSUGitCommit {
+﻿function Invoke-PSUGitCommit {
     <#
     .SYNOPSIS
         Generates and commits a conventional Git commit message using Gemini AI, then syncs with remote.
@@ -50,7 +50,7 @@ function Invoke-PSUGitCommit {
         "*.zip", "*.tar", "*.gz"
     )
 
-    function Should-SkipFile($path) {
+    function Test-SkipFile($path) {
         foreach ($pattern in $ignorePatterns) {
             if ($path -like $pattern) {
                 return $true
@@ -90,7 +90,7 @@ function Invoke-PSUGitCommit {
             $changeCode = $line.Split(' ')[0].Trim()
             $path = $line.Split(' ', 2)[1].Trim().Trim('"')
 
-            if (Should-SkipFile $path) { continue }
+            if (Test-SkipFile $path) { continue }
 
             $fullPath = Join-Path -Path $RootPath -ChildPath $path
             $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
@@ -127,7 +127,7 @@ function Invoke-PSUGitCommit {
 
         # filter with the $ignorePatterns
 
-        $changedItems = $changedItems | Where-Object { -not (Should-SkipFile $_.Path) }
+        $changedItems = $changedItems | Where-Object { -not (Test-SkipFile $_.Path) }
 
         $popupResponse = Popup-SensitiveContent -Files ($changedItems | Where-Object { $_.ItemType -eq 'File' } | Select-Object -ExpandProperty Path)
         if(-not $popupResponse){

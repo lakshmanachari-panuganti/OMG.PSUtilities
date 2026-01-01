@@ -1,4 +1,4 @@
-function Invoke-PSUPromptOnAzureOpenAi {
+﻿function Invoke-PSUPromptOnAzureOpenAi {
     <#
     .SYNOPSIS
         Sends a prompt to Azure OpenAI (Chat Completions API) and returns the generated response.
@@ -146,7 +146,7 @@ function Invoke-PSUPromptOnAzureOpenAi {
 
         # Calculate optimal MaxTokens if not provided
         if (-not $MaxTokens) {
-            $MaxTokens = Get-OptimalMaxTokens -Prompt $Prompt -ResponseSize "Medium"
+            $MaxTokens = Get-OptimalMaxToken -Prompt $Prompt -ResponseSize "Medium"
             Write-Verbose "Calculated MaxTokens: $MaxTokens"
         }
 

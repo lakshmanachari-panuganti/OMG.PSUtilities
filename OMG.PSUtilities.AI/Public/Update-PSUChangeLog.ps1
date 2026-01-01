@@ -1,4 +1,4 @@
-function Update-PSUChangeLog {
+﻿function Update-PSUChangeLog {
 <#
     .SYNOPSIS
         Uses AI to generate and prepend a professional changelog entry for major module updates, based on file diffs between branches.
@@ -35,6 +35,7 @@ function Update-PSUChangeLog {
 
     #>
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Function is interactive and provides real-time user feedback')]
     [Alias("aichangelog")]
     param(
         [Parameter(Position = 0, ValueFromPipeline, ValueFromPipelineByPropertyName)]
@@ -55,14 +56,14 @@ function Update-PSUChangeLog {
     )
     process {
         if ([string]::IsNullOrWhiteSpace($ModuleName)) {
-            $gitChanges = Get-PSUGitFileChangeMetadata | Where-Object { 
+            $gitChanges = Get-PSUGitFileChangeMetadata | Where-Object {
                     $_.file -like 'OMG.PSUtilities.*/*'
-                } 
+                }
             if (-not $AllGitChanges.IsPresent) {
-                $gitChanges = $gitChanges | Where-Object { 
+                $gitChanges = $gitChanges | Where-Object {
                     $_.file -like 'OMG.PSUtilities.*/*/*.ps1' -and
-                    $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'  
-                } 
+                    $_.file -notlike 'OMG.PSUtilities.*/*/*--wip.ps1'
+                }
             }
 
             $ModuleList = @($gitChanges | ForEach-Object { $_.file.split('/')[0] } | Sort-Object -Unique)
@@ -92,12 +93,12 @@ function Update-PSUChangeLog {
 
                 # Detect changed files
                 Write-Verbose "Comparing changes between [$BaseBranch] and [$FeatureBranch]"
-                $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only 
+                $files = git -C $moduleRoot diff "$($BaseBranch)...$($FeatureBranch)" --name-only
                 if (-not $AllGitChanges.IsPresent) {
                     $filteredfiles = '.PS1 '
                     $files = $files | Where-Object { ($_ -replace '\\', '/') -match "$thisModuleName/(Public|Private)/.*\.ps1$" }
                 }
-                
+
                 if (-not $files) {
                     Write-Warning "[$thisModuleName] No $($filteredfiles)file changes detected between $BaseBranch and $FeatureBranch."
                     return
@@ -212,6 +213,8 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                 $PSCmdlet.ThrowTerminatingError("Failed to update changelog for $thisModuleName. Error: $_")
             }
         }
-        
+
     }
 }
+
+

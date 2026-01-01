@@ -19,8 +19,8 @@ function Invoke-OMGBuildModule {
         Specific module name(s) to build. If not specified, builds all modules.
         Accepts short names (AI, Core) or full names (OMG.PSUtilities.AI).
 
-    .PARAMETER SkipScriptAnalyzer
-        Skip PSScriptAnalyzer validation during build.
+    .PARAMETER UseScriptAnalyzer
+        Run PSScriptAnalyzer validation during build.
 
     .PARAMETER SkipUpdateManifests
         Skip updating the module manifest files (.psd1 and .psm1).
@@ -33,8 +33,8 @@ function Invoke-OMGBuildModule {
         Builds all OMG modules.
 
     .EXAMPLE
-        Invoke-OMGBuildModule -ModuleName "OMG.PSUtilities.Core" -SkipScriptAnalyzer
-        Builds a specific module without script analysis.
+        Invoke-OMGBuildModule -ModuleName "OMG.PSUtilities.Core" -UseScriptAnalyzer
+        Builds a specific module with script analysis enabled.
 
     .EXAMPLE
         Invoke-OMGBuildModule -ModuleName "AI", "Core"
@@ -61,7 +61,7 @@ function Invoke-OMGBuildModule {
         [string[]]$ModuleName,
 
         [Parameter()]
-        [switch]$SkipScriptAnalyzer = $true,
+        [switch]$UseScriptAnalyzer,
 
         [Parameter()]
         [switch]$SkipUpdateManifests
@@ -151,7 +151,7 @@ function Invoke-OMGBuildModule {
                 }
 
                 # Run PSScriptAnalyzer
-                if (-not $SkipScriptAnalyzer) {
+                if ($UseScriptAnalyzer) {
                     Write-Verbose "Running PSScriptAnalyzer on $module..."
 
                     $rules = @(
