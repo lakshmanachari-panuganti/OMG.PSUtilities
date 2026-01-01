@@ -53,6 +53,7 @@ function Invoke-GeminiAIApi {
     #>
     [CmdletBinding()]
     [OutputType([string])]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Function is interactive and provides real-time user feedback')]
     param(
         [Parameter(Mandatory = $true, Position = 0)]
         [ValidateNotNullOrEmpty()]
@@ -118,7 +119,7 @@ function Invoke-GeminiAIApi {
             if ($needNewKey) {
                 Write-Host "Generating API key..." -ForegroundColor Cyan
                 try {
-                    $apiKey = New-PSUApiKey -ErrorAction Stop
+                    $script:PSU_API_KEY = New-PSUApiKey -ErrorAction Stop
                     Write-Verbose "API key generated and cached successfully"
                 }
                 catch {
@@ -127,7 +128,6 @@ function Invoke-GeminiAIApi {
             }
             else {
                 Write-Verbose "Using cached API key"
-                $apiKey = $script:PSU_API_KEY
 
                 # Log time remaining
                 if ($script:PSU_API_KEY_EXPIRY) {

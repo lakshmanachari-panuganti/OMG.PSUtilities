@@ -41,6 +41,7 @@ function Get-PSUAiPoweredGitChangeSummary {
         '',
         Justification = 'This is intended for this function to display formatted output to the user on the console'
     )]
+    [OutputType([object[]])]
     param(
         [string]$BaseBranch = $(git symbolic-ref refs/remotes/origin/HEAD 2>$null | ForEach-Object { $_ -replace 'refs/remotes/origin/', '' }),
         [string]$FeatureBranch = $(git branch --show-current)

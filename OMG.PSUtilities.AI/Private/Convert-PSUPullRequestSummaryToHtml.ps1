@@ -38,10 +38,9 @@
     Created : 2025-07-30
     Dependencies: Relies on `Convert-PSUMarkdownToHtml` for markdown to HTML conversion.
     Output includes a button to toggle between light and dark mode in modern browsers.
-
     #>
-
     [CmdletBinding()]
+    [OutputType([string])]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',

@@ -71,10 +71,10 @@ function Set-PSUAzureOpenAIEnvironment {
         https://www.powershellgallery.com/packages/OMG.PSUtilities.AI
         https://learn.microsoft.com/en-us/azure/ai-services/openai/
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost', '',
-        Justification = 'Console UX: interactive setup requires formatted, colorized output for user guidance'
+        Justification = 'Function is interactive and provides real-time feedback during Azure OpenAI environment setup'
     )]
     param(
         [Parameter()]
@@ -126,6 +126,11 @@ function Set-PSUAzureOpenAIEnvironment {
             }
             Write-Success "Connected to Azure as: $($context.Account.Id)"
             Write-Info "Subscription: $($context.Subscription.Name) ($($context.Subscription.Id))"
+
+            # ShouldProcess check
+            if (-not $PSCmdlet.ShouldProcess("Azure OpenAI Environment", "Configure Azure OpenAI resources and environment variables")) {
+                return
+            }
 
             # Select or confirm subscription
             Write-Step "Subscription Selection"

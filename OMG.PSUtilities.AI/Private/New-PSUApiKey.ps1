@@ -1,4 +1,4 @@
-function New-PSUApiKey {
+﻿function New-PSUApiKey {
     <#
     .SYNOPSIS
         Generates a secure 24-hour API key for PSU AI Proxy.
@@ -33,7 +33,17 @@ function New-PSUApiKey {
         Cross-platform: Windows, Linux, macOS
 
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingWriteHost',
+        '',
+        Justification = 'Function is interactive and provides user feedback during key generation'
+    )]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingInvokeExpression',
+        '',
+        Justification = 'Invoke-Expression used to execute trusted token issuer HeaderScript from controlled Azure endpoint. This is intentional architecture for secure token distribution.'
+    )]
     [OutputType([string])]
     param(
         [Parameter()]
@@ -63,6 +73,11 @@ function New-PSUApiKey {
                 else {
                     Write-Verbose "Cached API key has expired, generating new one"
                 }
+            }
+
+            # ShouldProcess check
+            if (-not $PSCmdlet.ShouldProcess("PSU API Key", "Generate new API key (expires in $ExpireTimeHours hours)")) {
+                return
             }
 
             # ============================================

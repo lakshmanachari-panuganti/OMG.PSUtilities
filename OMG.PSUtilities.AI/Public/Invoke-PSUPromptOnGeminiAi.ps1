@@ -1,4 +1,4 @@
-function Invoke-PSUPromptOnGeminiAi {
+﻿function Invoke-PSUPromptOnGeminiAi {
 <#
 .SYNOPSIS
     Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response.

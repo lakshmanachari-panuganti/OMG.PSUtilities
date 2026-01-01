@@ -37,19 +37,24 @@ function Start-PSUGeminiChat {
     Start-PSUGeminiChat
 #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',
-        Justification = 'This is intended for this function to display formatted output to the user on the console'
+        Justification = 'Function is interactive chat interface that requires real-time console feedback'
     )]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseBOMForUnicodeEncodedFile", "", Justification = "This script is intentionally saved without BOM.")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseBOMForUnicodeEncodedFile", "", Justification = "UTF-8 BOM will be added in build process")]
     param (
         [string]$ApiKey = $env:API_KEY_GEMINI
     )
 
     if (-not $ApiKey) {
         Write-Error "Gemini API key not found. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_GEMINI' -Value '<your-api-key>'"
+        return
+    }
+
+    # ShouldProcess check
+    if (-not $PSCmdlet.ShouldProcess("Gemini Chat Session", "Start interactive chat with Gemini AI")) {
         return
     }
 

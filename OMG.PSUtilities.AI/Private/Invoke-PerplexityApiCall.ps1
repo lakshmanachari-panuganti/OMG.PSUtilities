@@ -1,5 +1,6 @@
-# Helper function to make API call (to avoid code duplication)
+﻿# Helper function to make API call (to avoid code duplication)
 function Invoke-PerplexityApiCall {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSAvoidUsingWriteHost', '', Justification = 'Helper function provides interactive progress feedback')]
     param(
         [string]$PromptText,
         [string]$ModelName,
@@ -33,7 +34,7 @@ function Invoke-PerplexityApiCall {
         Body        = ($body | ConvertTo-Json -Depth 100)
         ContentType = 'application/json'
     }
-        
+
     $response = Invoke-RestMethod @invokeParams
 
     if ($response.choices.Count -gt 0 -and $response.choices[0].message.content) {

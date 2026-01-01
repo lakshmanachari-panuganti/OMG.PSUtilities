@@ -1,4 +1,5 @@
-function Popup-SensitiveContent {
+﻿function Popup-SensitiveContent {
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute('PSUseApprovedVerbs', '', Justification = 'Private function not exposed to module users')]
     <#
     .SYNOPSIS
     Displays a security warning popup when potential hardcoded sensitive data is detected in files.

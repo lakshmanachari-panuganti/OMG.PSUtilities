@@ -1,4 +1,4 @@
-function Convert-PSUContext {
+﻿function Convert-PSUContext {
     <#
     .SYNOPSIS
         Rephrases text into a specified length and tone.

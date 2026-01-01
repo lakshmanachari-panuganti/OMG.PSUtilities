@@ -1,4 +1,4 @@
-function Get-OptimalMaxTokens {
+﻿function Get-OptimalMaxToken {
     <#
     .SYNOPSIS
         Calculates optimal MaxTokens based on prompt size and desired response size.
@@ -25,15 +25,15 @@ function Get-OptimalMaxTokens {
         Total context window of the model. Default is 128000 (for GPT-4o/Turbo).
 
     .EXAMPLE
-        Get-OptimalMaxTokens -Prompt "What is Docker?"
+        Get-OptimalMaxToken -Prompt "What is Docker?"
         Returns: 2000 (Medium default)
 
     .EXAMPLE
-        Get-OptimalMaxTokens -Prompt $largePrompt -ResponseSize "Huge"
+        Get-OptimalMaxToken -Prompt $largePrompt -ResponseSize "Huge"
         Returns: 8000
 
     .EXAMPLE
-        $maxTokens = Get-OptimalMaxTokens -Prompt $prompt -ResponseSize "Large"
+        $maxTokens = Get-OptimalMaxToken -Prompt $prompt -ResponseSize "Large"
         Use calculated value in API call
     #>
 

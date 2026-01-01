@@ -1,4 +1,4 @@
-function Invoke-PSUPromptOnPerplexityAi {
+﻿function Invoke-PSUPromptOnPerplexityAi {
     <#
     .SYNOPSIS
         Sends a text prompt to the Perplexity AI API and returns the generated response.
@@ -137,7 +137,7 @@ function Invoke-PSUPromptOnPerplexityAi {
             -Tokens $MaxTokens `
             -Headers $headers `
             -Uri $uri
-        
+
         if ($ReturnJsonResponse.IsPresent) {
             # Extract and validate JSON with AI-powered correction if needed
             try {
@@ -163,3 +163,4 @@ function Invoke-PSUPromptOnPerplexityAi {
         Write-Error "Failed to get response from Perplexity:`n$($_.Exception.Message)"
     }
 }
+

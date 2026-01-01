@@ -15,7 +15,7 @@ function Get-ValidJson {
         $null = ConvertFrom-Json $Text -ErrorAction Stop
         return $Text
     } catch {
-        # Not valid JSON, try to extract it
+        Write-Verbose "Initial JSON parse failed, attempting cleanup..."
     }
 
     # Remove markdown code fences
@@ -27,7 +27,7 @@ function Get-ValidJson {
         $null = ConvertFrom-Json $cleaned -ErrorAction Stop
         return $cleaned
     } catch {
-        # Still not valid, try to find JSON object
+        Write-Verbose "JSON parse failed after fence removal, attempting extraction..."
     }
 
     # Try to find JSON object or array in the text
@@ -48,7 +48,7 @@ function Get-ValidJson {
                     $null = ConvertFrom-Json $extracted -ErrorAction Stop
                     return $extracted
                 } catch {
-                    # Give up on extraction
+                    Write-Verbose "Brace extraction failed, will request AI correction"
                 }
             }
         }

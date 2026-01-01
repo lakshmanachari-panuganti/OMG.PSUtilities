@@ -1,4 +1,4 @@
-function New-PSUAiPoweredPullRequest {
+﻿function New-PSUAiPoweredPullRequest {
     <#
     .SYNOPSIS
         Uses AI assistance to generate a professional Pull Request (PR) title and description from Git change summaries.
@@ -50,11 +50,11 @@ function New-PSUAiPoweredPullRequest {
 
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Medium')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',
-        Justification = 'This is intended for this function to display formatted output to the user on the console'
+        Justification = 'Function is interactive and provides real-time feedback during PR generation'
     )]
     param (
         [Parameter()]
@@ -94,6 +94,11 @@ function New-PSUAiPoweredPullRequest {
 
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Not in a git repository. Please run this command from within a git repository." -ForegroundColor Red
+        return
+    }
+
+    # ShouldProcess check
+    if (-not $PSCmdlet.ShouldProcess("Pull Request from $FeatureBranch to $BaseBranch", "Create AI-powered pull request")) {
         return
     }
 
