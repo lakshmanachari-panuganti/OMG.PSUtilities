@@ -1,3 +1,29 @@
+## [1.0.42] - 1st January 2026
+### Added
+- `Get-OptimalMaxToken` (Private): Calculates optimal MaxTokens based on prompt size, response size presets, and model context window.
+
+### Changed
+- `Convert-PSUPullRequestSummaryToHtml.ps1`: Added `[OutputType([string])]`.
+- `Get-ValidJson.ps1`: Improved verbose logging for JSON parsing, cleanup, and extraction steps.
+- `Invoke-GeminiAIApi.ps1`: Added `PSAvoidUsingWriteHost` suppression; updated API key caching to `$script:PSU_API_KEY`.
+- `Invoke-PerplexityApiCall.ps1`: Added `PSAvoidUsingWriteHost` suppression and BOM.
+- `New-PSUApiKey.ps1`: Added `SupportsShouldProcess`, multiple suppression attributes, and ShouldProcess check.
+- `Popup-SensitiveContent.ps1`: Added `PSUseApprovedVerbs` suppression and BOM.
+- `Convert-PSUContext.ps1`: Added BOM.
+- `Get-PSUAiPoweredGitChangeSummary.ps1`: Added `[OutputType([object[]])]`.
+- `Invoke-PSUGitCommit.ps1`: Renamed `Should-SkipFile` to `Test-SkipFile`; added BOM.
+- `Invoke-PSUPromptOnAzureOpenAi.ps1`: Fixed `Get-OptimalMaxTokens` to `Get-OptimalMaxToken`; added BOM.
+- `Invoke-PSUPromptOnGeminiAi.ps1`: Added BOM.
+- `Invoke-PSUPromptOnPerplexityAi.ps1`: Added BOM and newline.
+- `New-PSUAiPoweredPullRequest.ps1`: Added `SupportsShouldProcess` and ShouldProcess check; updated suppression justification.
+- `Set-PSUAzureOpenAIEnvironment.ps1`: Added `SupportsShouldProcess` and ShouldProcess check; updated suppression justification.
+- `Set-PSUDefaultAiEngine.ps1`: Added `SupportsShouldProcess` and ShouldProcess check with suppression.
+- `Start-PSUGeminiChat.ps1`: Added `SupportsShouldProcess` and ShouldProcess check; updated suppression justifications.
+- `Update-PSUChangeLog.ps1`: Added `PSAvoidUsingWriteHost` suppression and BOM.
+- `Update-PSUReadMe--wip.ps1`: Removed WIP file.
+
+### Removed
+- `Update-PSUReadMe--wip.ps1` (Public): Deleted work-in-progress file.
 ## [1.0.41] - 30th December 2025
 ### Added
 - `Convert-PSUContext` (Public): Rephrases text into specified length and tone using AI API, with aliases `rephrase`.
