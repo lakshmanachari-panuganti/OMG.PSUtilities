@@ -1,41 +1,71 @@
-function Get-PSUk8sPodLabel{
-    <#
-    .SYNOPSIS
+<#
+.SYNOPSIS
     Gets pod labels from AKS clusters in parallel with minimal kubectl overhead.
 
-    .DESCRIPTION
-    Retrieves pod labels from all namespaces in AKS clusters using a single optimized kubectl call per cluster.
-    Shows live job progress and lists failed clusters for easy retry.
-    Clusters are retrieved from the local kubeconfig file (~/.kube/config).
+.DESCRIPTION
+    Retrieves pod labels from all namespaces in AKS clusters using a single optimized
+    kubectl call per cluster. Shows live job progress and lists failed clusters for
+    easy retry. Clusters are retrieved from the local kubeconfig file (~/.kube/config).
     Ensure all required cluster credentials are updated in the kubeconfig file before running.
 
-    .PARAMETER ClusterFilter
-    Optional. Only process clusters whose names match this filter (wildcards supported).
+.PARAMETER ClusterFilter
+    (Optional) Filter clusters by name pattern using wildcards.
+    Default: "*" (all clusters).
+    Example: "*prod*" matches all production clusters.
 
-    .PARAMETER ThrottleLimit
-    Maximum number of jobs to run in parallel.
+.PARAMETER ThrottleLimit
+    (Optional) Maximum number of parallel jobs to run simultaneously.
+    Default: 8.
 
-    .EXAMPLE
+.EXAMPLE
+    Get-PSUk8sPodLabel
+
+    Retrieves pod labels from all clusters in the local kubeconfig.
+
+.EXAMPLE
     Get-PSUk8sPodLabel -ClusterFilter "*prod*" -ThrottleLimit 15
-    #>
 
+    Retrieves pod labels from all production clusters with up to 15 parallel jobs.
+
+.OUTPUTS
+    [System.Object[]]
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    Created: 19th August 2025
+    Last Modified: 7th March 2026
+    Version: 1.1
+    Requires: kubectl, ThreadJob module
+
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureCore
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureCore
+#>
+function Get-PSUk8sPodLabel {
     [CmdletBinding()]
     param(
         [string]$ClusterFilter = "*",
         [int]$ThrottleLimit = 8
     )
 
-    try {
+    begin {
+        Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
+        Write-Verbose "  ClusterFilter = $ClusterFilter"
+        Write-Verbose "  ThrottleLimit = $ThrottleLimit"
+
         $kubeConfigPath = Join-Path $env:USERPROFILE ".kube\config"
+
+        if (-not (Test-Path $kubeConfigPath)) {
+            throw "Kubeconfig file not found at $kubeConfigPath."
+        }
 
         Write-Host "Note: Retrieving clusters from kubeconfig: $kubeConfigPath" -ForegroundColor Cyan
         Write-Host "   Ensure all required cluster credentials are updated in the kubeconfig file before running." -ForegroundColor Yellow
+    }
 
-        if (-not (Test-Path $kubeConfigPath)) {
-            Write-Error "Kubeconfig file not found at $kubeConfigPath."
-            return
-        }
-
+    process {
+        try {
         Write-Verbose "Getting all available clusters..."
         $clusters = kubectl config get-contexts -o name | Where-Object { $_ -like '*-admin' }
         if ($ClusterFilter -and $ClusterFilter -ne "*") {
@@ -111,8 +141,7 @@ function Get-PSUk8sPodLabel{
             if ($job.State -eq 'Completed') {
                 $result = Receive-Job -Job $job
                 if ($result) { $allResults += $result }
-            }
-            elseif ($job.State -eq 'Failed') {
+            } elseif ($job.State -eq 'Failed') {
                 $failedClusters += $job.Name
             }
             Remove-Job -Job $job
@@ -121,8 +150,7 @@ function Get-PSUk8sPodLabel{
         # Summary
         if ($failedClusters.Count -gt 0) {
             Write-Host "Failed clusters: $($failedClusters -join ', ')" -ForegroundColor Red
-        }
-        else {
+        } else {
             Write-Host "All clusters processed successfully." -ForegroundColor Green
         }
 
@@ -134,8 +162,8 @@ function Get-PSUk8sPodLabel{
         Write-Host "Found $($allResults.Count) pods across $($clusters.Count) clusters" -ForegroundColor Green
         return $allResults
 
-    }
-    catch {
-        $PSCmdlet.ThrowTerminatingError($_)
+        } catch {
+            $PSCmdlet.ThrowTerminatingError($_)
+        }
     }
 }
