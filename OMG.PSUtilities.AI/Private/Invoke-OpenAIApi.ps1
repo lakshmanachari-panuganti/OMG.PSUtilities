@@ -23,12 +23,12 @@ function Invoke-OpenAIApi {
     for ($i = 1; $i -le $RetryCount; $i++) {
         try {
             $invokeParams = @{
-                Method       = 'Post'
-                Uri          = $ApiUrl
-                Body         = $body
-                Headers      = $headers
-                ContentType  = 'application/json'
-                TimeoutSec   = $TimeoutSeconds
+                Method      = 'Post'
+                Uri         = $ApiUrl
+                Body        = $body
+                Headers     = $headers
+                ContentType = 'application/json'
+                TimeoutSec  = $TimeoutSeconds
             }
             $response = Invoke-RestMethod @invokeParams
 
@@ -39,15 +39,13 @@ function Invoke-OpenAIApi {
                 return
             }
             return $response.response
-        }
-        catch {
+        } catch {
             $errMsg = $_.Exception.Message
             Write-Warning "Attempt $i failed: $errMsg"
 
             if ($i -lt $RetryCount) {
                 Start-Sleep -Seconds $RetryDelaySeconds
-            }
-            else {
+            } else {
                 throw "All retry attempts failed: $errMsg"
             }
         }

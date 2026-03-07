@@ -158,8 +158,8 @@
 
         # Determine which API to use based on credential availability
         $UseDirectApi = (-not [string]::IsNullOrWhiteSpace($ApiKey)) -and
-                        (-not [string]::IsNullOrWhiteSpace($Endpoint)) -and
-                        (-not [string]::IsNullOrWhiteSpace($Deployment))
+        (-not [string]::IsNullOrWhiteSpace($Endpoint)) -and
+        (-not [string]::IsNullOrWhiteSpace($Deployment))
     }
 
     process {
@@ -212,8 +212,12 @@
             @"
 $Prompt
 
-CRITICAL: Respond with ONLY valid JSON. No markdown, no code blocks, no explanations.
-Just pure JSON that starts with { or [
+CRITICAL REQUIREMENTS:
+1. Respond with ONLY valid JSON
+2. No markdown code blocks (no ```)
+3. No explanations before or after
+4. Must start with { or [
+5. Must be parseable by ConvertFrom-Json
 "@
         } else {
             $Prompt
