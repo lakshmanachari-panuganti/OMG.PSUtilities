@@ -1,6 +1,7 @@
-# Prompt: Azure App Registration Cleanup & Governance System (v4)
+# Prompt: Azure App Registration Cleanup & Governance System (v5)
 # PRIMARY GOAL: Safe, evidence-based cleanup of unused App Registrations at scale (9,000+ apps)
 # Architecture: Collect → Score → Bucket → Output → Act
+# Updated: 7th March 2026 — fixes from expert Azure review (19 issues resolved)
 
 ---
 
@@ -44,6 +45,7 @@ Do **NOT** use:
 ### Module Declarations
 
 ```powershell
+#Requires -Version 7.2
 #Requires -Modules @{ ModuleName='Microsoft.Graph.Authentication';               ModuleVersion='2.0.0' }
 #Requires -Modules @{ ModuleName='Microsoft.Graph.Applications';                ModuleVersion='2.0.0' }
 #Requires -Modules @{ ModuleName='Microsoft.Graph.Reports';                     ModuleVersion='2.0.0' }
@@ -51,6 +53,10 @@ Do **NOT** use:
 #Requires -Modules @{ ModuleName='Microsoft.Graph.Identity.DirectoryManagement';ModuleVersion='2.0.0' }
 #Requires -Modules @{ ModuleName='Az.Resources';                                ModuleVersion='6.0.0' }
 ```
+
+> **Why PowerShell 7.2+?** This script uses the `??` null-coalescing operator,
+> ternary expressions, and `[System.Collections.Generic.*]` types extensively.
+> These features do NOT exist in Windows PowerShell 5.1.
 
 ---
 
@@ -63,11 +69,15 @@ param(
     [string]$OutputDirectory   = $PSScriptRoot,
     [string]$LogDirectory      = $PSScriptRoot,
     [switch]$SkipAzureRBAC,               # Skip Az.Resources if module unavailable
-    [switch]$SkipSignInLogs,              # Skip sign-in log queries (faster, less signal)
-    [int]$ThrottleDelayMs      = 200,     # Base delay between Graph calls (ms)
+    [switch]$SkipSignInLogs,              # Skip per-app sign-in log queries (faster, less signal)
+    [int]$ThrottleDelayMs      = 200,     # Base delay between per-app Graph calls (ms)
+    [int]$DryRunLimit          = 0,       # If > 0, process only this many apps (test mode)
     [switch]$VerboseMode
 )
 ```
+
+> **`-DryRunLimit 50`** processes only the first 50 apps and generates sample output files.
+> Use this to validate the script works before committing to a full 3-4 hour run.
 
 ---
 
@@ -80,7 +90,8 @@ Connect-MgGraph -Scopes @(
     "Application.Read.All",
     "Directory.Read.All",
     "AuditLog.Read.All",
-    "AppRoleAssignment.Read.All"
+    "AppRoleAssignment.Read.All",
+    "Policy.Read.All"               # Required for Conditional Access policy read in Bulk Load 8
 ) -NoWelcome
 
 Connect-AzAccount -TenantId $TenantId   # Required for RBAC unless -SkipAzureRBAC
@@ -91,7 +102,8 @@ Connect-AzAccount -TenantId $TenantId   # Required for RBAC unless -SkipAzureRBA
 Execute in this exact order before any data collection:
 
 1. `Get-MgContext` → if `$null` → abort: `"ERROR: No Graph context. Run Connect-MgGraph."`
-2. Validate all 4 scopes present in `(Get-MgContext).Scopes` → list missing scopes by name → abort
+2. Validate all 5 scopes present in `(Get-MgContext).Scopes` → list missing scopes by name → abort
+   - `Application.Read.All`, `Directory.Read.All`, `AuditLog.Read.All`, `AppRoleAssignment.Read.All`, `Policy.Read.All`
 3. If `-SkipAzureRBAC` is NOT set: `Get-AzContext` → if `$null` → abort: `"ERROR: No Azure context. Run Connect-AzAccount."`
 4. Resolve and store `$TenantId` from `(Get-MgContext).TenantId` if not supplied as parameter
 5. Cache all Azure subscriptions: `$script:AzSubscriptions = Get-AzSubscription -TenantId $TenantId`
@@ -107,42 +119,78 @@ Execute in this exact order before any data collection:
 > The following data MUST be bulk-loaded ONCE into memory before the per-app loop begins.
 > NEVER call these inside the per-app loop.
 
-### Bulk Load 1 — All App Registrations
+### Bulk Load 1 — All App Registrations (with Owners + Federated Creds)
 
 ```powershell
-$AllApps = Get-MgApplication -All -Property @(
-    "id", "appId", "displayName", "createdDateTime",
-    "signInAudience", "publisherDomain", "tags",
-    "passwordCredentials", "keyCredentials", "requiredResourceAccess",
-    "web", "spa", "publicClient",
-    "api",                          # ← API exposure: oauth2PermissionScopes + appRoles
-    "info", "notes"
-)
+# ✅ PERFORMANCE FIX: Use $expand to include owners and federated identity credentials
+#    in the same bulk call. This eliminates 18,000 per-app Graph calls (Signal C + Signal D).
+#    If $expand causes timeouts on very large tenants, fall back to per-app calls.
+$AllApps = Get-MgApplication -All `
+    -ExpandProperty "owners,federatedIdentityCredentials" `
+    -Property @(
+        "id", "appId", "displayName", "createdDateTime",
+        "signInAudience", "publisherDomain", "tags",
+        "passwordCredentials", "keyCredentials", "requiredResourceAccess",
+        "web", "spa", "publicClient",
+        "api",                          # API exposure: oauth2PermissionScopes + appRoles
+        "info", "notes",
+        "verifiedPublisher"             # Verified publisher info (Salesforce, ServiceNow, etc.)
+    )
+
+# Validate bulk load returned data
+if ($null -eq $AllApps -or $AllApps.Count -eq 0) {
+    Write-Log "ERROR" "Bulk" "ZERO App Registrations returned. Check Application.Read.All scope."
+    throw "Bulk load returned no applications. Verify permissions and try again."
+}
+
 # Store as hashtable keyed by appId for O(1) lookups
 $AppCache = @{}
 foreach ($app in $AllApps) { $AppCache[$app.AppId] = $app }
-Write-Log "INFO" "Bulk" "Loaded $($AllApps.Count) App Registrations"
+Write-Log "INFO" "Bulk" "Loaded $($AllApps.Count) App Registrations (with owners + federated creds)"
 ```
 
-### Bulk Load 2 — All Service Principals
+### Bulk Load 2 — All Service Principals (with Sign-in Activity)
 
 ```powershell
+# ✅ PERFORMANCE FIX: Include signInActivity to get ALL-TIME last sign-in dates.
+#    This is far more reliable than per-app audit log queries (30-day/7-day retention).
+#    signInActivity provides: LastSignInDateTime + LastNonInteractiveSignInDateTime
+#    across the entire lifetime of the SP — not limited by log retention.
+# ✅ FIX: Include alternativeNames for reliable MI type detection (system vs user-assigned).
 $AllSPs = Get-MgServicePrincipal -All -Property @(
     "id", "appId", "displayName", "accountEnabled",
     "appOwnerOrganizationId", "servicePrincipalType", "createdDateTime",
-    "tags", "homepage", "replyUrls"
+    "signInActivity",               # ALL-TIME sign-in dates (not limited by log retention)
+    "tags", "homepage", "replyUrls",
+    "alternativeNames"              # Contains ARM resource ID for Managed Identities
 )
-# TWO separate caches — apps and managed identities both live here
+
+# Validate bulk load returned data
+if ($null -eq $AllSPs -or $AllSPs.Count -eq 0) {
+    Write-Log "ERROR" "Bulk" "ZERO Service Principals returned. Check Directory.Read.All scope."
+    throw "Bulk load returned no service principals. Verify permissions and try again."
+}
+
+# Microsoft 1st-party tenant ID — apps owned by this org are Microsoft's own apps
+$MicrosoftTenantId = "f8cdef31-a31e-4b4a-93e4-5f571e91255a"
+
+# THREE separate caches — apps, managed identities, and Microsoft apps
 $SpCache = @{}           # keyed by AppId → SP object
 $MiCache = @{}           # keyed by SP ObjectId → MI SP object
+$MicrosoftAppIds = [System.Collections.Generic.HashSet[string]]::new()  # Microsoft 1st-party apps
 
 foreach ($sp in $AllSPs) {
     $SpCache[$sp.AppId] = $sp
     if ($sp.ServicePrincipalType -eq "ManagedIdentity") {
         $MiCache[$sp.Id] = $sp
     }
+    # Detect Microsoft 1st-party apps (Office 365, Teams, Azure Portal, etc.)
+    # These should NEVER appear in cleanup buckets — they are auto-classified as Bucket 4
+    if ($sp.AppOwnerOrganizationId -eq $MicrosoftTenantId) {
+        [void]$MicrosoftAppIds.Add($sp.AppId)
+    }
 }
-Write-Log "INFO" "Bulk" "Loaded $($AllSPs.Count) Service Principals ($($MiCache.Count) Managed Identities)"
+Write-Log "INFO" "Bulk" "Loaded $($AllSPs.Count) Service Principals ($($MiCache.Count) Managed Identities, $($MicrosoftAppIds.Count) Microsoft 1st-party)"
 ```
 
 ### Bulk Load 3 — All OAuth2 Permission Grants
@@ -160,58 +208,100 @@ foreach ($grant in $AllOAuthGrants) {
     }
     $OAuthGrantCache[$grant.ClientId].Add($grant)
 }
-Write-Log "INFO" "Bulk" "Loaded $($AllOAuthGrants.Count) OAuth2 Permission Grants"
+Write-Log "INFO" "Bulk" "Loaded $(if ($AllOAuthGrants) { $AllOAuthGrants.Count } else { 0 }) OAuth2 Permission Grants"
 ```
 
 ### Bulk Load 4 — All App Role Assignments (Outbound)
 
 ```powershell
-# Load ALL outbound role assignments once — group by principalId (SP ObjectId)
-# DO NOT call Get-MgServicePrincipalAppRoleAssignment per app
-$AllAppRoleAssignments = Get-MgServicePrincipalAppRoleAssignment -All -Property @(
-    "id", "principalId", "resourceDisplayName", "resourceId", "appRoleId", "createdDateTime"
-)
-# ⚠️ NOTE: Get-MgServicePrincipalAppRoleAssignment without -ServicePrincipalId returns ALL assignments
-# This is the correct bulk-load pattern. Verify this cmdlet supports -All without -ServicePrincipalId
-# in SDK v2. If not supported, use: Invoke-MgGraphRequest GET /servicePrincipals/{id}/appRoleAssignments
-# as a documented fallback.
+# ✅ CRITICAL FIX: Get-MgServicePrincipalAppRoleAssignment REQUIRES -ServicePrincipalId.
+#    It CANNOT be called with just -All. The v4 prompt was incorrect about this.
+#    We must iterate through each SP and collect assignments.
+#    For 9,000 SPs this is 9,000 calls — but each call is fast (small payload).
+#    Use Invoke-GraphWithRetry for throttle protection.
 
-$OutboundRoleCache = @{}   # keyed by principalId
-foreach ($assignment in $AllAppRoleAssignments) {
-    if (-not $OutboundRoleCache.ContainsKey($assignment.PrincipalId)) {
-        $OutboundRoleCache[$assignment.PrincipalId] = [System.Collections.Generic.List[object]]::new()
+$OutboundRoleCache = @{}   # keyed by principalId (SP ObjectId)
+$outboundTotal = 0
+
+foreach ($sp in $AllSPs) {
+    # Skip Managed Identities and Microsoft 1st-party apps here for speed
+    if ($sp.ServicePrincipalType -eq "ManagedIdentity") { continue }
+    if ($MicrosoftAppIds.Contains($sp.AppId)) { continue }
+
+    $assignments = Invoke-GraphWithRetry -OperationName "OutboundRoles-$($sp.Id)" -ScriptBlock {
+        Get-MgServicePrincipalAppRoleAssignment -ServicePrincipalId $sp.Id -All
     }
-    $OutboundRoleCache[$assignment.PrincipalId].Add($assignment)
+    if ($null -ne $assignments -and $assignments.Count -gt 0) {
+        $OutboundRoleCache[$sp.Id] = [System.Collections.Generic.List[object]]::new()
+        foreach ($assignment in $assignments) {
+            $OutboundRoleCache[$sp.Id].Add($assignment)
+        }
+        $outboundTotal += $assignments.Count
+    }
+
+    # Throttle delay to avoid HTTP 429
+    if ($ThrottleDelayMs -gt 0) { Start-Sleep -Milliseconds $ThrottleDelayMs }
 }
-Write-Log "INFO" "Bulk" "Loaded $($AllAppRoleAssignments.Count) outbound App Role Assignments"
+Write-Log "INFO" "Bulk" "Loaded $outboundTotal outbound App Role Assignments across $($OutboundRoleCache.Count) SPs"
 ```
 
 ### Bulk Load 5 — All Inbound App Role Assignments (Consumers)
 
 ```powershell
-# Inbound: who is assigned TO each app (users, groups, other SPs consuming this app)
-$AllInboundAssignments = Get-MgServicePrincipalAppRoleAssignedTo -All -Property @(
-    "id", "principalId", "principalType", "principalDisplayName",
-    "resourceId", "appRoleId", "createdDateTime"
-)
+# ✅ CRITICAL FIX: Get-MgServicePrincipalAppRoleAssignedTo also REQUIRES -ServicePrincipalId.
+#    Same fix as Bulk Load 4 — iterate SPs.
+#    Inbound = who is assigned TO each app (users, groups, other SPs consuming this app)
+
 $InboundRoleCache = @{}   # keyed by resourceId (the SP being consumed)
-foreach ($assignment in $AllInboundAssignments) {
-    if (-not $InboundRoleCache.ContainsKey($assignment.ResourceId)) {
-        $InboundRoleCache[$assignment.ResourceId] = [System.Collections.Generic.List[object]]::new()
+$inboundTotal = 0
+
+foreach ($sp in $AllSPs) {
+    # Skip Managed Identities and Microsoft 1st-party apps here for speed
+    if ($sp.ServicePrincipalType -eq "ManagedIdentity") { continue }
+    if ($MicrosoftAppIds.Contains($sp.AppId)) { continue }
+
+    $assignments = Invoke-GraphWithRetry -OperationName "InboundRoles-$($sp.Id)" -ScriptBlock {
+        Get-MgServicePrincipalAppRoleAssignedTo -ServicePrincipalId $sp.Id -All
     }
-    $InboundRoleCache[$assignment.ResourceId].Add($assignment)
+    if ($null -ne $assignments -and $assignments.Count -gt 0) {
+        $InboundRoleCache[$sp.Id] = [System.Collections.Generic.List[object]]::new()
+        foreach ($assignment in $assignments) {
+            $InboundRoleCache[$sp.Id].Add($assignment)
+        }
+        $inboundTotal += $assignments.Count
+    }
+
+    # Throttle delay to avoid HTTP 429
+    if ($ThrottleDelayMs -gt 0) { Start-Sleep -Milliseconds $ThrottleDelayMs }
 }
-Write-Log "INFO" "Bulk" "Loaded $($AllInboundAssignments.Count) inbound App Role Assignments"
+Write-Log "INFO" "Bulk" "Loaded $inboundTotal inbound App Role Assignments across $($InboundRoleCache.Count) SPs"
 ```
 
 ### Bulk Load 6 — All Directory Role Assignments
 
 ```powershell
+# ✅ PERFORMANCE FIX: Load role definitions separately (small, static dataset ~80 roles)
+#    instead of using -ExpandProperty "roleDefinition" on every assignment.
+#    This avoids throttling on large tenants with thousands of role assignments.
+
+# Step 1: Load all role definitions (small call, ~80 built-in roles)
+$AllRoleDefinitions = Get-MgRoleManagementDirectoryRoleDefinition -All -Property @(
+    "id", "displayName", "isBuiltIn"
+)
+$RoleDefCache = @{}   # keyed by roleDefinitionId → role definition object
+foreach ($rd in $AllRoleDefinitions) { $RoleDefCache[$rd.Id] = $rd }
+Write-Log "INFO" "Bulk" "Loaded $($AllRoleDefinitions.Count) Directory Role Definitions"
+
+# Step 2: Load all role assignments WITHOUT -ExpandProperty
 $AllDirRoleAssignments = Get-MgRoleManagementDirectoryRoleAssignment -All `
-    -ExpandProperty "roleDefinition" `
     -Property "id,principalId,roleDefinitionId,directoryScopeId"
+
+# Step 3: Join in memory using the RoleDefCache (O(1) lookups)
 $DirRoleCache = @{}   # keyed by principalId
 foreach ($ra in $AllDirRoleAssignments) {
+    # Attach role definition from cache
+    $ra | Add-Member -NotePropertyName "RoleDefinition" -NotePropertyValue $RoleDefCache[$ra.RoleDefinitionId] -Force
+
     if (-not $DirRoleCache.ContainsKey($ra.PrincipalId)) {
         $DirRoleCache[$ra.PrincipalId] = [System.Collections.Generic.List[object]]::new()
     }
@@ -254,7 +344,9 @@ $AllCAPolicies = Get-MgIdentityConditionalAccessPolicy -All -Property @(
 )
 $CaProtectedAppIds = [System.Collections.Generic.HashSet[string]]::new()
 foreach ($policy in $AllCAPolicies) {
-    if ($policy.State -eq "enabled") {
+    # ✅ FIX: Graph SDK returns State as "Enabled" (PascalCase), not "enabled" (lowercase).
+    #    Also include "enabledForReportingButNotEnforced" — these policies are active in reporting mode.
+    if ($policy.State -in @("enabled", "Enabled", "enabledForReportingButNotEnforced")) {
         foreach ($appId in $policy.Conditions.Applications.IncludeApplications) {
             [void]$CaProtectedAppIds.Add($appId)
         }
@@ -264,8 +356,10 @@ Write-Log "INFO" "Bulk" "Loaded $($AllCAPolicies.Count) CA policies. Protected a
 ```
 
 > **Sign-in Logs are NOT bulk-loadable** — they must be queried per app.
-> To manage performance at 9,000 apps scale, sign-in log queries are only executed
-> when `-SkipSignInLogs` is NOT set. Warn the operator that 9,000 sign-in log queries
+> However, the `signInActivity` property on Service Principals (Bulk Load 2) provides
+> ALL-TIME last sign-in dates without per-app queries. Use sign-in log queries only
+> when you need additional detail (IP address, location, client app used).
+> When `-SkipSignInLogs` is NOT set, warn the operator that 9,000 sign-in log queries
 > will take approximately 2–4 hours depending on throttling.
 
 ---
@@ -289,7 +383,20 @@ $SignInAudience    = $app.SignInAudience
 $PublisherDomain   = $app.PublisherDomain
 $Tags              = ($app.Tags -join ";")
 
-# Redirect URIs (GAP: new signal — zero extra Graph calls)
+# ✅ NEW: Verified Publisher detection (Salesforce, ServiceNow, etc.)
+# Apps from verified publishers are legitimate SaaS apps — less likely to be abandoned
+$VerifiedPublisher = $app.VerifiedPublisher.DisplayName ?? "NotVerified"
+$IsVerifiedPublisher = ($null -ne $app.VerifiedPublisher -and
+                       -not [string]::IsNullOrWhiteSpace($app.VerifiedPublisher.DisplayName))
+
+# ✅ NEW: Microsoft 1st-party app detection (from Bulk Load 2 cache)
+# Microsoft-owned apps (Office 365, Teams, Azure Portal, etc.) should NEVER be in cleanup buckets
+$IsMicrosoftApp = $MicrosoftAppIds.Contains($AppId)
+
+# App age (used in scoring — older unused apps are safer to clean up)
+$AppAgeDays = [int]((Get-Date) - $CreatedDateTime).TotalDays
+
+# Redirect URIs (zero extra Graph calls)
 $WebRedirectUris       = ($app.Web.RedirectUris -join ";")
 $SpaRedirectUris       = ($app.Spa.RedirectUris -join ";")
 $PublicClientUris      = ($app.PublicClient.RedirectUris -join ";")
@@ -317,7 +424,7 @@ $DeclaredPermissionCount = ($app.RequiredResourceAccess | ForEach-Object { $_.Re
 
 ---
 
-### Signal B — Service Principal (Cache Lookup — Free)
+### Signal B — Service Principal + ALL-TIME Sign-in Activity (Cache Lookup — Free)
 
 ```powershell
 $sp = $SpCache[$AppId]
@@ -327,46 +434,51 @@ if ($null -eq $sp) {
     $IsEnabled             = "N/A"
     $NoServicePrincipal    = $true
     $ServicePrincipalType  = "N/A"
+    $SPLastSignInDate      = $null
+    $SPLastDaemonSignInDate = $null
 } else {
     $ServicePrincipalId    = $sp.Id
     $IsEnabled             = $sp.AccountEnabled
     $NoServicePrincipal    = $false
     $ServicePrincipalType  = $sp.ServicePrincipalType
+
+    # ✅ NEW: ALL-TIME sign-in dates from signInActivity (loaded in Bulk Load 2)
+    #    These are NOT limited by log retention (30d/7d).
+    #    They tell you the LAST TIME this SP was used — ever.
+    $SPLastSignInDate       = $sp.SignInActivity.LastSignInDateTime
+    $SPLastDaemonSignInDate = $sp.SignInActivity.LastNonInteractiveSignInDateTime
 }
 ```
 
 ---
 
-### Signal C — Owners (Per-App Graph Call — Required)
+### Signal C — Owners (Cache Lookup — Free, via $expand)
 
 ```powershell
-# Cannot be bulk-loaded — must be called per app
-# Cost: 1 Graph call per app = 9,000 calls total
-$owners = Invoke-GraphWithRetry -OperationName "Owners-$AppId" -ScriptBlock {
-    Get-MgApplicationOwner -ApplicationId $ObjectId -All
-}
-$OwnerUPNs    = if ($owners.Count -gt 0) { ($owners | ForEach-Object { $_.AdditionalProperties.userPrincipalName ?? $_.DisplayName }) -join ";" } else { "NoOwner" }
+# ✅ PERFORMANCE FIX: Owners were bulk-loaded via $expand in Bulk Load 1.
+#    No per-app Graph call needed. This saves 9,000 API calls.
+$owners = $app.Owners
+$OwnerUPNs    = if ($owners.Count -gt 0) {
+    ($owners | ForEach-Object { $_.AdditionalProperties.userPrincipalName ?? $_.AdditionalProperties.displayName ?? $_.Id }) -join ";"
+} else { "NoOwner" }
 $OwnerCount   = $owners.Count
 $HasOwner     = $owners.Count -gt 0
 ```
 
 ---
 
-### Signal D — Federated Identity Credentials (Per-App Graph Call — Required)
+### Signal D — Federated Identity Credentials (Cache Lookup — Free, via $expand)
 
 ```powershell
-# Cost: 1 Graph call per app = 9,000 calls total
-$fedCreds = Invoke-GraphWithRetry -OperationName "FedCreds-$AppId" -ScriptBlock {
-    Get-MgApplicationFederatedIdentityCredential -ApplicationId $ObjectId -All -Property @(
-        "id","name","issuer","subject","audiences","description"
-    )
-}
+# ✅ PERFORMANCE FIX: Federated creds were bulk-loaded via $expand in Bulk Load 1.
+#    No per-app Graph call needed. This saves 9,000 API calls.
+$fedCreds = $app.FederatedIdentityCredentials
 
-$FederatedCredentialCount = $fedCreds.Count
-$FederatedCredentials     = ($fedCreds | ForEach-Object { $_.Name }) -join ";"
-$FederatedIssuers         = ($fedCreds | ForEach-Object { $_.Issuer }) -join ";"
-$FederatedSubjects        = ($fedCreds | ForEach-Object { $_.Subject }) -join ";"
-$UsedByExternalSystem     = $fedCreds.Count -gt 0
+$FederatedCredentialCount = if ($null -ne $fedCreds) { $fedCreds.Count } else { 0 }
+$FederatedCredentials     = if ($FederatedCredentialCount -gt 0) { ($fedCreds | ForEach-Object { $_.Name }) -join ";" } else { "None" }
+$FederatedIssuers         = if ($FederatedCredentialCount -gt 0) { ($fedCreds | ForEach-Object { $_.Issuer }) -join ";" } else { "None" }
+$FederatedSubjects        = if ($FederatedCredentialCount -gt 0) { ($fedCreds | ForEach-Object { $_.Subject }) -join ";" } else { "None" }
+$UsedByExternalSystem     = $FederatedCredentialCount -gt 0
 $ExternalSystemType       = Get-ExternalSystemType -Issuers $fedCreds.Issuer
 # RULE: If UsedByExternalSystem = $true → IsUnused MUST = $false regardless of sign-in logs
 ```
@@ -376,8 +488,13 @@ $ExternalSystemType       = Get-ExternalSystemType -Issuers $fedCreds.Issuer
 ### Signal E — Interactive Sign-in Logs (Per-App Graph Call — Optional, -SkipSignInLogs)
 
 ```powershell
-# ⚠️ RETENTION: 30 days max without Log Analytics workspace
+# ⚠️ RETENTION: 30 days max for interactive sign-in logs (all license tiers).
+#    For longer retention, the tenant must stream logs to a Log Analytics workspace.
 # ⚠️ PERFORMANCE: 9,000 calls. Warn operator before running.
+# ✅ NOTE: The signInActivity property on the SP (Signal B) already provides ALL-TIME
+#    last sign-in dates. These per-app audit log queries add DETAIL (IP, location, client app)
+#    but are NOT required for basic usage classification. Consider skipping with -SkipSignInLogs
+#    unless you need the detailed sign-in context.
 
 $LastInteractiveSignInDate    = $null
 $LastSignInResourceName       = "NoData"
@@ -418,7 +535,12 @@ if (-not $SkipSignInLogs -and -not $NoServicePrincipal) {
 ### Signal F — SP/Daemon Sign-in Logs (Per-App Graph Call — Optional, -SkipSignInLogs)
 
 ```powershell
-# ⚠️ RETENTION: 7 days max without Log Analytics workspace
+# ⚠️ RETENTION: 7–30 days depending on license tier.
+#    - Entra ID Free: 7 days
+#    - Entra ID P1/P2: 30 days
+#    For longer retention, stream logs to a Log Analytics workspace.
+# ✅ NOTE: The signInActivity.LastNonInteractiveSignInDateTime on the SP (Signal B)
+#    already provides ALL-TIME daemon sign-in dates. These per-app queries add detail only.
 # Machine-to-machine (client credentials flow) — separate from interactive logs
 
 $LastSPSignInDate         = $null
@@ -531,11 +653,19 @@ $OldestSecretAgeDays  = if ($SecretCount -gt 0) {
     if ($null -ne $oldest) { [int]($now - $oldest).TotalDays } else { -1 }
 } else { -1 }
 
+# ✅ FIX: AllSecretsExpired = ALL secrets are expired (not just "at least one is expired")
+#    HasExpiredSecret only means ONE or more secrets are expired.
+#    An app with 3 secrets (2 expired, 1 still valid) should NOT get the "all expired" bonus.
+$AllSecretsExpired = ($SecretCount -gt 0 -and
+    ($secrets | Where-Object { $_.EndDateTime -ge $now }).Count -eq 0)
+
 # Certificates
 $certs                = $app.KeyCredentials
 $CertCount            = $certs.Count
 $HasExpiredCert       = ($certs | Where-Object { $_.EndDateTime -lt $now }).Count -gt 0
 $NearestCertExpiry    = if ($CertCount -gt 0) { ($certs | Sort-Object EndDateTime | Select-Object -First 1).EndDateTime } else { "NoCert" }
+$AllCertsExpired      = ($CertCount -gt 0 -and
+    ($certs | Where-Object { $_.EndDateTime -ge $now }).Count -eq 0)
 
 # Secretless authentication detection
 $UsesPasswordlessAuth = ($FederatedCredentialCount -gt 0 -or $CertCount -gt 0 -or
@@ -552,8 +682,12 @@ $AuthMethod = if ($ServicePrincipalType -eq "ManagedIdentity") { "ManagedIdentit
 ### Signal M — Broad Permission Detection (Zero Extra Calls)
 
 ```powershell
-# Lookup hashtable — DO NOT resolve GUIDs via Graph at runtime
+# Lookup hashtable — DO NOT resolve GUIDs via Graph at runtime.
+# ✅ EXPANDED: Added Application.ReadWrite.All, GroupMember.ReadWrite.All,
+#    Sites.ReadWrite.All, MailboxSettings.ReadWrite, Calendars.ReadWrite
+#    which are high-impact permissions commonly over-provisioned.
 $BroadPermissions = @{
+    # Application permissions (Role)
     "df021288-bdef-4463-88db-98f22de89214" = "User.ReadWrite.All"
     "62a82d76-70ea-41e2-9197-370581804d09" = "Group.ReadWrite.All"
     "19dbc75e-c2e2-444c-a770-ec69d8559fc7" = "Directory.ReadWrite.All"
@@ -561,6 +695,12 @@ $BroadPermissions = @{
     "e2a3a72e-5f79-4c64-b1b1-878b674786c9" = "Mail.ReadWrite"
     "75359482-378d-4052-8f01-80520e7db3cd" = "Files.ReadWrite.All"
     "dc50a0fb-09a3-484d-be87-e023b12c6440" = "SecurityEvents.ReadWrite.All"
+    "1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9" = "Application.ReadWrite.All"
+    "dbaae8cf-10b5-4b86-a4a1-f871c94c6571" = "GroupMember.ReadWrite.All"
+    "9492366f-7969-46a4-8d15-ed1a20078fff" = "Sites.ReadWrite.All"
+    "6931bccd-447a-43d1-b442-00a195474b6c" = "MailboxSettings.ReadWrite"
+    "ef54d2bf-783f-4e0f-bca1-3210c0444d99" = "Calendars.ReadWrite"
+    # Delegated permissions (Scope)
     "741f803b-c850-494e-b5df-cde7c675a1ca" = "User.ReadWrite.All (Delegated)"
 }
 
@@ -596,6 +736,15 @@ function Get-DeletionSafetyScore {
     $score  = 100
     $reasons = [System.Collections.Generic.List[string]]::new()
 
+    # ── INSTANT OVERRIDE: Microsoft 1st-party apps ───────────────────────────
+    # Microsoft-owned apps (Office 365, Teams, Azure Portal, etc.) are NEVER cleanup targets.
+    if ($Signals.IsMicrosoftApp) {
+        return @{
+            Score        = 0
+            ScoreReasons = "Microsoft1stPartyApp"
+        }
+    }
+
     # ── HARD BLOCKS (score floor = 0, do not touch) ──────────────────────────
     if ($Signals.ConsumedByAppsCount -gt 0) {
         $score -= 70
@@ -615,12 +764,28 @@ function Get-DeletionSafetyScore {
     }
 
     # ── STRONG EVIDENCE OF ACTIVE USE ────────────────────────────────────────
-    if ($null -ne $Signals.LastInteractiveSignInDate) {
-        $daysSince = [int]((Get-Date) - $Signals.LastInteractiveSignInDate).TotalDays
+
+    # ✅ NEW: Use ALL-TIME sign-in date from signInActivity (Signal B) first.
+    #    This is more reliable than audit log queries which have 30-day retention.
+    $bestSignInDate = $null
+    if ($null -ne $Signals.SPLastSignInDate) { $bestSignInDate = $Signals.SPLastSignInDate }
+    if ($null -ne $Signals.SPLastDaemonSignInDate -and
+        ($null -eq $bestSignInDate -or $Signals.SPLastDaemonSignInDate -gt $bestSignInDate)) {
+        $bestSignInDate = $Signals.SPLastDaemonSignInDate
+    }
+    # Overlay audit log dates if they're more recent
+    if ($null -ne $Signals.LastInteractiveSignInDate -and
+        ($null -eq $bestSignInDate -or $Signals.LastInteractiveSignInDate -gt $bestSignInDate)) {
+        $bestSignInDate = $Signals.LastInteractiveSignInDate
+    }
+
+    if ($null -ne $bestSignInDate) {
+        $daysSince = [int]((Get-Date) - $bestSignInDate).TotalDays
         if ($daysSince -le 30)  { $score -= 60; $reasons.Add("SignIn:${daysSince}dAgo") }
         elseif ($daysSince -le 90)  { $score -= 50; $reasons.Add("SignIn:${daysSince}dAgo") }
         elseif ($daysSince -le 180) { $score -= 35; $reasons.Add("SignIn:${daysSince}dAgo") }
         elseif ($daysSince -le 365) { $score -= 20; $reasons.Add("SignIn:${daysSince}dAgo") }
+        elseif ($daysSince -le 730) { $score -= 10; $reasons.Add("SignIn:${daysSince}dAgo") }
     }
     if ($Signals.DaemonUsageDetected) {
         $score -= 40
@@ -684,12 +849,27 @@ function Get-DeletionSafetyScore {
         $score += 10    # No SP = cannot issue tokens, safer to delete
         $reasons.Add("+NoSP")
     }
-    if ($Signals.HasExpiredSecret -and $Signals.SecretCount -gt 0 -and $Signals.CertCount -eq 0) {
-        $score += 5     # All credentials expired = less likely to be actively used
+    # ✅ FIX: Use AllSecretsExpired (ALL secrets expired) instead of HasExpiredSecret (ANY expired)
+    if ($Signals.AllSecretsExpired -and $Signals.CertCount -eq 0 -and -not $Signals.UsedByExternalSystem) {
+        $score += 5     # ALL credentials expired and no certs = less likely to be actively used
         $reasons.Add("+AllSecretsExpired")
     }
+    # ✅ NEW: App age factor — older unused apps are safer to clean up
+    if ($Signals.AppAgeDays -gt 730 -and $null -eq $bestSignInDate) {
+        $score += 10    # 2+ years old with no sign-in signal = likely abandoned
+        $reasons.Add("+OldUnused:$($Signals.AppAgeDays)d")
+    }
+    if ($Signals.AppAgeDays -lt 30) {
+        $score -= 15    # Brand new app — may not be configured yet, don't touch
+        $reasons.Add("NewlyCreated:$($Signals.AppAgeDays)d")
+    }
+    # ✅ NEW: Verified publisher bonus (legitimate SaaS apps from known vendors)
+    if ($Signals.IsVerifiedPublisher) {
+        $score -= 5     # Verified publisher = more likely a real, managed app
+        $reasons.Add("VerifiedPublisher")
+    }
 
-    # Clamp to 0–100
+    # Clamp to 0–100 (score can go negative from cumulative deductions — this is by design)
     $score = [Math]::Max(0, [Math]::Min(100, $score))
 
     return @{
@@ -774,9 +954,19 @@ function Get-AppUsageStatus {
 
 ```powershell
 function Get-CleanupBucket {
-    param([int]$Score, [bool]$IsUnused, [string]$UsageConfidence)
+    param(
+        [int]$Score,
+        [bool]$IsUnused,
+        [string]$UsageConfidence,
+        [bool]$IsMicrosoftApp = $false
+    )
 
-    # Hard overrides regardless of score
+    # ✅ OVERRIDE 1: Microsoft 1st-party apps are NEVER cleanup targets
+    if ($IsMicrosoftApp) {
+        return @{ Bucket = 4; Label = "Microsoft1stParty";    Emoji = "🟢"; Action = "DO NOT TOUCH — MICROSOFT OWNED" }
+    }
+
+    # OVERRIDE 2: High-confidence active apps
     if (-not $IsUnused -and $UsageConfidence -eq "High") {
         return @{ Bucket = 4; Label = "BusinessCritical";     Emoji = "🟢"; Action = "DO NOT TOUCH" }
     }
@@ -809,16 +999,24 @@ foreach ($mi in $MiCache.Values) {
     $miRBACRoles  = if ($miRbac)    { ($miRbac    | ForEach-Object { $_.RoleDefinitionName }) -join ";" } else { "None" }
     $miDirRoles   = if ($miDirRole) { ($miDirRole | ForEach-Object { $_.RoleDefinition.DisplayName }) -join ";" } else { "None" }
 
-    # Determine MI type from tags
-    $miType = if ($mi.Tags -contains "WindowsAzureActiveDirectoryIntegratedApp") { "SystemAssigned" } else { "UserAssigned" }
+    # ✅ FIX: Determine MI type from AlternativeNames (not Tags).
+    # System-assigned MIs have an entry like "/subscriptions/<guid>/resourceGroups/..." in AlternativeNames.
+    # User-assigned MIs do not have a /subscriptions/ entry.
+    $altNames = $mi.AlternativeNames
+    $isSystemAssigned = ($altNames | Where-Object { $_ -like '/subscriptions/*' }).Count -gt 0
+    $miType = if ($isSystemAssigned) { "SystemAssigned" } else { "UserAssigned" }
 
-    # Determine linked resource from DisplayName pattern or tags
-    # Note: Graph does not expose the linked Azure resource directly.
-    # The display name often contains the resource name (e.g., "vm-prod-mi")
-    # Document this limitation as a comment.
-    $LinkedResource = $mi.DisplayName   # Best available — actual ARM resource link requires Azure Resource Graph
+    # Determine linked resource from AlternativeNames or DisplayName
+    # System-assigned MIs: the /subscriptions/... entry IS the linked ARM resource ID
+    # User-assigned MIs: DisplayName is the best available hint
+    $LinkedResource = if ($isSystemAssigned) {
+        ($altNames | Where-Object { $_ -like '/subscriptions/*' }) | Select-Object -First 1
+    } else {
+        $mi.DisplayName   # Best available — actual ARM resource link requires Azure Resource Graph
+    }
 
-    $miReport = [PSCustomObject]@{
+    # ✅ FIX: Use $miRecord (not $miReport) to avoid overwriting the $MiReport list
+    $miRecord = [PSCustomObject]@{
         DisplayName            = $mi.DisplayName
         ServicePrincipalId     = $mi.Id
         AppId                  = $mi.AppId
@@ -835,7 +1033,7 @@ foreach ($mi in $MiCache.Values) {
         # Full orphan detection requires Azure Resource Graph query — add as future enhancement note
         PossiblyOrphaned       = ($miRbac.Count -eq 0 -and $miDirRole.Count -eq 0)
     }
-    $MiReport.Add($miReport)
+    $MiReport.Add($miRecord)
 }
 ```
 
@@ -1073,9 +1271,11 @@ Columns to include (human-readable subset):
 
 ```powershell
 # Generate per-owner files
+# ✅ FIX: Capture $_ as $currentApp before inner ForEach-Object overwrites $_
 $byOwner = $MasterReport | Where-Object { $_.OwnerUPNs -ne "NoOwner" } |
            ForEach-Object {
-               $_.OwnerUPNs -split ";" | ForEach-Object { @{ Owner = $_; App = $app } }
+               $currentApp = $_
+               $currentApp.OwnerUPNs -split ";" | ForEach-Object { @{ Owner = $_; App = $currentApp } }
            } | Group-Object -Property Owner
 
 foreach ($ownerGroup in $byOwner) {
@@ -1099,7 +1299,7 @@ $MasterReport | Where-Object { $_.OwnerUPNs -eq "NoOwner" -and $_.CleanupBucket 
 
 ```
 ╔══════════════════════════════════════════════════════════════════╗
-║      Azure App Registration Cleanup System — v4 Summary          ║
+║      Azure App Registration Cleanup System — v5 Summary          ║
 ╠══════════════════════════════════════════════════════════════════╣
 ║  Tenant ID                    : <TenantId>                       ║
 ║  Run Date                     : <Date>                           ║
@@ -1230,54 +1430,69 @@ Log mandatory events:
 ```
  1.  Script header: .SYNOPSIS, .DESCRIPTION, .PARAMETER, .NOTES
      NOTES must include:
-     - Sign-in log retention caveat (30d interactive / 7d SP)
+     - Sign-in log retention caveat (7-30 days depending on Entra ID license tier)
+     - signInActivity provides ALL-TIME sign-in dates (no retention limit)
      - Managed Identity limitation (ARM resource link requires Resource Graph)
+     - Microsoft 1st-party apps are auto-excluded from cleanup
      - Recommended: run with -SkipSignInLogs first for fast baseline, then full run
      - Estimated runtime: ~30min without sign-in logs / ~3-4hrs with sign-in logs
 
- 2.  #Requires statements
+ 2.  #Requires statements (including #Requires -Version 7.2)
 
  3.  [CmdletBinding(SupportsShouldProcess)] param() block
+     Includes -DryRunLimit parameter for testing subset of apps
 
  4.  Constants and lookup hashtables (ALL declared here, NONE inside loops):
-        $BroadPermissions       (GUID → permission name)
+        $BroadPermissions       (GUID → permission name, 13+ entries)
         $PrivilegedEntraRoles   (string array)
         $PrivilegedAzureRoles   (string array)
         $FederatedIssuerLabels  (issuer URL → label)
         $DateStamp              (reused in all filenames)
+        $MicrosoftTenantId      ('f8cdef31-a31e-4b4a-93e4-5f571e91255a')
+        $MicrosoftAppIds        (HashSet of known Microsoft 1st-party app IDs)
 
  5.  Helper functions (in this order):
         Write-Log
         Invoke-GraphWithRetry
         Get-ExternalSystemType
-        Get-DeletionSafetyScore
+        Get-DeletionSafetyScore   (includes Microsoft app override, age factor, signInActivity)
         Get-AppUsageStatus
-        Get-CleanupBucket
+        Get-CleanupBucket         (includes IsMicrosoftApp param for auto Bucket 4)
         Get-AppWhereUsed
         Get-NearestExpiry
         Test-BroadPermissions
 
  6.  Main block: try {} finally { Disconnect-MgGraph; Disconnect-AzAccount }
 
- 7.  Pre-flight validation (all 6 checks)
+ 7.  Pre-flight validation (5 scope checks + Az module)
 
  8.  Phase 1: All 8 bulk loads with logging
+        - Bulk Load 1: Apps with $expand=owners,federatedIdentityCredentials
+        - Bulk Load 2: SPs with signInActivity, alternativeNames
+        - Bulk Load 6: Role definitions loaded SEPARATELY from assignments
+        - Null guard after each bulk load
 
  9.  Phase 2: Per-app loop with Write-Progress
         - All signals A through M
+        - Signal A includes VerifiedPublisher, IsMicrosoftApp, AppAgeDays
+        - Signal B includes SPLastSignInDate, SPLastDaemonSignInDate
+        - Signals C & D use $expand cache (no per-app Graph calls)
+        - Signal L includes AllSecretsExpired, AllCertsExpired
         - Call Get-AppUsageStatus
-        - Call Get-DeletionSafetyScore
-        - Call Get-CleanupBucket
+        - Call Get-DeletionSafetyScore (pass IsMicrosoftApp, AppAgeDays, SP sign-in dates)
+        - Call Get-CleanupBucket (pass -IsMicrosoftApp)
         - Call Get-AppWhereUsed
         - Build $masterRecord PSCustomObject
         - Add to $MasterReport list
 
 10.  Phase 3: Managed Identity sweep (separate loop over $MiCache)
+        - Use AlternativeNames for MI type detection (not Tags)
+        - Use $miRecord variable (not $miReport) to avoid list collision
 
 11.  Phase 4: Export all CSVs
         - MasterAudit
         - 4 Bucket CSVs
-        - Owner Notification CSVs
+        - Owner Notification CSVs (with $currentApp fix)
         - NoOwner Escalation CSV
         - Managed Identity CSV
 
@@ -1292,11 +1507,18 @@ Log mandatory events:
 - **Do not use `AzureAD` or `MSOnline` cmdlets under any circumstance.**
 - **`Get-MgServicePrincipalAppRoleAssignedTo` (inbound) ≠ `Get-MgServicePrincipalAppRoleAssignment` (outbound).** Never merge their results. Never confuse which direction each captures.
 - **`Get-MgApplicationFederatedIdentityCredential` takes `-ApplicationId` (ObjectId), NOT AppId.**
-- **Sign-in log retention caveats are MANDATORY** in the script header `.NOTES` block and as inline comments on every sign-in query.
+- **Sign-in log retention:** Audit logs are retained for 7-30 days depending on Entra ID license tier. Always prefer `signInActivity` on the Service Principal (ALL-TIME, no retention limit) over audit log queries. Document the retention caveat in `.NOTES` and as inline comments.
+- **`signInActivity` property:** Available only via `Get-MgServicePrincipal` with `-Property signInActivity`. Returns `LastSignInDateTime` and `LastNonInteractiveSignInDateTime` — these are ALL-TIME values, not subject to audit log retention.
 - **Managed Identities do NOT appear in `Get-MgApplication`.** They are detected ONLY from `$SpCache` where `ServicePrincipalType -eq 'ManagedIdentity'`. Never attempt `Get-MgApplication` to find them.
+- **MI type detection:** Use `AlternativeNames` (check for `/subscriptions/` prefix), NOT `Tags`. Tags do not reliably distinguish system-assigned from user-assigned MIs.
 - **`$null` comparisons: always `$null -eq $var`** — never `$var -eq $null`.
 - **String comparisons: always `-eq`** — never `==`.
 - **All cache hashtables declared BEFORE all loops.** Never declare or populate a cache inside a per-app loop.
 - **The Deletion Safety Score is a composite RECOMMENDATION, not a command.** The script must print a comment in the `.NOTES` header stating that no automatic deletions occur — all actions require human review.
 - **`Get-AzRoleAssignment` for RBAC bulk-load MUST use the subscription-loop pattern.** Calling it without a subscription context produces incomplete results.
 - **Bucket 1 output means DISABLE, not DELETE.** The ProposedDeleteDate is Today+30. The script must never generate delete commands. Disable only.
+- **`$expand` for owners and federated credentials:** Use `$expand=owners,federatedIdentityCredentials` on `Get-MgApplication -All` to avoid per-app Graph calls. This saves ~18,000 API calls for a 9,000-app tenant.
+- **Microsoft 1st-party detection:** Use `$MicrosoftTenantId = 'f8cdef31-a31e-4b4a-93e4-5f571e91255a'` and compare against `$sp.AppOwnerOrganizationId`. Also check known Microsoft AppIds. Never clean up Microsoft-owned apps.
+- **`AllSecretsExpired` vs `HasExpiredSecret`:** `HasExpiredSecret` means "at least one secret is expired" (some may still be valid). `AllSecretsExpired` means "every secret has expired and none are valid." Only use `AllSecretsExpired` for the scoring bonus.
+- **Owner notification variable capture:** In nested `ForEach-Object` blocks, capture outer `$_` as `$currentApp` before the inner `ForEach-Object` overwrites `$_`.
+- **MI report variable naming:** Use `$miRecord` for individual MI objects in the foreach loop; `$MiReport` is the list that collects them. Never use the same name for both.
