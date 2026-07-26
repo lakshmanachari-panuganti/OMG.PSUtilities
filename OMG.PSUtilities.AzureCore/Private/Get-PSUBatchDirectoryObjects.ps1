@@ -1,12 +1,26 @@
+<#
+.SYNOPSIS
+    Batch-retrieves directory objects from Microsoft Graph to reduce per-object API calls.
+
+.DESCRIPTION
+    Uses the Microsoft Graph /$batch endpoint to fetch up to 20 directory objects per
+    request. Falls back to individual Get-MgDirectoryObject calls if the batch request
+    fails. Requires an active Connect-MgGraph session.
+
+.PARAMETER Ids
+    Array of directory object IDs to retrieve.
+
+.OUTPUTS
+    [System.Object[]] Array of directory objects with id, displayName, mail,
+    userPrincipalName, and @odata.type properties.
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    Created: 11th August 2025
+    Last Modified: 7th March 2026
+    Version: 1.0
+#>
 function Get-PSUBatchDirectoryObjects {
-    <#
-    .SYNOPSIS
-      Batch-get directory objects from Microsoft Graph using /$batch to reduce per-object calls.
-    .PARAMETER Ids
-      Array of directory object ids to retrieve.
-    .OUTPUTS
-      Array of parsed Directory objects (has id, displayName, mail, userPrincipalName, @odata.type)
-    #>
     param([string[]] $Ids)
 
     if (-not $Ids -or $Ids.Count -eq 0) { return @() }

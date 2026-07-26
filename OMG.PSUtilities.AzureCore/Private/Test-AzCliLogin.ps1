@@ -1,16 +1,19 @@
-function Test-AzCliLogin {
-    <#
-    .SYNOPSIS
+<#
+.SYNOPSIS
     Ensures Azure CLI is logged in and has a valid token.
 
-    .DESCRIPTION
-    This function checks if Azure CLI is logged in and has a valid session. 
-    If not logged in, it prompts for login. If already logged in, it refreshes the access token.
+.DESCRIPTION
+    Checks if Azure CLI is logged in and has a valid session.
+    If not logged in, it prompts for login. If already logged in,
+    it refreshes the access token.
 
-    .NOTES
+.NOTES
     Author: Lakshmanachari Panuganti
-    Date  : 2025-08-11
-    #>
+    Created: 11th August 2025
+    Last Modified: 7th March 2026
+    Version: 1.0
+#>
+function Test-AzCliLogin {
     
     try {
         # Check if already logged in

@@ -1,5 +1,5 @@
 
-Function New-PSUHTMLReport {
+Function Send-PSUHTMLReport {
   <#
   .SYNOPSIS
     Sends HTML reports that are created with New-PSUHTMLReport function.

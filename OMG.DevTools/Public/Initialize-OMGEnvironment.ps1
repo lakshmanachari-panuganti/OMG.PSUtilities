@@ -23,6 +23,10 @@ function Initialize-OMGEnvironment {
 
     .OUTPUTS
         Hashtable with validation results.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
     #>
 
     [CmdletBinding()]
@@ -47,7 +51,7 @@ function Initialize-OMGEnvironment {
         )
 
         $results = @{
-            Valid = @()
+            Valid   = @()
             Missing = @()
             Created = @()
         }
@@ -70,17 +74,14 @@ function Initialize-OMGEnvironment {
                             Set-Item -Path "env:$varName" -Value $readHost  # Set for current session
                             $results.Created += $varName
                             Write-Host "✓ Set $varName successfully" -ForegroundColor Green
-                        }
-                        catch {
+                        } catch {
                             Write-Error "Failed to set ${varName}: $_"
                         }
                     }
-                }
-                else {
+                } else {
                     Write-Warning "Missing environment variable: $varName"
                 }
-            }
-            else {
+            } else {
                 $results.Valid += $varName
                 Write-Verbose "✓ $varName is set"
             }
@@ -98,8 +99,7 @@ function Initialize-OMGEnvironment {
         if ($results.Missing.Count -gt 0 -and $NonInteractive) {
             Write-Warning "Missing environment variables: $($results.Missing -join ', ')"
             Write-Host "Run 'Initialize-OMGEnvironment' interactively to set them." -ForegroundColor Cyan
-        }
-        elseif ($results.Created.Count -gt 0) {
+        } elseif ($results.Created.Count -gt 0) {
             Write-Host "`n✓ Created $($results.Created.Count) environment variable(s)" -ForegroundColor Green
             Write-Host "Note: You may need to restart your PowerShell session for changes to take effect." -ForegroundColor Cyan
         }

@@ -1,5 +1,27 @@
 # Changelog
 
+## [1.1.0] - 2025-07-03
+### Added
+- `Invoke-PSUAzureAppRegAudit` (Public): Comprehensive Azure App Registration cleanup and governance audit.
+  Collects 13 signals per app, calculates Deletion Safety Score (0-100), assigns to 4 cleanup buckets,
+  exports master audit CSV, per-bucket CSVs, owner notification files, Managed Identity report, and
+  console summary. Supports -SkipAzureRBAC, -SkipSignInLogs, -DryRunLimit, -VerboseMode switches.
+- `Invoke-PSUGraphWithRetry` (Private): Graph API retry handler with HTTP 429 throttle protection.
+- `Get-PSUDeletionSafetyScore` (Private): Scoring engine (0-100) with Microsoft 1st-party override,
+  signInActivity ALL-TIME dates, age factor, and multi-tier deduction system.
+- `Get-PSUAppUsageStatus` (Private): Usage classification with High/Medium/Low confidence levels.
+- `Get-PSUCleanupBucket` (Private): 4-bucket assignment (SafeToDisable, NeedsInvestigation, LikelyActive,
+  BusinessCritical) based on score and overrides.
+- `Get-PSUAppWhereUsed` (Private): Human-readable usage location summary builder.
+- `Get-PSUExternalSystemType` (Private): Federated identity credential issuer classifier
+  (GitHub Actions, AKS, Terraform Cloud, Azure DevOps, AWS, Google Cloud).
+- `Scripts/Run-AzureAppRegAudit.ps1`: Orchestration script with Quick/Full/DryRun modes.
+  Handles prerequisite module checks, Graph & Azure authentication, timestamped output
+  directories, and post-processing (HTML report, auto-open folder).
+- `Scripts/ConvertTo-AuditHtmlReport.ps1`: Self-contained HTML dashboard generator.
+  Reads audit CSVs and produces a styled report with executive summary cards, risk flags,
+  usage statistics, sortable bucket tables, and Managed Identity summary.
+
 ## [1.0.5] - 2025-08-19
 ### Changed
 - Updated Get-PSUAzToken and Test-PSUAzConnection functions to comply with OMG.PSUtilities.StyleGuide.md standards

@@ -144,7 +144,7 @@ You are a PowerShell code quality auditor for the OMG.PSUtilities module suite. 
 - [ ] Opening braces on same line: `function Name {`, `if ($condition) {`
 - [ ] Consistent spacing around operators and assignments
 - [ ] Blank lines to separate logical sections
-- [ ] Proper indentation in comment-based help (8 spaces for content)
+- [ ] Comment-based help placed outside the function (zero-indent keywords, 4-space content)
 
 **Variable Naming:**
 - [ ] CamelCase for variable names: `$repositoryIdentifier`
@@ -270,7 +270,7 @@ Please provide your analysis in the following format:
 ### Code Examples
 If providing corrected code, ensure it matches OMG.PSUtilities patterns:
 - Auto-detection default values with git commands
-- Proper comment-based help with 8-space indentation
+- Proper comment-based help (outside function: zero-indent keywords, 4-space content)
 - Lakshmanachari's parameter validation style
 - Consistent error handling and output patterns
 
@@ -278,51 +278,48 @@ If providing corrected code, ensure it matches OMG.PSUtilities patterns:
 
 ### Acceptable Documentation Template (Lakshmanachari's Standard)
 ```powershell
+<#
+.SYNOPSIS
+    Brief description of function purpose.
+
+.DESCRIPTION
+    Detailed explanation of what the function does, how it works,
+    and when to use it. Explain auto-detection behavior and integration points.
+
+.PARAMETER Organization
+    (Optional) Description of the parameter with default behavior.
+    Default value is auto-detected from git remote origin URL or $env:ORGANIZATION.
+
+.PARAMETER ParameterName
+    Description of the parameter, including expected values and behavior.
+    Default behavior explained when applicable.
+
+.EXAMPLE
+    Verb-PSUNoun -ParameterName "Value"
+
+    Description of what this example does and expected output.
+
+.EXAMPLE
+    Verb-PSUNoun -Organization "myorg" -ParameterName "Value"
+
+    Example showing explicit parameter usage.
+
+.OUTPUTS
+    [PSCustomObject]
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    Created: DDth Month YYYY
+    Last Modified: DDth Month YYYY
+    Version: 1.0
+
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/ModuleName
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/ModuleName
+    https://learn.microsoft.com/relevant-documentation-link
+#>
 function Verb-PSUNoun {
-    <#
-    .SYNOPSIS
-        Brief description of function purpose.
-
-    .DESCRIPTION
-        Detailed explanation of what the function does, how it works,
-        and when to use it. Explain auto-detection behavior and integration points.
-
-    .PARAMETER Organization
-        (Optional) Description of the parameter with default behavior.
-        Default value is auto-detected from git remote origin URL or $env:ORGANIZATION.
-
-    .PARAMETER ParameterName
-        Description of the parameter, including expected values and behavior.
-        Default behavior explained when applicable.
-
-    .PARAMETER Organization
-        The Azure DevOps organization. If not provided, defaults to the ORGANIZATION environment variable.
-
-    .EXAMPLE
-        Verb-PSUNoun -ParameterName "Value"
-        
-        Description of what this example does and expected output.
-
-    .EXAMPLE
-        Verb-PSUNoun -Organization "myorg" -ParameterName "Value"
-
-        Example showing explicit parameter usage.
-
-    .OUTPUTS
-        [PSCustomObject]
-
-    .NOTES
-        Author: Lakshmanachari Panuganti
-        Date: YYYY-MM-DD
-        (OR: Date: DD Month YYYY: Description)
-        (OR: File Creation Date: YYYY-MM-DD)
-
-    .LINK
-        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/ModuleName
-        https://www.linkedin.com/in/lakshmanachari-panuganti/
-        https://www.powershellgallery.com/packages/ModuleName
-        https://learn.microsoft.com/relevant-documentation-link
-    #>
     [CmdletBinding()]
     param (
         [Parameter(Mandatory = $true)]

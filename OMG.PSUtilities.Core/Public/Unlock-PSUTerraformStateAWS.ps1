@@ -1,3 +1,45 @@
+<#
+.SYNOPSIS
+    Unlocks a Terraform state lock for an AWS-backed Terraform project.
+
+.DESCRIPTION
+    Validates a Terraform working directory, initializes its backend, selects a
+    workspace, and runs Terraform force-unlock for the supplied lock ID. AWS
+    credentials can be supplied explicitly for an S3 backend or resolved by the
+    Terraform and AWS tooling.
+
+.PARAMETER Path
+    The Terraform working directory. Defaults to the current directory.
+
+.PARAMETER LockId
+    The Terraform state lock identifier. The function prompts when omitted.
+
+.PARAMETER AccessKey
+    An optional AWS access key used when initializing an S3 backend.
+
+.PARAMETER SecretKey
+    An optional AWS secret key used when initializing an S3 backend.
+
+.PARAMETER Region
+    The AWS region used for an S3 backend. Defaults to us-east-2.
+
+.PARAMETER Force
+    Runs Terraform force-unlock without an additional confirmation prompt.
+
+.EXAMPLE
+    Unlock-PSUTerraformStateAWS -Path 'C:\Terraform\Project' -LockId 'abc123'
+
+    Unlocks the specified Terraform state after confirming the operation.
+
+.OUTPUTS
+    None. The function invokes Terraform and writes operation status to the console.
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    Version: 1.0
+    Requires the Terraform CLI. Force-unlock can corrupt state when another
+    Terraform operation is still active.
+#>
 function Unlock-PSUTerraformStateAWS {
     [CmdletBinding()]
     param(

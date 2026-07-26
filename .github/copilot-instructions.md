@@ -88,51 +88,56 @@ Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport
 
 ### Comment-Based Help (MANDATORY)
 
-Every function MUST have this structure with **8-space indentation**:
+Every function MUST place the help block **outside and before** the function definition (Option A — Microsoft standard). Use zero-indent for `.KEYWORD` labels and 4-space indent for content:
 
 ```powershell
+<#
+.SYNOPSIS
+    One-line summary of what the function does.
+
+.DESCRIPTION
+    Detailed explanation of functionality.
+    Multiple paragraphs allowed.
+
+.PARAMETER ParameterName
+    Description of the parameter.
+    Include default behavior, validation rules, and examples.
+
+.PARAMETER Organization
+    (Optional) The Azure DevOps organization name.
+    Default is $env:ORGANIZATION.
+    Set via: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "<value>"
+
+.PARAMETER PAT
+    (Optional) Personal Access Token.
+    Default is $env:PAT.
+    Set via: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "<value>"
+
+.EXAMPLE
+    Verb-PSUADONoun -Parameter1 "Value1" -Organization "myorg"
+
+    Demonstrates explicit parameters.
+
+.EXAMPLE
+    Verb-PSUADONoun -Parameter1 "Value1"
+
+    Demonstrates auto-detected Organization from $env:ORGANIZATION.
+
+.OUTPUTS
+    [PSCustomObject] or [System.Object[]]
+
+.NOTES
+    Author: Lakshmanachari Panuganti
+    Created: DDth Month YYYY
+    Last Modified: DDth Month YYYY
+    Version: 1.0
+
+.LINK
+    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
+    https://www.linkedin.com/in/lakshmanachari-panuganti/
+    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+#>
 function Verb-PSUADONoun {
-        <#
-        .SYNOPSIS
-                One-line summary of what the function does.
-
-        .DESCRIPTION
-                Detailed explanation of functionality.
-                Multiple paragraphs allowed.
-
-        .PARAMETER ParameterName
-                Description of the parameter.
-                Include default behavior, validation rules, and examples.
-
-        .PARAMETER Organization
-                (Optional) The Azure DevOps organization name.
-                Default is $env:ORGANIZATION.
-                Set via: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "<value>"
-
-        .PARAMETER PAT
-                (Optional) Personal Access Token.
-                Default is $env:PAT.
-                Set via: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "<value>"
-
-        .EXAMPLE
-                Verb-PSUADONoun -Parameter1 "Value1" -Organization "myorg"
-
-                Demonstrates explicit parameters.
-
-        .EXAMPLE
-                Verb-PSUADONoun -Parameter1 "Value1"
-
-                Demonstrates auto-detected Organization from $env:ORGANIZATION.
-
-        .OUTPUTS
-                [PSCustomObject] or [System.Object[]]
-
-        .NOTES
-                Author: Lakshmanachari Panuganti
-                Created: YYYY-MM-DD
-                Last Modified: YYYY-MM-DD
-                Version: 1.0
-        #>
 ```
 
 **⚠️ NO EMOJIS** in function code or comment-based help (only in `Write-Host` progress indicators).
@@ -400,7 +405,7 @@ All Azure DevOps functions use:
 3. Follow parameter ordering: Business → Organization → PAT
 4. Put all validation in `begin{}` block
 5. Use `begin/process/end` for pipeline support
-6. Add 8-space indented comment-based help
+6. Add comment-based help outside the function (Option A: zero-indent keywords, 4-space content)
 7. Run `Reset-OMGModuleManifests -ModuleName "OMG.PSUtilities.AzureDevOps"`
 8. Test with `Run-MasterTest.ps1 -TestType Comprehensive`
 
@@ -472,7 +477,7 @@ This codebase prioritizes **consistency, automation, and enterprise-grade qualit
 ✅ Use begin/process/end blocks for pipeline support  
 ✅ Put all validation in `begin{}` block  
 ✅ Follow parameter ordering (Business → Organization → PAT)  
-✅ Include 8-space indented comment-based help  
+✅ Place comment-based help outside the function (zero-indent keywords, 4-space content)  
 ✅ Use environment variables (`$env:ORGANIZATION`, `$env:PAT`)  
 ✅ Mask PAT in verbose output  
 ✅ Use approved PowerShell verbs  

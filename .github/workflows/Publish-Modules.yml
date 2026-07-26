@@ -3,103 +3,178 @@ name: Publish PowerShell Modules
 on:
   push:
     branches:
-      - main  # Trigger only when pushing to the main branch
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-modules
+  cancel-in-progress: false
 
 env:
-  PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
-  MODULES: |
-    OMG.PSUtilities.ActiveDirectory
-    OMG.PSUtilities.VSphere
-    OMG.PSUtilities.AI
-    OMG.PSUtilities.AzureCore
-    OMG.PSUtilities.AzureDevOps
-    OMG.PSUtilities.ServiceNow
-    OMG.PSUtilities.Core
+  MODULES: >-
+    OMG.PSUtilities.Core,
+    OMG.PSUtilities.ActiveDirectory,
+    OMG.PSUtilities.AI,
+    OMG.PSUtilities.AzureCore,
+    OMG.PSUtilities.AzureDevOps,
+    OMG.PSUtilities.ServiceNow,
+    OMG.PSUtilities.VSphere,
+    OMG.PSUtilities
 
 jobs:
-  publish-modules:
-    name: Publish Updated PowerShell Modules
+  publish:
+    name: Validate, Package, and Publish
     runs-on: windows-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      # Setup step REMOVED - setup-powershell@v1 does not exist, PowerShell is already available
-
-      # [Optional] Setup a specific PowerShell version (uncomment if needed)
-      # - uses: powershell/setup-pwsh@v1
-      #   with:
-      #     pwsh-version: '7.2.12'
-
-      - name: Install PowerShellGet Module (if needed)
+      - name: Configure PowerShell Module Path
         shell: pwsh
         run: |
-          if (-not (Get-Module -ListAvailable -Name PowerShellGet)) {
-            Install-Module -Name PowerShellGet -Force -Scope CurrentUser -AllowClobber
-          }
+          "PSModulePath=$env:GITHUB_WORKSPACE;$env:PSModulePath" >> $env:GITHUB_ENV
 
-      - name: Compare and Publish Updated Modules
+      - name: Install Build Dependencies
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $updatedModules = @()
-          $modules = $env:MODULES -split "`n"
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -MinimumVersion 5.6.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module -Name PSScriptAnalyzer -MinimumVersion 1.22.0 -Scope CurrentUser -Force
+          Install-Module -Name ImportExcel -MinimumVersion 7.8.9 -Scope CurrentUser -Force
+          Install-Module -Name Microsoft.PowerShell.ThreadJob -Scope CurrentUser -Force
+
+      - name: Validate Repository
+        shell: pwsh
+        run: .\build\Test-Repository.ps1 -IncludeScriptAnalyzer
+
+      - name: Run Pester Tests
+        shell: pwsh
+        run: |
+          New-Item -Path '.\artifacts' -ItemType Directory -Force | Out-Null
+          $configuration = New-PesterConfiguration
+          $configuration.Run.Path = '.\tests'
+          $configuration.Run.Exit = $true
+          $configuration.Output.Verbosity = 'Normal'
+          $configuration.TestResult.Enabled = $true
+          $configuration.TestResult.OutputPath = '.\artifacts\test-results.xml'
+          $configuration.TestResult.OutputFormat = 'NUnitXml'
+          Invoke-Pester -Configuration $configuration
+
+      - name: Build Module Artifacts
+        shell: pwsh
+        run: .\build\Build-Modules.ps1 -Clean
+
+      - name: Upload Release Artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: powershell-modules-${{ github.sha }}
+          path: |
+            artifacts/modules
+            artifacts/test-results.xml
+          retention-days: 90
+
+      - name: Publish Updated Modules
+        shell: pwsh
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $publishedModules = [System.Collections.Generic.List[string]]::new()
+          $modules = $env:MODULES -split ',' | ForEach-Object { $_.Trim() }
 
           foreach ($module in $modules) {
-              $module = $module.Trim()
-              if (-not $module) { continue }
+              $modulePath = Join-Path '.\artifacts\modules' $module
+              $manifestPath = Join-Path $modulePath "$module.psd1"
+              $manifest = Import-PowerShellDataFile -Path $manifestPath
+              $localVersion = [version]$manifest.ModuleVersion
+              $galleryVersion = [version]'0.0.0'
 
-              $psd1Path = "$module/$module.psd1"
-              Write-Host "`nChecking module: [$module] " -NoNewline
+              try {
+                  $galleryVersion = [version](Find-Module -Name $module -Repository PSGallery -ErrorAction Stop).Version
+              } catch {
+                  Write-Host "$module is not currently published."
+              }
 
-              if (-not (Test-Path $psd1Path)) {
-                  Write-Warning "Could not find $psd1Path, skipping."
+              if ($localVersion -le $galleryVersion) {
+                  Write-Host "Skipping $module ($localVersion); gallery has $galleryVersion."
                   continue
               }
 
-              $newVersion = (Import-PowerShellDataFile -Path $psd1Path).ModuleVersion
-
-              try {
-                  $publishedModule = Find-Module -Name (Split-Path $psd1Path -LeafBase) -ErrorAction Stop
-                  $publishedVersion = $publishedModule.Version
-              } catch {
-                  Write-Warning "Module $module not found in gallery, assuming new. Will publish."
-                  $publishedVersion = [version]'0.0.0'
+              if ([string]::IsNullOrWhiteSpace($env:PSGALLERY_API_KEY)) {
+                  throw 'PSGALLERY_API_KEY is required to publish updated modules.'
               }
 
-              if ($newVersion -gt $publishedVersion) {
-                  Write-Host "Detected [$publishedVersion → $newVersion]. Publishing $module..." -ForegroundColor Yellow
-                  try {
-                      if(-not (Get-PSRepository -Name PSGallery)){
-                          Register-PSRepository -Default -ErrorAction SilentlyContinue -WarningAction SilentlyContinue
+                if ($module -eq 'OMG.PSUtilities') {
+                  foreach ($dependency in $manifest.RequiredModules) {
+                    $dependencyName = $dependency.ModuleName
+                    $minimumVersion = if ($dependency.RequiredVersion) {
+                      [version]$dependency.RequiredVersion
+                    } elseif ($dependency.ModuleVersion) {
+                      [version]$dependency.ModuleVersion
+                    } else {
+                      [version]'0.0.0'
+                    }
+
+                    $dependencyAvailable = $false
+                    foreach ($attempt in 1..18) {
+                      try {
+                        $publishedDependency = Find-Module -Name $dependencyName -Repository PSGallery -ErrorAction Stop
+                        if ([version]$publishedDependency.Version -ge $minimumVersion) {
+                          $dependencyAvailable = $true
+                          break
+                        }
+                      } catch {
+                        Write-Host "Waiting for $dependencyName $minimumVersion to become available."
                       }
-                      # Install the dependency modules
-                      Install-Module OMG.PSUtilities.Core -force -repository PSGallery
-                      $moduleRootPath = Split-Path -Parent $psd1Path
-                      Publish-Module -Path $moduleRootPath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force
-                      $updatedModules += $module
-                      Write-Host "=======> Published $module successfully!" -ForegroundColor Green
-                  } catch {
-                      Write-Warning "Failed to publish $module : $_"
+
+                      Start-Sleep -Seconds 10
+                    }
+
+                    if (-not $dependencyAvailable) {
+                      throw "Required module $dependencyName $minimumVersion is not available in PowerShell Gallery."
+                    }
                   }
-              } else {
-                  Write-Host "No version change for $module. Skipping publish."
+                }
+
+              Write-Host "Publishing $module $localVersion (gallery: $galleryVersion)." -ForegroundColor Yellow
+              Publish-Module -Path $modulePath -NuGetApiKey $env:PSGALLERY_API_KEY -Repository PSGallery -Force -ErrorAction Stop
+              $publishedModules.Add("$module@$localVersion")
+          }
+
+          "PUBLISHED_MODULES=$($publishedModules -join ',')" >> $env:GITHUB_ENV
+
+      - name: Tag Published Versions
+        if: env.PUBLISHED_MODULES != ''
+        shell: pwsh
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+
+          foreach ($publishedModule in ($env:PUBLISHED_MODULES -split ',')) {
+              $name, $version = $publishedModule -split '@'
+              $tag = "$name-v$version"
+              if (-not (git tag --list $tag)) {
+                  git tag -a $tag -m "Release $name $version"
               }
           }
 
-          if ($updatedModules.Count -eq 0) {
-              Write-Host "`nNo modules needed publishing."
-          } else {
-              Write-Host "`nPublished modules: $($updatedModules -join ', ')"
-          }
+          git push origin --tags
 
-      - name: Summarize Published Modules
+      - name: Write Release Summary
         if: always()
         shell: pwsh
         run: |
-          echo "### PowerShell Modules Publishing Summary" >> $env:GITHUB_STEP_SUMMARY
-          echo "" >> $env:GITHUB_STEP_SUMMARY
-          echo "- Triggered by: $env:GITHUB_ACTOR" >> $env:GITHUB_STEP_SUMMARY
-          echo "- Branch: $env:GITHUB_REF_NAME" >> $env:GITHUB_STEP_SUMMARY
-
+          "## PowerShell module release" >> $env:GITHUB_STEP_SUMMARY
+          "" >> $env:GITHUB_STEP_SUMMARY
+          if ($env:PUBLISHED_MODULES) {
+              "Published: $env:PUBLISHED_MODULES" >> $env:GITHUB_STEP_SUMMARY
+          } else {
+              'No module versions required publishing.' >> $env:GITHUB_STEP_SUMMARY
+          }

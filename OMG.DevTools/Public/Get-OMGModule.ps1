@@ -20,6 +20,10 @@ function Get-OMGModule {
 
     .OUTPUTS
         PSCustomObject with ModuleName and Path properties.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
     #>
 
     [CmdletBinding()]
@@ -49,13 +53,11 @@ function Get-OMGModule {
             if ($cachedModules) {
                 Write-Verbose "Found $($cachedModules.Count) OMG modules"
                 return $cachedModules
-            }
-            else {
+            } else {
                 Write-Warning "No OMG modules found in $env:BASE_MODULE_PATH"
                 return $null
             }
-        }
-        catch {
+        } catch {
             Write-Error "Failed to get OMG modules: $_"
             throw
         }

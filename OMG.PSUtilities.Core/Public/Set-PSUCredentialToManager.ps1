@@ -13,16 +13,20 @@ function Set-PSUCredentialToManager {
         (Mandatory) The username to store.
 
     .PARAMETER Password
-        (Mandatory) The password to store.
+        (Mandatory) The password to store. The Credential parameter is recommended
+        because it avoids passing a plaintext password.
 
     .PARAMETER Comment
         (Optional) A comment to associate with the credential.
 
     .EXAMPLE
-        Set-PSUCredentialToManager -Target "acred" -Username "A092721" -Password "123123123"
+        Set-PSUCredentialToManager -Target "acred" -Username "A092721" -Password $plainTextPassword
+
+        Stores a credential using the backward-compatible username and password parameters.
 
     .EXAMPLE
-        Set-PSUCredentialToManager -Target "prod-db-server" -Username "dbadmin" -Password "SecurePass123" -Comment "Production DB"
+        $credential = Get-Credential
+        Set-PSUCredentialToManager -Target "prod-db-server" -Credential $credential -Comment "Production DB"
 
     .OUTPUTS
         [PSCustomObject]
@@ -37,8 +41,13 @@ function Set-PSUCredentialToManager {
         https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
     #>
 
-    [CmdletBinding(DefaultParameterSetName = 'ByUserPass')]
+    [CmdletBinding(DefaultParameterSetName = 'ByUserPass', SupportsShouldProcess)]
     [Alias("setcred")]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingUsernameAndPasswordParams',
+        '',
+        Justification = 'The legacy parameter set is retained for backward compatibility. Use -Credential for secure input.'
+    )]
     param (
         [Parameter(Mandatory, ParameterSetName = 'ByUserPass')]
         [Parameter(Mandatory, ParameterSetName = 'ByCredential')]
@@ -59,14 +68,20 @@ function Set-PSUCredentialToManager {
     process {
         if ($PSCmdlet.ParameterSetName -eq 'ByCredential') {
             $Username = $Credential.UserName
-            $Password = $Credential.GetNetworkCredential().Password
+            $plainTextPassword = $Credential.GetNetworkCredential().Password
+        } else {
+            $plainTextPassword = $Password
         }
 
         try {
+            if (-not $PSCmdlet.ShouldProcess($Target, "Store credential for $Username")) {
+                return
+            }
+
             $CredentialManager = [CredentialManager.CredMan]::Store(
-                $Target, 
-                $Username, 
-                $Password, 
+                $Target,
+                $Username,
+                $plainTextPassword,
                 $Comment
             )
 
@@ -90,6 +105,8 @@ function Set-PSUCredentialToManager {
             }
         } catch {
             $PSCmdlet.ThrowTerminatingError($_)
+        } finally {
+            $plainTextPassword = $null
         }
     }
 }

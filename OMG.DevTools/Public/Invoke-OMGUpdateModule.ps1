@@ -19,13 +19,20 @@ function Invoke-OMGUpdateModule {
     .EXAMPLE
         Invoke-OMGUpdateModule -WhatIf
         Shows which modules would be updated.
+
+    .OUTPUTS
+        Hashtable containing updated, current, failed, and unavailable module results.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
     [Alias('omgupdate')]
     param(
-        [Parameter(Position=0)]
-        [ValidateSet('AI','AzureCore','AzureDevOps','Core','ServiceNow','VSphere','ActiveDirectory')]
+        [Parameter(Position = 0)]
+        [ValidateSet('AI', 'AzureCore', 'AzureDevOps', 'Core', 'ServiceNow', 'VSphere', 'ActiveDirectory')]
         [string]$Name,
 
         [Parameter()]
@@ -37,9 +44,9 @@ function Invoke-OMGUpdateModule {
     begin {
         Write-Host "`n=== OMG Module Updater ===" -ForegroundColor Cyan
         $updateResults = @{
-            Updated = @()
+            Updated  = @()
             UpToDate = @()
-            Failed = @()
+            Failed   = @()
             NotFound = @()
         }
     }
@@ -47,12 +54,12 @@ function Invoke-OMGUpdateModule {
     process {
         # Map short names to full module names
         $moduleMap = @{
-            'AI' = 'OMG.PSUtilities.AI'
-            'AzureCore' = 'OMG.PSUtilities.AzureCore'
-            'AzureDevOps' = 'OMG.PSUtilities.AzureDevOps'
-            'Core' = 'OMG.PSUtilities.Core'
-            'ServiceNow' = 'OMG.PSUtilities.ServiceNow'
-            'VSphere' = 'OMG.PSUtilities.VSphere'
+            'AI'              = 'OMG.PSUtilities.AI'
+            'AzureCore'       = 'OMG.PSUtilities.AzureCore'
+            'AzureDevOps'     = 'OMG.PSUtilities.AzureDevOps'
+            'Core'            = 'OMG.PSUtilities.Core'
+            'ServiceNow'      = 'OMG.PSUtilities.ServiceNow'
+            'VSphere'         = 'OMG.PSUtilities.VSphere'
             'ActiveDirectory' = 'OMG.PSUtilities.ActiveDirectory'
         }
 
@@ -64,8 +71,7 @@ function Invoke-OMGUpdateModule {
                 $Name  # Use as-is if not in map (allows full names too)
             }
             $modules = Get-OMGModule | Where-Object { $_.ModuleName -eq $fullModuleName }
-        }
-        else {
+        } else {
             $modules = Get-OMGModule
         }
 
@@ -107,7 +113,7 @@ function Invoke-OMGUpdateModule {
                     if ($PSCmdlet.ShouldProcess($module.ModuleName, "Update from $($localModule.Version) to $($galleryModule.Version)")) {
                         Update-Module -Name $module.ModuleName -Force -Verbose:$VerbosePreference
                         $updateResults.Updated += @{
-                            Module = $module.ModuleName
+                            Module     = $module.ModuleName
                             OldVersion = $localModule.Version
                             NewVersion = $galleryModule.Version
                         }
@@ -124,16 +130,14 @@ function Invoke-OMGUpdateModule {
                                     try {
                                         Uninstall-Module -Name $module.ModuleName -RequiredVersion $oldModule.Version -Force -ErrorAction Stop
                                         Write-Host "    ✓ Removed version $($oldModule.Version)" -ForegroundColor Gray
-                                    }
-                                    catch {
+                                    } catch {
                                         Write-Warning "    ⚠ Could not remove version $($oldModule.Version): $_"
                                     }
                                 }
                             }
                         }
                     }
-                }
-                else {
+                } else {
                     Write-Host "  ✓ Already up to date ($($localModule.Version))" -ForegroundColor Green
                     $updateResults.UpToDate += $module.ModuleName
 
@@ -148,19 +152,17 @@ function Invoke-OMGUpdateModule {
                                 try {
                                     Uninstall-Module -Name $module.ModuleName -RequiredVersion $oldModule.Version -Force -ErrorAction Stop
                                     Write-Host "    ✓ Removed version $($oldModule.Version)" -ForegroundColor Gray
-                                }
-                                catch {
+                                } catch {
                                     Write-Warning "    ⚠ Could not remove version $($oldModule.Version): $_"
                                 }
                             }
                         }
                     }
                 }
-            }
-            catch {
+            } catch {
                 $updateResults.Failed += @{
                     Module = $module.ModuleName
-                    Error = $_.Exception.Message
+                    Error  = $_.Exception.Message
                 }
                 Write-Error "  ✗ Failed to update $($module.ModuleName): $_"
             }

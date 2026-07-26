@@ -2,16 +2,15 @@
 
 Core Azure-related scripting, including identity and subscription management.
 
-> Module version: 1.0.5 | Last updated: 19th August 2025
+> Module version: 1.1.0 | Last updated: 26th July 2026
 
 ## 📋 Available Functions
 
-| Function                              | Description                                 |
-|----------------------------------------|---------------------------------------------|
-| `Get-PSUAzAccountAccessInSubscriptions` | Retrieves Azure role assignments for a specified user across filtered subscriptions |
-| `Get-PSUAzToken`                       | Retrieves an Azure access token for a specified resource |
-| `Get-PSUk8sPodLabel`                   | Gets pod labels from AKS clusters in parallel with minimal kubectl overhead |
-| `Test-PSUAzConnection`                 | Checks if an active Azure session exists |
+| Function                | Description                                                                    |
+|-------------------------|--------------------------------------------------------------------------------|
+| `Get-PSUAzToken`        | Retrieves an Azure access token for a specified resource                       |
+| `Get-PSUk8sPodLabel`    | Gets pod labels from AKS clusters in parallel with minimal kubectl overhead    |
+| `Test-PSUAzConnection`  | Checks if an active Azure session exists                                       |
 
 ## 📦 Installation
 
@@ -22,14 +21,20 @@ Install-Module -Name OMG.PSUtilities.AzureCore -Scope CurrentUser -Repository PS
 ## 📖 Usage Examples
 
 ```powershell
-# Get AKS workload identity inventory
-Get-PSUAksWorkloadIdentityInventory -SubscriptionId "xxxx-xxxx-xxxx-xxxx"
-
-# Get Azure access token
+# Get Azure access token for management API
 Get-PSUAzToken -Resource "https://management.azure.com/"
 
+# Get Azure access token for Microsoft Graph
+Get-PSUAzToken -Resource "https://graph.microsoft.com/"
+
 # Test Azure connection
-Test-PSUAzConnection -SubscriptionId "xxxx-xxxx-xxxx-xxxx"
+Test-PSUAzConnection
+
+# Get pod labels from all AKS clusters
+Get-PSUk8sPodLabel
+
+# Get pod labels from production clusters only
+Get-PSUk8sPodLabel -ClusterFilter "*prod*" -ThrottleLimit 15
 ```
 
 ## 🔗 Links
@@ -40,7 +45,7 @@ Test-PSUAzConnection -SubscriptionId "xxxx-xxxx-xxxx-xxxx"
 
 ## 📝 Requirements
 
-- PowerShell 5.1 or higher
+- PowerShell 7.0 or higher
 - Azure PowerShell modules
 - Appropriate Azure permissions
 

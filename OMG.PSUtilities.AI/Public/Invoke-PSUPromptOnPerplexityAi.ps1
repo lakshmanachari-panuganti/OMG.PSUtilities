@@ -60,6 +60,9 @@
         # With custom retry attempts for JSON fixing
         Invoke-PSUPromptOnPerplexityAi -Prompt "Get weather data" -ReturnJsonResponse -MaxJsonRetries 3
 
+    .OUTPUTS
+        [System.String] or [PSCustomObject]
+
     .NOTES
         Author: Lakshmanachari Panuganti
         Modified: October 2025

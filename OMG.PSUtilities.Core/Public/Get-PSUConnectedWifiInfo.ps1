@@ -12,6 +12,9 @@ function Get-PSUConnectedWifiInfo {
         Get-PSUConnectedWifiInfo
         Gets details of the currently connected Wi-Fi network.
 
+    .OUTPUTS
+        [PSCustomObject]
+
     .NOTES
         Author: Lakshmanachari Panuganti
         Created: 2025-07-03

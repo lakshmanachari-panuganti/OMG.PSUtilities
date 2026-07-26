@@ -26,6 +26,9 @@ function Get-PSUPublicIP {
         Get-PSUPublicIP -NoCache -TimeoutSec 5
         # Forces fresh lookup with 5 second timeout
 
+    .OUTPUTS
+        [System.String]
+
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 11 December 2025

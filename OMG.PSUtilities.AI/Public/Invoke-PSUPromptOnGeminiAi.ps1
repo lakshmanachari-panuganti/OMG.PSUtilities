@@ -1,5 +1,5 @@
 ﻿function Invoke-PSUPromptOnGeminiAi {
-<#
+    <#
 .SYNOPSIS
     Sends a text prompt to the Google Gemini 2.0 Flash AI model and returns the generated response.
 
@@ -34,6 +34,9 @@
 .EXAMPLE
     Invoke-PSUPromptOnGeminiAi -Prompt "Summarize cloud computing in one line"
 
+.OUTPUTS
+    [System.String] or [PSCustomObject]
+
 .NOTES
     Author: Lakshmanachari Panuganti
     Date: 2025-07-03
@@ -56,11 +59,11 @@
     param(
         [Parameter(Mandatory)]
         [ValidateScript({
-            if ([string]::IsNullOrWhiteSpace($_)) {
-                throw "Prompt cannot be null, empty, or contain only whitespace."
-            }
-            return $true
-        })]
+                if ([string]::IsNullOrWhiteSpace($_)) {
+                    throw "Prompt cannot be null, empty, or contain only whitespace."
+                }
+                return $true
+            })]
         [string]$Prompt,
 
         [Parameter()]
@@ -76,14 +79,13 @@
     #----------[Determine which API to use based on ApiKey availability]----------
 
     if ([string]::IsNullOrWhiteSpace($ApiKey) -or $UseProxy.IsPresent) {
-        if(-not $ApiKey) { Write-Verbose "API_KEY_GEMINI not configured - Routing request through proxy..." }
-        if($UseProxy.IsPresent) { Write-Verbose "UseProxy parameter enforced - Routing request through proxy..." }
+        if (-not $ApiKey) { Write-Verbose "API_KEY_GEMINI not configured - Routing request through proxy..." }
+        if ($UseProxy.IsPresent) { Write-Verbose "UseProxy parameter enforced - Routing request through proxy..." }
 
         try {
             $geminiresponse = Invoke-GeminiAIApi -Prompt $Prompt -ReturnJsonResponse:$ReturnJsonResponse
             return $geminiresponse.response
-        }
-        catch {
+        } catch {
             Write-Error "Failed to get response from Gemini proxy: $($_.Exception.Message)"
             Write-Host ""
             Write-Host "    Alternatively, you can use direct Gemini API with your own key:" -ForegroundColor Yellow
@@ -143,13 +145,11 @@
                 Write-Warning "Could not find a JSON object in the response."
                 return $rawText
             }
-        }
-        else {
+        } else {
             return $rawText
         }
 
-    }
-    catch {
+    } catch {
         Write-Error "Failed to get response from Gemini:`n$($_.Exception.Message)"
     }
 }

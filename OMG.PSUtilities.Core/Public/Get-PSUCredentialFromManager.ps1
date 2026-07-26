@@ -58,14 +58,18 @@ function Get-PSUCredentialFromManager {
                 Write-Verbose "Password copied to clipboard. Use with caution."
             }
 
-            $securePassword = ConvertTo-SecureString $CredentialManager.Password -AsPlainText -Force
+            $securePassword = [System.Security.SecureString]::new()
+            foreach ($character in $CredentialManager.Password.ToCharArray()) {
+                $securePassword.AppendChar($character)
+            }
+            $securePassword.MakeReadOnly()
             $credObj = New-Object System.Management.Automation.PSCredential (
                 $CredentialManager.Username,
                 $securePassword
             )
             $credObj | Add-Member -MemberType NoteProperty -Name LastModified -Value $CredentialManager.LastModified
             $credObj.PSTypeNames.Insert(0, 'PSU.CredentialManager.Credential')
-            return $credObj | Select-Object UserName, Password, LastModified
+            return $credObj
         }
         catch {
             $PSCmdlet.ThrowTerminatingError($_)

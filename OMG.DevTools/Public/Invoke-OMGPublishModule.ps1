@@ -26,6 +26,14 @@ function Invoke-OMGPublishModule {
     .EXAMPLE
         Invoke-OMGPublishModule -SkipChangelog -Force
         Publishes without updating changelogs and without prompts.
+
+    .OUTPUTS
+        Hashtable containing successful, skipped, and failed module publication results.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
+        Requires the API_KEY_PSGALLERY environment variable.
     #>
 
     [CmdletBinding(SupportsShouldProcess)]
@@ -106,9 +114,9 @@ function Invoke-OMGPublishModule {
                 Write-Host "`nPublishing modules to PSGallery..." -ForegroundColor Yellow
 
                 $publishResults = @{
-                    Success = @()
+                    Success          = @()
                     AlreadyPublished = @()
-                    Failed = @()
+                    Failed           = @()
                 }
 
                 foreach ($moduleName in $modulesUpdated) {
@@ -122,18 +130,16 @@ function Invoke-OMGPublishModule {
 
                             $publishResults.Success += $moduleName
                             Write-Host "  ✓ $moduleName published successfully" -ForegroundColor Green
-                        }
-                        catch {
+                        } catch {
                             $exception = $_.Exception.Message
 
                             if ($exception -like "*current version*is already available in the repository*") {
                                 $publishResults.AlreadyPublished += $moduleName
                                 Write-Host "  ⚠ $moduleName : Current version already exists in PSGallery" -ForegroundColor Yellow
-                            }
-                            else {
+                            } else {
                                 $publishResults.Failed += @{
                                     Module = $moduleName
-                                    Error = $exception
+                                    Error  = $exception
                                 }
                                 Write-Error "  ✗ Failed to publish $moduleName : $exception"
                             }
@@ -149,8 +155,7 @@ function Invoke-OMGPublishModule {
 
                 return $publishResults
             }
-        }
-        catch {
+        } catch {
             Write-Error "Failed to publish modules: $_"
             throw
         }
