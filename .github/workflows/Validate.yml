@@ -37,6 +37,8 @@ jobs:
           Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
           Install-Module -Name Pester -MinimumVersion 5.6.0 -Scope CurrentUser -Force -SkipPublisherCheck
           Install-Module -Name PSScriptAnalyzer -MinimumVersion 1.22.0 -Scope CurrentUser -Force
+          Install-Module -Name ImportExcel -MinimumVersion 7.8.9 -Scope CurrentUser -Force
+          Install-Module -Name Microsoft.PowerShell.ThreadJob -Scope CurrentUser -Force
 
       - name: Validate Repository
         shell: pwsh
