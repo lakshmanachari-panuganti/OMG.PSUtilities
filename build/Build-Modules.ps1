@@ -59,9 +59,6 @@ param (
 $ErrorActionPreference = 'Stop'
 
 & (Join-Path $PSScriptRoot 'Test-Repository.ps1')
-if ($LASTEXITCODE -ne 0) {
-    throw 'Repository validation failed.'
-}
 
 if ($Clean -and (Test-Path $OutputPath)) {
     Remove-Item -Path $OutputPath -Recurse -Force

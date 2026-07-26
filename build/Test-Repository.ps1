@@ -144,7 +144,7 @@ if ($validationErrors.Count -gt 0) {
     foreach ($validationError in $validationErrors) {
         Write-Host " - $validationError" -ForegroundColor Red
     }
-    exit 1
+    throw 'Repository validation failed.'
 }
 
 $result = [PSCustomObject]@{
