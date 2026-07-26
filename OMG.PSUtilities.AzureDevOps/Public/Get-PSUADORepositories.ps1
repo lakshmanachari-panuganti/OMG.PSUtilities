@@ -27,6 +27,9 @@ function Get-PSUADORepositories {
 
         Retrieves all repositories using the organization from $env:ORGANIZATION.
 
+    .OUTPUTS
+        [PSCustomObject]
+
     .NOTES
         Author: Lakshmanachari Panuganti
         Date: 2 July 2025: Initial Development.

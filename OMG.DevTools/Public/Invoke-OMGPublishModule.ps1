@@ -26,6 +26,14 @@ function Invoke-OMGPublishModule {
     .EXAMPLE
         Invoke-OMGPublishModule -SkipChangelog -Force
         Publishes without updating changelogs and without prompts.
+
+    .OUTPUTS
+        Hashtable containing successful, skipped, and failed module publication results.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
+        Requires the API_KEY_PSGALLERY environment variable.
     #>
 
     [CmdletBinding(SupportsShouldProcess)]

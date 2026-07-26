@@ -44,4 +44,5 @@ Thumbs.db
 # PowerShell module build/publish output
 Output/
 publish/
+artifacts/
 *.nupkg

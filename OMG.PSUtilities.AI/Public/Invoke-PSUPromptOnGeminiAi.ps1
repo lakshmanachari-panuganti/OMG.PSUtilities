@@ -34,6 +34,9 @@
 .EXAMPLE
     Invoke-PSUPromptOnGeminiAi -Prompt "Summarize cloud computing in one line"
 
+.OUTPUTS
+    [System.String] or [PSCustomObject]
+
 .NOTES
     Author: Lakshmanachari Panuganti
     Date: 2025-07-03

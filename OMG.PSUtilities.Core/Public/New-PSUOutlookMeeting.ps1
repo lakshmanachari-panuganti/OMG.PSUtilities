@@ -82,6 +82,9 @@ function New-PSUOutlookMeeting {
         }
         New-PSUOutlookMeeting @meetingParams
 
+    .OUTPUTS
+        [PSCustomObject]
+
     .NOTES
         Requires Microsoft.Graph.Calendar module and appropriate permissions.
         For all-day events, times are automatically set to midnight UTC as required by Microsoft Graph.

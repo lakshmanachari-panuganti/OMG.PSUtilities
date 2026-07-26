@@ -1,3 +1,11 @@
+## [1.0.20] - 26th July 2026
+### Security
+- Reduced plaintext credential exposure when retrieving credentials from Windows Credential Manager.
+- Added `ShouldProcess` support to `Set-PSUCredentialToManager` while preserving its existing parameter contract.
+
+### Documentation
+- Completed missing public command output documentation.
+
 ## [1.0.19] - 31st December 2025
 ### Changed
 - Added support for untracked files in `Get-PSUGitFileChangeMetadata` (Public): auto-stages by default as "New", marks as "Untracked" with `-ExcludeUntrackedFiles`.

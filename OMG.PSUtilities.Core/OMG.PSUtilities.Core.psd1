@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.Core.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.19'
+ModuleVersion = '1.0.20'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -52,7 +52,7 @@ PowerShellVersion = '5.1'
 
 # Modules that must be imported into the global environment prior to importing this module
 RequiredModules = @(
-    @{ ModuleName = 'ImportExcel'; RequiredVersion = '7.8.9' }
+    @{ ModuleName = 'ImportExcel'; ModuleVersion = '7.8.9' }
 )
 
 # Assemblies that must be loaded prior to importing this module

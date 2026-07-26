@@ -20,6 +20,10 @@ function Get-OMGModule {
 
     .OUTPUTS
         PSCustomObject with ModuleName and Path properties.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
     #>
 
     [CmdletBinding()]

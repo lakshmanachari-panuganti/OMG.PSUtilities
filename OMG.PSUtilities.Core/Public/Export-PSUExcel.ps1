@@ -56,6 +56,9 @@ function Export-PSUExcel {
         $data | Export-PSUExcel -ExcelPath 'C:\Reports\report.xlsx' -AutoFilter
         Export data with Excel-style column filters enabled
 
+    .OUTPUTS
+        None. The function writes the supplied data to an Excel workbook.
+
     .NOTES
         Author: Lakshmanachari Panuganti
         Created: 2025-06-27

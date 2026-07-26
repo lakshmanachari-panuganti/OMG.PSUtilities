@@ -2,7 +2,7 @@
 
 Core Azure-related scripting, including identity and subscription management.
 
-> Module version: 1.0.5 | Last updated: 7th March 2026
+> Module version: 1.1.0 | Last updated: 26th July 2026
 
 ## 📋 Available Functions
 
@@ -45,7 +45,7 @@ Get-PSUk8sPodLabel -ClusterFilter "*prod*" -ThrottleLimit 15
 
 ## 📝 Requirements
 
-- PowerShell 5.1 or higher
+- PowerShell 7.0 or higher
 - Azure PowerShell modules
 - Appropriate Azure permissions
 

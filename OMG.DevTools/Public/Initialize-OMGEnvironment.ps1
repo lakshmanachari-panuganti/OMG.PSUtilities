@@ -23,6 +23,10 @@ function Initialize-OMGEnvironment {
 
     .OUTPUTS
         Hashtable with validation results.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
     #>
 
     [CmdletBinding()]

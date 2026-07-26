@@ -19,6 +19,13 @@ function Invoke-OMGUpdateModule {
     .EXAMPLE
         Invoke-OMGUpdateModule -WhatIf
         Shows which modules would be updated.
+
+    .OUTPUTS
+        Hashtable containing updated, current, failed, and unavailable module results.
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Version: 1.0
     #>
 
     [CmdletBinding(SupportsShouldProcess)]

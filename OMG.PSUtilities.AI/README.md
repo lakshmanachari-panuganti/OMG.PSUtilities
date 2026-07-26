@@ -2,7 +2,7 @@
 
 PowerShell utilities for AI-powered automation and reporting.
 
-> Module version: 1.0.37 | Last updated: 23rd December 2025
+> Module version: 1.0.42 | Last updated: 26th July 2026
 
 ## 📋 Available Functions
 

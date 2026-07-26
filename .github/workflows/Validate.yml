@@ -1,0 +1,71 @@
+name: Validate PowerShell Modules
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches-ignore:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Validate, Test, and Build
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure PowerShell Module Path
+        shell: pwsh
+        run: |
+          "PSModulePath=$env:GITHUB_WORKSPACE;$env:PSModulePath" >> $env:GITHUB_ENV
+
+      - name: Install Validation Dependencies
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          Set-PSRepository -Name PSGallery -InstallationPolicy Trusted
+          Install-Module -Name Pester -MinimumVersion 5.6.0 -Scope CurrentUser -Force -SkipPublisherCheck
+          Install-Module -Name PSScriptAnalyzer -MinimumVersion 1.22.0 -Scope CurrentUser -Force
+
+      - name: Validate Repository
+        shell: pwsh
+        run: .\build\Test-Repository.ps1 -IncludeScriptAnalyzer
+
+      - name: Run Pester Tests
+        shell: pwsh
+        run: |
+          New-Item -Path '.\artifacts' -ItemType Directory -Force | Out-Null
+          $configuration = New-PesterConfiguration
+          $configuration.Run.Path = '.\tests'
+          $configuration.Run.Exit = $true
+          $configuration.Output.Verbosity = 'Detailed'
+          $configuration.TestResult.Enabled = $true
+          $configuration.TestResult.OutputPath = '.\artifacts\test-results.xml'
+          $configuration.TestResult.OutputFormat = 'NUnitXml'
+          Invoke-Pester -Configuration $configuration
+
+      - name: Build Module Artifacts
+        shell: pwsh
+        run: .\build\Build-Modules.ps1 -Clean
+
+      - name: Upload Validation Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-${{ github.run_number }}
+          path: |
+            artifacts/test-results.xml
+            artifacts/modules
+          if-no-files-found: warn
+          retention-days: 14

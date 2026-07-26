@@ -2,7 +2,7 @@
 
 General purpose PowerShell utilities and system-level tools.
 
-> Module version: 1.0.8 | Last updated: 19th August 2025
+> Module version: 1.0.20 | Last updated: 26th July 2026
 
 ## 📋 Available Functions
 

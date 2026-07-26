@@ -35,6 +35,9 @@ function Start-PSUGeminiChat {
 
 .EXAMPLE
     Start-PSUGeminiChat
+
+.OUTPUTS
+    None. This function provides an interactive console session.
 #>
 
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'Low')]
