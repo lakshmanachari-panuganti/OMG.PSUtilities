@@ -1,0 +1,47 @@
+# Secrets and local configuration
+.env
+*.env
+local.settings.json
+**/local.settings.json
+secrets.ps1
+*.secret
+*.secrets
+
+# Credentials / keys
+*.pfx
+*.pem
+*.key
+*.snk
+
+# Azure Functions local artifacts
+bin/
+obj/
+appsettings.*.json
+
+# Test and coverage output
+TestResults/
+TestResults-*.xml
+TestResults-*.json
+coverage*.xml
+*.coverage
+
+# Generated reports
+*Report*.html
+AuditReport*.csv
+
+# Logs and temp
+*.log
+*.tmp
+tmp/
+temp/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.vs/
+
+# PowerShell module build/publish output
+Output/
+publish/
+*.nupkg

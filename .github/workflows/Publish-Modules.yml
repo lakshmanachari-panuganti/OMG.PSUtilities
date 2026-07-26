@@ -44,6 +44,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           $updatedModules = @()
+          $failedModules = @()
           $modules = $env:MODULES -split "`n"
 
           foreach ($module in $modules) {
@@ -81,7 +82,8 @@ jobs:
                       $updatedModules += $module
                       Write-Host "=======> Published $module successfully!" -ForegroundColor Green
                   } catch {
-                      Write-Warning "Failed to publish $module : $_"
+                      Write-Error "Failed to publish $module : $_"
+                      $failedModules += $module
                   }
               } else {
                   Write-Host "No version change for $module. Skipping publish."
@@ -92,6 +94,10 @@ jobs:
               Write-Host "`nNo modules needed publishing."
           } else {
               Write-Host "`nPublished modules: $($updatedModules -join ', ')"
+          }
+
+          if ($failedModules.Count -gt 0) {
+              throw "Publishing failed for the following module(s): $($failedModules -join ', ')"
           }
 
       - name: Summarize Published Modules

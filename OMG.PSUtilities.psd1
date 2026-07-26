@@ -6,7 +6,7 @@
     Author = 'OMG IT Solutions'
     CompanyName = 'OMG IT Solutions'
     Description = 'Meta module that includes all OMG.PSUtilities.* submodules.'
-    PowerShellVersion = '5.1'
+    PowerShellVersion = '7.0'
     NestedModules = @(
         'OMG.PSUtilities.ActiveDirectory',
         'OMG.PSUtilities.VSphere',

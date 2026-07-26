@@ -180,7 +180,7 @@ function Invoke-OMGBuildModule {
                         Recurse       = $true
                         IncludeRule   = $rules
                         Settings      = $settings
-                        Fix           = $true
+                        Fix           = $false
                         Severity      = @('Warning', 'Error')
                         ReportSummary = $true
                     }
