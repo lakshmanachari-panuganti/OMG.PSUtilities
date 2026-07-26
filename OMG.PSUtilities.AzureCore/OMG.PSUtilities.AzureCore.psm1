@@ -20,6 +20,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name
 $PublicFunctions = @(
     'Get-PSUAzToken',
     'Get-PSUk8sPodLabel',
+    'Invoke-PSUAzureAppRegAudit',
     'Test-PSUAzConnection'
 )
 
