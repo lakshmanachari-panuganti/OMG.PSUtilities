@@ -1,4 +1,4 @@
-﻿function New-PSUAiPoweredPullRequest {
+function New-PSUAiPoweredPullRequest {
     <#
     .SYNOPSIS
         Uses AI assistance to generate a professional Pull Request (PR) title and description from Git change summaries.
@@ -15,7 +15,7 @@
         (Optional) The feature branch being merged.
         Default value is the current git branch from git branch --show-current.
 
-    .PARAMETER PullRequestTemplate
+    .PARAMETER PullRequestTemplatePath
         (Optional) Path to the Pull Request template file.
         Default value is "C:\Temp\PRTemplate.txt".
 

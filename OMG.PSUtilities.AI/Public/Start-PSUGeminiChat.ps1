@@ -62,7 +62,7 @@ function Start-PSUGeminiChat {
     }
 
     $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"
-    $chatHistory = @()
+    $chatHistory = [System.Collections.Generic.List[hashtable]]::new()
 
     Write-Host "💬 Welcome to PSU Ai Chatbot!!" -ForegroundColor Green
     Write-Host "Type your message. Type 'exit' or 'q' to quit." -ForegroundColor Yellow
@@ -81,7 +81,7 @@ function Start-PSUGeminiChat {
             break
         }
 
-        $chatHistory += @{ role = "user"; parts = @(@{ text = $prompt }) }
+        $chatHistory.Add(@{ role = "user"; parts = @(@{ text = $prompt }) })
 
         $body = @{ contents = $chatHistory } | ConvertTo-Json -Depth 10
 
@@ -94,7 +94,7 @@ function Start-PSUGeminiChat {
             Write-Host "`n🤖 PSU-Ai: " -NoNewline
             Write-Host $text -ForegroundColor Yellow
 
-            $chatHistory += @{ role = "model"; parts = @(@{ text = $text }) }
+            $chatHistory.Add(@{ role = "model"; parts = @(@{ text = $text }) })
         }
         catch {
             Write-Error "Error communicating with Gemini: $($_.Exception.Message)"

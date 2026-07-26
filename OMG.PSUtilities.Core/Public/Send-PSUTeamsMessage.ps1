@@ -27,7 +27,7 @@ function Send-PSUTeamsMessage {
         Send-PSUTeamsMessage -WebhookUrl 'https://outlook.office.com/webhook/...' -Message 'Deployment completed!'
 
     .OUTPUTS
-        None
+        [object]
 
     .NOTES
         Author: Lakshmanachari Panuganti
@@ -38,6 +38,7 @@ function Send-PSUTeamsMessage {
         https://www.linkedin.com/in/lakshmanachari-panuganti/
         https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
     #>
+    [CmdletBinding()]
     param(
         [Parameter(Mandatory)]
         [string]$WebhookUrl,
@@ -53,6 +54,6 @@ function Send-PSUTeamsMessage {
         Write-Verbose "Message sent to Teams successfully."
         return $response
     } catch {
-        Write-Error "Failed to send message to Teams: $_"
+        $PSCmdlet.ThrowTerminatingError($_)
     }
 }

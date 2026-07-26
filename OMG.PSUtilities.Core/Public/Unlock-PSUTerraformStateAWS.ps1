@@ -41,7 +41,7 @@
     Terraform operation is still active.
 #>
 function Unlock-PSUTerraformStateAWS {
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $false)]
         [string]$Path = (Get-Location).Path,
@@ -220,9 +220,8 @@ function Unlock-PSUTerraformStateAWS {
         Write-Host "Directory: $Path"
     }
     catch {
-        Write-Host "Error: $($_.Exception.Message)"
-        Write-Host "Operation failed"
-        exit 1
+        Write-Error "Operation failed: $($_.Exception.Message)"
+        $PSCmdlet.ThrowTerminatingError($_)
     }
     finally {
         Set-Location -Path $originalLocation

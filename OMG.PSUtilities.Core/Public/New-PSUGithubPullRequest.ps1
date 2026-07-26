@@ -95,7 +95,7 @@ function New-PSUGithubPullRequest {
         https://www.powershellgallery.com/packages/OMG.PSUtilities.Core
         https://docs.github.com/en/rest/pulls/pulls#create-a-pull-request
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',
@@ -221,28 +221,21 @@ function New-PSUGithubPullRequest {
             # Enable auto-merge if specified
             if ($CompleteOnApproval) {
                 try {
-                    $autoMergeUri = "https://api.github.com/repos/$Owner/$Repository/pulls/$pullRequestNumber/merge"
-                    $autoMergeBody = @{
-                        merge_method = "merge"
-                    } | ConvertTo-Json
-
-                    # Enable auto-merge using the GraphQL-style approach via REST
+                    # GitHub auto-merge uses the GraphQL API via REST
                     $autoMergeHeaders = $headers.Clone()
                     $autoMergeHeaders['Accept'] = 'application/vnd.github.v3+json'
 
-                    # Use the enable auto-merge endpoint
                     $enableAutoMergeUri = "https://api.github.com/repos/$Owner/$Repository/pulls/$pullRequestNumber/merge"
                     $enableAutoMergeBody = @{
                         merge_method = "merge"
-                        auto_merge = $true
                     } | ConvertTo-Json
 
-                    # Note: Auto-merge API is available but may require specific permissions
                     Write-Host "Attempting to enable auto-merge..." -ForegroundColor Yellow
-                    Write-Host "Note: Auto-merge will only trigger when all required checks pass and approvals are met." -ForegroundColor Cyan
+                    Invoke-RestMethod -Method Put -Uri $enableAutoMergeUri -Headers $autoMergeHeaders -Body $enableAutoMergeBody -ContentType "application/json" -ErrorAction Stop
+                    Write-Host "Auto-merge enabled. It will trigger when all required checks pass and approvals are met." -ForegroundColor Green
                 }
                 catch {
-                    Write-Warning "Auto-merge setup note: $($_.Exception.Message). Auto-merge requires repository admin permissions and must be enabled in repository settings."
+                    Write-Warning "Auto-merge setup failed: $($_.Exception.Message). Auto-merge requires repository admin permissions and must be enabled in repository settings."
                 }
             }
 

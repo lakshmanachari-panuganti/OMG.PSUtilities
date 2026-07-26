@@ -90,7 +90,7 @@ function New-PSUOutlookMeeting {
         For all-day events, times are automatically set to midnight UTC as required by Microsoft Graph.
     #>
 
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param(
         [Parameter(Mandatory = $true)]
         [string]$Subject,
@@ -170,15 +170,15 @@ function New-PSUOutlookMeeting {
             }
 
             # Build attendees array
-            $attendeeList = @()
+            $attendeeList = [System.Collections.Generic.List[hashtable]]::new()
             foreach ($attendeeEmail in $Attendees) {
-                $attendeeList += @{
+                $attendeeList.Add(@{
                     emailAddress = @{
                         address = $attendeeEmail
                         name = $attendeeEmail
                     }
                     type = $AttendeeType
-                }
+                })
             }
 
             # Build the meeting body based on whether it's all-day or not
