@@ -112,7 +112,7 @@ function New-PSUADOPullRequest {
         https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
         https://learn.microsoft.com/en-us/rest/api/azure/devops/git/pull-requests/create
     #>
-    [CmdletBinding(DefaultParameterSetName = 'ByRepoName')]
+    [CmdletBinding(SupportsShouldProcess, DefaultParameterSetName = 'ByRepoName')]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
         'PSAvoidUsingWriteHost',
         '',

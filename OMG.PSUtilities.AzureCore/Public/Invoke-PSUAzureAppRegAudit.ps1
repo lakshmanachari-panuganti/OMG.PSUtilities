@@ -216,6 +216,10 @@ function Invoke-PSUAzureAppRegAudit {
     }
 
     process {
+        if (-not $PSCmdlet.ShouldProcess("Tenant '$TenantId'", 'Run Azure App Registration Audit')) {
+            return
+        }
+
         try {
             #region Pre-flight Validation
             Write-Log "INFO" "PreFlight" "Starting pre-flight validation..."

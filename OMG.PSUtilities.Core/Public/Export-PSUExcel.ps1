@@ -72,7 +72,7 @@ function Export-PSUExcel {
         https://github.com/dfinke/ImportExcel
 
     #>
-    [CmdletBinding()]
+    [CmdletBinding(SupportsShouldProcess)]
     param (
         [Parameter(Mandatory, ValueFromPipeline = $true)]
         [object[]]$DataObject,
@@ -106,11 +106,11 @@ function Export-PSUExcel {
     )
 
     begin {
-        $allData = @()
+        $allData = [System.Collections.Generic.List[object]]::new()
     }
     process {
         if ($null -ne $DataObject) {
-            $allData += $DataObject
+            $allData.AddRange(@($DataObject))
         }
     }
     end {
@@ -128,8 +128,10 @@ function Export-PSUExcel {
                     }
 
                     $backupFilePath = Join-Path $backupFolder ($fileInfo.BaseName + "-$timestamp.xlsx")
-                    Write-Host "Backing up existing file to '$backupFilePath'..." -ForegroundColor Cyan
-                    Move-Item -Path $ExcelPath -Destination $backupFilePath -Force
+                    Write-Verbose "Backing up existing file to '$backupFilePath'..."
+                    if ($PSCmdlet.ShouldProcess($ExcelPath, "Move to backup '$backupFilePath'")) {
+                        Move-Item -Path $ExcelPath -Destination $backupFilePath -Force
+                    }
                 }
                 else {
                     Write-Warning "No existing file found with the name '$ExcelPath'. No backup created."
@@ -138,7 +140,9 @@ function Export-PSUExcel {
             }
             else {
                 if (-not $PSBoundParameters.ContainsKey('WorksheetName') -and (Test-Path -Path $ExcelPath)) {
-                    Remove-Item -Path $ExcelPath -Force
+                    if ($PSCmdlet.ShouldProcess($ExcelPath, 'Remove existing Excel file')) {
+                        Remove-Item -Path $ExcelPath -Force
+                    }
                 }
             }
 
