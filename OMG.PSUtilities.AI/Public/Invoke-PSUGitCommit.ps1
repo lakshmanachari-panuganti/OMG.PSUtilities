@@ -284,7 +284,9 @@ $($item.Diff)
         $CustomCommitMsg = ($CustomCommitMsg).Trim()
 
         if ($CustomCommitMsg -ieq 'R') {
+            # The nested call does the commit and push, so stop here
             Invoke-PSUGitCommit
+            return
         } elseif ($CustomCommitMsg) {
             $commitMessage = $CustomCommitMsg
         }

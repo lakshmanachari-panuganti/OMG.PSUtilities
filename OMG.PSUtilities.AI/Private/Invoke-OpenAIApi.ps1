@@ -26,7 +26,6 @@ function Invoke-OpenAIApi {
                 Method      = 'Post'
                 Uri         = $ApiUrl
                 Body        = $body
-                Headers     = $headers
                 ContentType = 'application/json'
                 TimeoutSec  = $TimeoutSeconds
             }

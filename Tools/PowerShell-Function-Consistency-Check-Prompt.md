@@ -189,7 +189,7 @@ You are a PowerShell code quality auditor for the OMG.PSUtilities module suite. 
 ### 8. Security Considerations (OMG.PSUtilities Standards)
 **Credential Handling:**
 - [ ] No hardcoded credentials or API keys
-- [ ] Environment variable usage for sensitive data: `$env:PAT`, `$env:API_KEY_GEMINI`
+- [ ] Environment variable usage for sensitive data: `$env:PAT`, `$env:GEMINI_API_KEY`
 - [ ] Clear documentation of required environment variables
 - [ ] Secure string handling where appropriate
 - [ ] Authentication headers properly constructed and secured

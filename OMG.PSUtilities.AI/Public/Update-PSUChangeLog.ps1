@@ -88,7 +88,7 @@
 
                 if (-not (Test-Path $changelogPath)) {
                     Write-Error "CHANGELOG.md not found for $thisModuleName at path [$changelogPath]."
-                    return
+                    continue
                 }
 
                 # Detect changed files
@@ -101,7 +101,7 @@
 
                 if (-not $files) {
                     Write-Warning "[$thisModuleName] No $($filteredfiles)file changes detected between $BaseBranch and $FeatureBranch."
-                    return
+                    continue
                 }
 
                 $diffs = foreach ($file in $files) {
@@ -210,7 +210,7 @@ Note: if any type change (like Deprecated, Removed, Fixed, Security) is not avai
                     Write-Host "CHANGELOG.md updated successfully for $thisModuleName." -ForegroundColor Green
                 }
             } catch {
-                $PSCmdlet.ThrowTerminatingError("Failed to update changelog for $thisModuleName. Error: $_")
+                throw "Failed to update changelog for $thisModuleName. Error: $_"
             }
         }
 
