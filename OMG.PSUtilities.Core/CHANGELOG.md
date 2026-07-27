@@ -1,3 +1,7 @@
+## [1.0.21] - 27th July 2026
+### Documentation
+- `Get-PSUUserEnvironmentVariable` (Public): updated the pipeline example to use `GEMINI_API_KEY`, following the environment variable rename in `OMG.PSUtilities.AI` 1.0.43.
+
 ## [1.0.20] - 26th July 2026
 ### Security
 - Reduced plaintext credential exposure when retrieving credentials from Windows Credential Manager.
