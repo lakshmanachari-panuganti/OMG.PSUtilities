@@ -47,7 +47,7 @@ function Set-PSUDefaultAiEngine {
             if (-not $env:AZURE_OPENAI_DEPLOYMENT) { $missingVars += "AZURE_OPENAI_DEPLOYMENT" }
         }
         "GeminiAi" {
-            if (-not $env:API_KEY_GEMINI) { $missingVars += "API_KEY_GEMINI" }
+            if (-not $env:GEMINI_API_KEY) { $missingVars += "GEMINI_API_KEY" }
         }
         "PerplexityAi" {
             if (-not $env:API_KEY_PERPLEXITY) { $missingVars += "API_KEY_PERPLEXITY" }

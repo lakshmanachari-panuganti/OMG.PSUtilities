@@ -43,7 +43,7 @@ function Initialize-OMGEnvironment {
     begin {
         $requiredVars = @(
             'BASE_MODULE_PATH'
-            'API_KEY_GEMINI'
+            'GEMINI_API_KEY'
             'API_KEY_CLAUDE'
             'API_KEY_OPENAI'
             'API_KEY_PERPLEXITY'

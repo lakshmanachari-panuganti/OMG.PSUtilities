@@ -6,7 +6,7 @@ Write-Host 'FILE: C:\repos\OMG.PSUtilities\OMG.PSUtilities.AI\Private\New-PSUApi
 # Check environment variables if not exist ask for create
 @(
     '$env:BASE_MODULE_PATH'
-    '$env:API_KEY_GEMINI'
+    '$env:GEMINI_API_KEY'
     '$env:API_KEY_CLAUDE'
     '$env:API_KEY_OPENAI'
     '$env:API_KEY_PERPLEXITY'

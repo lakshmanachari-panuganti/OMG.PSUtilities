@@ -1,3 +1,24 @@
+## [1.0.43] - 27th July 2026
+### Fixed
+- `Invoke-GeminiAIApi` (Private): read request headers from `$script:PSU_API_HEADERS` instead of an undefined `$headers` variable. The Gemini proxy path and `Convert-PSUContext` previously failed on every call with "Cannot index into a null array".
+- `New-PSUApiKey` (Private): cache the full header set returned by the token issuer so callers can use it, treat a cached key without headers as a cache miss, and clear the cached headers when key generation fails.
+- `Invoke-GeminiAIApi` (Private): send `application/json` as the content type on the proxy request.
+- `Invoke-PSUPromptOnGeminiAi` (Public): use `Get-ValidJson` in place of a non-greedy regex, which truncated nested JSON arrays mid-structure when `-ReturnJsonResponse` was supplied.
+- `Update-PSUChangeLog` (Public): use `continue` rather than `return` inside the module loop, so a failure on one module no longer skips every remaining module.
+- `Update-PSUChangeLog` (Public): `throw` instead of passing a string to `$PSCmdlet.ThrowTerminatingError`, which raised an ErrorRecord conversion error that masked the real cause.
+- `Invoke-PSUGitCommit` (Public): return after the regenerate recursion, which previously produced a second commit and push using the stale message.
+
+### Changed
+- **BREAKING** `Invoke-PSUPromptOnGeminiAi`, `Start-PSUGeminiChat`, `Set-PSUDefaultAiEngine` (Public): the Gemini API key environment variable is renamed from `API_KEY_GEMINI` to `GEMINI_API_KEY`, matching Google's documented convention. There is no fallback - existing users must rename the variable or calls will route through the proxy instead.
+- `Invoke-PSUPromptOnGeminiAi`, `Start-PSUGeminiChat` (Public): model updated to `gemini-3.5-flash`. The two cmdlets previously disagreed, pinning `gemini-2.5-flash` and `gemini-2.0-flash` respectively.
+- `Invoke-PSUPromptOnGeminiAi`, `Start-PSUGeminiChat` (Public): the API key is sent in the `x-goog-api-key` header rather than the URL query string, per Google's documented REST method, keeping it out of proxy logs and request traces.
+
+### Security
+- `Invoke-OpenAIApi` (Private): removed an undefined `$headers` splat. Through PowerShell's dynamic scoping this forwarded whatever `$headers` existed in a caller's scope to the OpenAI proxy, including the Bearer token built by `Invoke-PSUPromptOnPerplexityAi`.
+
+### Added
+- `tests/OMG.PSUtilities.AI.Tests.ps1`: 11 Pester tests covering each fix above, with all HTTP calls mocked so they run offline in CI.
+
 ## [1.0.42] - 1st January 2026
 ### Added
 - `Get-OptimalMaxToken` (Private): Calculates optimal MaxTokens based on prompt size, response size presets, and model context window.
@@ -260,7 +281,7 @@
 - Replaced all calls to `Invoke-PSUPromptOnGeminiAi` with the new `Invoke-PSUAiPrompt` in `Get-PSUAiPoweredGitChangeSummary.ps1`, `Invoke-PSUGitCommit.ps1`, and `New-PSUAiPoweredPullRequest.ps1`.
 - Updated the default value calculation of `BaseBranch` in `New-PSUAiPoweredPullRequest.ps1` to correctly extract the branch name using a regex replace.
 - Renamed parameter from `PullRequestTemplate` to `PullRequestTemplatePath` in `New-PSUAiPoweredPullRequest.ps1` and updated all references accordingly.
-- Simplified parameter requirements in `Invoke-PSUGitCommit.ps1` by removing environment variable dependency `$env:API_KEY_GEMINI`.
+- Simplified parameter requirements in `Invoke-PSUGitCommit.ps1` by removing environment variable dependency `$env:GEMINI_API_KEY`.
 - Improved commit message generation in `Invoke-PSUGitCommit.ps1` to use `Invoke-PSUAiPrompt` without requiring an API key argument.
 - Enhanced error handling and JSON parsing consistency in AI prompt responses across affected scripts.
 ## [1.0.14] - 17th October 2025

@@ -214,7 +214,7 @@ Write-Host @"
    2. Sign in with your Google account
    3. Click "Create API Key"
    4. Copy the key and save it using:
-       Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "YOUR_API_KEY_VALUE"
+       Set-PSUUserEnvironmentVariable -Name "GEMINI_API_KEY" -Value "YOUR_API_KEY_VALUE"
 "@ -ForegroundColor Cyan
 ```
 
@@ -775,7 +775,7 @@ begin {
 **Excellent Practices:**
 
 ✅ **No hardcoded secrets** anywhere in codebase  
-✅ **Environment variable pattern** (`$env:PAT`, `$env:API_KEY_GEMINI`, `$env:ORGANIZATION`)  
+✅ **Environment variable pattern** (`$env:PAT`, `$env:GEMINI_API_KEY`, `$env:ORGANIZATION`)  
 ✅ **Helper function for setting env vars** (`Set-PSUUserEnvironmentVariable`)  
 ✅ **PAT masking in output** (first 3 chars + `********`)  
 ✅ **Auth header centralization** (`Get-PSUAdoAuthHeader`)  
@@ -941,7 +941,7 @@ Write-Host @"
    2. Sign in with your Google account
    3. Click "Create API Key"
    4. Copy the key and save it using:
-       Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "YOUR_API_KEY_VALUE"
+       Set-PSUUserEnvironmentVariable -Name "GEMINI_API_KEY" -Value "YOUR_API_KEY_VALUE"
 "@ -ForegroundColor Cyan
 ```
 

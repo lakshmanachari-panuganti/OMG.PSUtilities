@@ -24,7 +24,7 @@ function Get-PSUUserEnvironmentVariable {
         'API_KEY_OPENAI', 'ADO_ORGANIZATION' | Get-PSUUserEnvironmentVariable
 
     .EXAMPLE
-        [PSCustomObject] @{'Name' = 'API_KEY_GEMINI'} | Get-PSUUserEnvironmentVariable
+        [PSCustomObject] @{'Name' = 'GEMINI_API_KEY'} | Get-PSUUserEnvironmentVariable
 
     .OUTPUTS
         [PSCustomObject]

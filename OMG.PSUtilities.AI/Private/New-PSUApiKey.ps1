@@ -62,7 +62,7 @@
     process {
         try {
             # Check for cached key first (unless Force is specified)
-            if (-not $Force -and $script:PSU_API_KEY -and $script:PSU_API_KEY_EXPIRY) {
+            if (-not $Force -and $script:PSU_API_KEY -and $script:PSU_API_KEY_EXPIRY -and $script:PSU_API_HEADERS) {
                 $now = [DateTime]::UtcNow
                 if ($now -lt $script:PSU_API_KEY_EXPIRY) {
                     $timeLeft = $script:PSU_API_KEY_EXPIRY - $now
@@ -155,6 +155,9 @@
             $script:PSU_API_KEY_COMPUTER = $clientDevice
             $script:PSU_API_KEY_IP = $clientIP
 
+            # Cache the whole header set - callers need the psu-client* headers, not just the token
+            $script:PSU_API_HEADERS = $Headers
+
             # ============================================
             # 9. Display success message
             # ============================================
@@ -183,6 +186,7 @@
             # Clear any partial cache on error
             $script:PSU_API_KEY = $null
             $script:PSU_API_KEY_EXPIRY = $null
+            $script:PSU_API_HEADERS = $null
 
             Write-Host ""
             Write-Host "╔════════════════════════════════════════════════════════╗" -ForegroundColor Red

@@ -106,8 +106,8 @@ function Invoke-GeminiAIApi {
                 Write-Verbose "Force new API key requested"
                 $needNewKey = $true
             }
-            elseif (-not $script:PSU_API_KEY) {
-                Write-Verbose "No cached API key found"
+            elseif (-not $script:PSU_API_KEY -or -not $script:PSU_API_HEADERS) {
+                Write-Verbose "No cached API key or headers found"
                 $needNewKey = $true
             }
             elseif ($script:PSU_API_KEY_EXPIRY -and ([DateTime]::UtcNow -gt $script:PSU_API_KEY_EXPIRY)) {
@@ -149,8 +149,11 @@ function Invoke-GeminiAIApi {
             ReturnJsonResponse = [bool]$ReturnJsonResponse
         } | ConvertTo-Json -Depth 20
 
+        $headers = $script:PSU_API_HEADERS
+
         # Validate required headers are present
-        if (-not $headers['psu-clientusername'] -or -not $headers['psu-clientdevice'] -or -not $headers['psu-clientip']) {
+        if (-not $headers -or -not $headers['Authorization'] -or -not $headers['psu-clientusername'] -or
+            -not $headers['psu-clientdevice'] -or -not $headers['psu-clientip']) {
             throw "Missing required authentication metadata. Ensure New-PSUApiKey has been called successfully."
         }
 
@@ -176,6 +179,7 @@ function Invoke-GeminiAIApi {
                     Uri         = $ApiUrl
                     Body        = $body
                     Headers     = $headers
+                    ContentType = 'application/json'
                     TimeoutSec  = $TimeoutSeconds
                     ErrorAction = 'Stop'
                 }

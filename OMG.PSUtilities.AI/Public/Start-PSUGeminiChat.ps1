@@ -1,15 +1,15 @@
 function Start-PSUGeminiChat {
     <#
 .SYNOPSIS
-    Interactive Gemini 2.0 Flash chatbot using Google's Generative Language API.
+    Interactive Gemini 3.5 Flash chatbot using Google's Generative Language API.
 
 .DESCRIPTION
     Opens a PowerShell-based chat session with Gemini AI.
 
-    This function interacts with Google's Generative Language API (Gemini 2.0 Flash model) to perform fast and
+    This function interacts with Google's Generative Language API (Gemini 3.5 Flash model) to perform fast and
     lightweight AI content generation.
 
-    Requires an environment variable named 'API_KEY_GEMINI'.
+    Requires an environment variable named 'GEMINI_API_KEY'.
 
     How to get started:
     ----------------------
@@ -20,7 +20,7 @@ function Start-PSUGeminiChat {
 
 .PARAMETER ApiKey
     (Optional) The API key for Google Gemini AI service.
-    Default value is $env:API_KEY_GEMINI. Set using: Set-PSUUserEnvironmentVariable -Name "API_KEY_GEMINI" -Value "your-api-key"
+    Default value is $env:GEMINI_API_KEY. Set using: Set-PSUUserEnvironmentVariable -Name "GEMINI_API_KEY" -Value "your-api-key"
 
 .NOTES
     Author: Lakshmanachari Panuganti
@@ -48,11 +48,11 @@ function Start-PSUGeminiChat {
     )]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseBOMForUnicodeEncodedFile", "", Justification = "UTF-8 BOM will be added in build process")]
     param (
-        [string]$ApiKey = $env:API_KEY_GEMINI
+        [string]$ApiKey = $env:GEMINI_API_KEY
     )
 
     if (-not $ApiKey) {
-        Write-Error "Gemini API key not found. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_GEMINI' -Value '<your-api-key>'"
+        Write-Error "Gemini API key not found. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'GEMINI_API_KEY' -Value '<your-api-key>'"
         return
     }
 
@@ -61,7 +61,7 @@ function Start-PSUGeminiChat {
         return
     }
 
-    $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$ApiKey"
+    $uri = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent"
     $chatHistory = [System.Collections.Generic.List[hashtable]]::new()
 
     Write-Host "💬 Welcome to PSU Ai Chatbot!!" -ForegroundColor Green
@@ -86,7 +86,7 @@ function Start-PSUGeminiChat {
         $body = @{ contents = $chatHistory } | ConvertTo-Json -Depth 10
 
         try {
-            $response = Invoke-RestMethod -Method Post -Uri $uri -Body $body -ContentType 'application/json'
+            $response = Invoke-RestMethod -Method Post -Uri $uri -Headers @{ 'x-goog-api-key' = $ApiKey } -Body $body -ContentType 'application/json'
 
             $text = $response.candidates[0].content.parts[0].text
             #$text = $text -replace '```json', '' -replace '```', '' -replace '^[\s\r\n]+|[\s\r\n]+$', ''
