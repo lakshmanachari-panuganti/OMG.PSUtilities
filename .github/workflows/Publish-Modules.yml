@@ -28,8 +28,27 @@ jobs:
   publish:
     name: Validate, Package, and Publish
     runs-on: windows-latest
+    # Publishing to PowerShell Gallery cannot be undone - a version, once public, stays
+    # public. The environment adds a required reviewer and restricts deployments to main,
+    # so no merge alone reaches the gallery and PSGALLERY_API_KEY is unreachable from any
+    # run that has not been approved.
+    environment: psgallery
 
     steps:
+      # workflow_dispatch can be started from ANY ref, and the run uses the workflow file
+      # from that ref. Without this, a branch carrying a modified copy of this file would
+      # execute with the gallery key attached.
+      - name: Refuse to publish from anything but main
+        shell: pwsh
+        env:
+          REF: ${{ github.ref }}
+        run: |
+          if ($env:REF -ne 'refs/heads/main') {
+              Write-Host "::error::Publishing may only run from refs/heads/main. This run is on $env:REF."
+              exit 1
+          }
+          Write-Host 'Running from main.'
+
       - name: Checkout Repository
         uses: actions/checkout@v7
         with:
