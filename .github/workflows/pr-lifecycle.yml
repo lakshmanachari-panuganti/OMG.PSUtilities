@@ -1,8 +1,9 @@
 name: PR Lifecycle
 
-# Thin caller. The implementation lives in the administration repository.
-# language: none - Validate.yml already runs PSScriptAnalyzer and the Pester suite as
-# the required "Validate, Test, and Build" check; duplicating it here would prove nothing.
+# Thin caller. The implementation lives in the administration repository so a fix
+# reaches every repository at once.
+#
+# language: none - Validate.yml already runs PSScriptAnalyzer and Pester as the required check.
 
 on:
   pull_request:
@@ -16,5 +17,5 @@ jobs:
     with:
       language: none
       test-command: ''
-      enable-agents: false
+      enable-agents: true
     secrets: inherit
