@@ -1,3 +1,11 @@
+## [1.1.0] - 6th August 2026
+### Added
+- New `Complete-PSUGithubPullRequest` (Public): Merges a GitHub pull request using the REST API, supports the merge, squash, and rebase strategies, and optionally deletes the source branch. `Complete-PSUPullRequest` already routed GitHub repositories to this command, but it had never been implemented.
+
+### Fixed
+- `Complete-PSUPullRequest` (Public): The GitHub branch no longer fails with a "term is not recognized" error.
+- `Approve-PSUPullRequest` and `Complete-PSUPullRequest` (Public): Both now report a clear installation message when an Azure DevOps repository is detected but `OMG.PSUtilities.AzureDevOps` is not installed.
+
 ## [1.0.21] - 27th July 2026
 ### Documentation
 - `Get-PSUUserEnvironmentVariable` (Public): updated the pipeline example to use `GEMINI_API_KEY`, following the environment variable rename in `OMG.PSUtilities.AI` 1.0.43.

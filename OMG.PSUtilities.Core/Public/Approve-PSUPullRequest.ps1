@@ -105,6 +105,10 @@ function Approve-PSUPullRequest {
             } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                 Write-Verbose "Detected Azure DevOps repository"
 
+                if (-not (Get-Command -Name 'Approve-PSUADOPullRequest' -ErrorAction SilentlyContinue)) {
+                    throw "Azure DevOps pull requests require the OMG.PSUtilities.AzureDevOps module. Install it using: Install-Module -Name OMG.PSUtilities.AzureDevOps -Scope CurrentUser"
+                }
+
                 # Map approval types to Azure DevOps vote values
                 $vote = switch ($ApprovalType) {
                     'Approve' { 10 }

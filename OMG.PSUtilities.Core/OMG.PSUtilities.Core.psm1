@@ -20,6 +20,7 @@ Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse -ErrorAction SilentlyC
 $PublicFunctions = @(
     'Approve-PSUGithubPullRequest',
     'Approve-PSUPullRequest',
+    'Complete-PSUGithubPullRequest',
     'Complete-PSUPullRequest',
     'Export-PSUExcel',
     'Find-PSUFilesContainingText',

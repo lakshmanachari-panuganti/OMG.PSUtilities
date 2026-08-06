@@ -118,6 +118,10 @@ function Complete-PSUPullRequest {
             } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                 Write-Verbose "Detected Azure DevOps repository"
 
+                if (-not (Get-Command -Name 'Complete-PSUADOPullRequest' -ErrorAction SilentlyContinue)) {
+                    throw "Azure DevOps pull requests require the OMG.PSUtilities.AzureDevOps module. Install it using: Install-Module -Name OMG.PSUtilities.AzureDevOps -Scope CurrentUser"
+                }
+
                 if ($CommitTitle -or $CommitMessage) {
                     Write-Warning "Custom commit title/message not supported for Azure DevOps pull requests."
                 }

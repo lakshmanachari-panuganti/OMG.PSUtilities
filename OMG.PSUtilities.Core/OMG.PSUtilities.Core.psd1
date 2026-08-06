@@ -12,7 +12,7 @@
 RootModule = 'OMG.PSUtilities.Core.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.21'
+ModuleVersion = '1.1.0'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -74,6 +74,7 @@ RequiredModules = @(
 FunctionsToExport = @(
     'Approve-PSUGithubPullRequest',
     'Approve-PSUPullRequest',
+    'Complete-PSUGithubPullRequest',
     'Complete-PSUPullRequest',
     'Export-PSUExcel',
     'Find-PSUFilesContainingText',
