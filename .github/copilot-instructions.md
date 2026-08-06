@@ -1,178 +1,130 @@
-# GitHub Copilot Instructions for OMG.PSUtilities
+# GitHub Copilot instructions for OMG.PSUtilities
 
-## Project Overview
+## Project overview
 
-**OMG.PSUtilities** is a PowerShell meta-module managing 7 specialized submodules for enterprise automation:
+OMG.PSUtilities is a portfolio of independently versioned PowerShell modules
+published to PowerShell Gallery, plus a meta-module that installs the whole set.
 
-- **OMG.PSUtilities.AzureDevOps** (26 functions) - Azure DevOps REST API wrapper
-- **OMG.PSUtilities.Core** (23 functions) - General-purpose utilities
-- **OMG.PSUtilities.AzureCore** (3 functions) - Azure infrastructure utilities
-- **OMG.PSUtilities.ActiveDirectory** (1 function) - AD automation
-- **OMG.PSUtilities.VSphere** (1 function) - VMware automation
-- **OMG.PSUtilities.ServiceNow** (1 function) - ServiceNow integration
-- **OMG.PSUtilities.AI** - AI integration utilities
+| Module | Purpose |
+| --- | --- |
+| `OMG.PSUtilities.Core` | General automation, reporting, credentials, workstation utilities |
+| `OMG.PSUtilities.AzureDevOps` | Azure DevOps REST API automation |
+| `OMG.PSUtilities.AI` | AI provider and prompt automation |
+| `OMG.PSUtilities.AzureCore` | Azure and Kubernetes governance utilities |
+| `OMG.PSUtilities.ActiveDirectory` | Active Directory analysis |
+| `OMG.PSUtilities.ServiceNow` | ServiceNow integration boundary (placeholder) |
+| `OMG.PSUtilities.VSphere` | VMware integration boundary (placeholder) |
+| `OMG.PSUtilities` | Meta-module, no commands of its own |
+| `OMG.DevTools` | Repository tooling, never published |
 
-Each submodule follows a **strict architecture pattern** with `Public/` and `Private/` folders, manifest-driven exports, and automated build tooling.
+Command counts change often. Read the manifest `FunctionsToExport` rather than
+trusting any number written in documentation.
+
+See [Architecture](../docs/ARCHITECTURE.md), [CI/CD](../docs/CI-CD.md), and
+[Contributing](../CONTRIBUTING.md).
 
 ---
 
-## Critical Architecture Patterns
+## Module structure
 
-### Module Structure (MANDATORY)
-
-Every submodule uses this exact structure:
-
-```
+```text
 OMG.PSUtilities.ModuleName/
-├── Public/               # Exported functions (one .ps1 per function)
-├── Private/              # Internal helper functions (not exported)
-├── ModuleName.psm1       # Auto-generated module loader
-├── ModuleName.psd1       # Auto-generated manifest
-├── CHANGELOG.md
-├── README.md
-└── plasterManifest.xml
+|-- Public/                 Exported commands, one command per file
+|-- Private/                Internal helpers, never exported
+|-- ModuleName.psm1         Loader and explicit exports
+|-- ModuleName.psd1         Package metadata and dependencies
+|-- README.md
+`-- CHANGELOG.md
 ```
 
-**Module Loader Pattern** (`ModuleName.psm1`):
-```powershell
-# Load private functions
-Get-ChildItem -Path "$PSScriptRoot\Private\*.ps1" -Recurse | Where-Object{$_.name -notlike "*--wip.ps1"} | ForEach-Object {
-    try {
-        . $($_.FullName)
-    } catch {
-        Write-Error "Failed to load private function $($_.FullName): $($_)"
-    }
-}
+`.psm1` and `.psd1` exports are generated. After adding or removing a file under
+`Public/`, regenerate them with `Invoke-OMGBuildModule` (`omgbuild`) from
+`OMG.DevTools`, or `Reset-OMGModuleManifests` from
+`Module Developer Tools\functions\`. Never hand-edit the export lists and leave
+them out of sync with the folder; `build\Test-Repository.ps1` fails when they
+drift.
 
-# Load public functions
-Get-ChildItem -Path "$PSScriptRoot\Public\*.ps1" -Recurse | Where-Object{$_.name -notlike "*--wip.ps1"} | ForEach-Object {
-    try {
-        . $($_.FullName)
-    } catch {
-        Write-Error "Failed to load public function $($_.FullName): $($_)"
-    }
-}
-
-# Export public functions
-$PublicFunctions = @(
-    'Function-Name1',
-    'Function-Name2'
-)
-
-$AliasesToExport = @()
-
-Export-ModuleMember -Function $PublicFunctions -Alias $AliasesToExport
-```
-
-**⚠️ CRITICAL**: 
-- `.psm1` and `.psd1` files are **AUTO-GENERATED**. Use `Reset-OMGModuleManifests` to update them after adding/removing functions.
-- Functions ending in `--wip.ps1` are excluded from loading (work-in-progress convention).
+Files ending in `--wip.ps1` are excluded from loading and from release artifacts.
 
 ---
 
-## Coding Standards (LLM-Ready)
+## Naming
 
-### Golden Rules
-
-1. **Consistency over cleverness** - Follow existing patterns exactly
-2. **Professional presentation** - Comment-based help is mandatory
-3. **Automation-first outputs** - All functions must work in pipelines and automation
-
-### Naming Conventions
-
-- **AzureDevOps Module**: `Verb-PSUADONoun` (e.g., `Get-PSUADOWorkItem`, `Set-PSUADOTask`)
-- **Core Module**: `Verb-PSUNoun` (e.g., `Export-PSUExcel`, `Get-PSUModule`)
-- **All Other Modules**: `Verb-PSUNoun` with domain context
-- **Private Functions**: Descriptive names (e.g., `Get-PSUAdoAuthHeader`, `Test-AzCliLogin`)
-- **Use only approved PowerShell verbs** (`Get-Verb` compliant)
-
-### Comment-Based Help (MANDATORY)
-
-Every function MUST place the help block **outside and before** the function definition (Option A — Microsoft standard). Use zero-indent for `.KEYWORD` labels and 4-space indent for content:
-
-```powershell
-<#
-.SYNOPSIS
-    One-line summary of what the function does.
-
-.DESCRIPTION
-    Detailed explanation of functionality.
-    Multiple paragraphs allowed.
-
-.PARAMETER ParameterName
-    Description of the parameter.
-    Include default behavior, validation rules, and examples.
-
-.PARAMETER Organization
-    (Optional) The Azure DevOps organization name.
-    Default is $env:ORGANIZATION.
-    Set via: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "<value>"
-
-.PARAMETER PAT
-    (Optional) Personal Access Token.
-    Default is $env:PAT.
-    Set via: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "<value>"
-
-.EXAMPLE
-    Verb-PSUADONoun -Parameter1 "Value1" -Organization "myorg"
-
-    Demonstrates explicit parameters.
-
-.EXAMPLE
-    Verb-PSUADONoun -Parameter1 "Value1"
-
-    Demonstrates auto-detected Organization from $env:ORGANIZATION.
-
-.OUTPUTS
-    [PSCustomObject] or [System.Object[]]
-
-.NOTES
-    Author: Lakshmanachari Panuganti
-    Created: DDth Month YYYY
-    Last Modified: DDth Month YYYY
-    Version: 1.0
-
-.LINK
-    https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
-    https://www.linkedin.com/in/lakshmanachari-panuganti/
-    https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
-#>
-function Verb-PSUADONoun {
-```
-
-**⚠️ NO EMOJIS** in function code or comment-based help (only in `Write-Host` progress indicators).
+- Azure DevOps module: `Verb-PSUADONoun`, for example `Get-PSUADOWorkItem`.
+- Every other module: `Verb-PSUNoun`, for example `Export-PSUExcel`.
+- Private helpers use descriptive names, for example `Get-PSUAdoAuthHeader`.
+- Use approved verbs only (`Get-Verb`).
+- No emojis in function code or comment-based help.
 
 ---
 
-## Parameter Design (CRITICAL)
+## Comment-based help
 
-### Parameter Ordering (100% Enforcement)
+Every public command has comment-based help with `.SYNOPSIS`, `.DESCRIPTION`,
+`.PARAMETER` for each parameter, at least one `.EXAMPLE`, `.OUTPUTS`, `.NOTES`,
+and `.LINK`. Validation fails without `.SYNOPSIS`, `.DESCRIPTION`, `.EXAMPLE`,
+`.OUTPUTS`, and `.NOTES`.
 
-**MANDATORY order for Azure DevOps functions**:
+Most files place the help block inside the function, immediately after the
+opening brace, indented four spaces. Match the file you are editing.
 
-1. **Mandatory business parameters** (e.g., `Project`, `WorkItemId`, `PullRequestId`)
-2. **Optional business parameters** (e.g., `Description`, `SourceBranch`, `Title`)
-3. **Organization parameter** (second-to-last)
-4. **PAT parameter** (last)
-
-**Example**:
 ```powershell
+function Get-PSUADONoun {
+    <#
+    .SYNOPSIS
+        One-line summary of what the command does.
+
+    .DESCRIPTION
+        Detailed explanation of the behaviour.
+
+    .PARAMETER Project
+        (Mandatory) The Azure DevOps project name.
+
+    .PARAMETER Organization
+        (Optional) The Azure DevOps organization name.
+        Default value is $env:ORGANIZATION. Set using: Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "your_org_name"
+
+    .PARAMETER PAT
+        (Optional) Personal Access Token for Azure DevOps authentication.
+        Default value is $env:PAT. Set using: Set-PSUUserEnvironmentVariable -Name "PAT" -Value "your_pat_token"
+
+    .EXAMPLE
+        Get-PSUADONoun -Project "psutilities"
+
+        Describes what the example does.
+
+    .OUTPUTS
+        [PSCustomObject]
+
+    .NOTES
+        Author: Lakshmanachari Panuganti
+        Date: 15th October 2025
+
+    .LINK
+        https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/tree/main/OMG.PSUtilities.AzureDevOps
+        https://www.linkedin.com/in/lakshmanachari-panuganti/
+        https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
+    #>
+```
+
+---
+
+## Parameter design
+
+Order parameters as: mandatory business parameters, then optional business
+parameters, then `Organization`, then `PAT` last. Put each attribute on its own
+line and leave a blank line between parameters.
+
+```powershell
+[CmdletBinding()]
 param (
-    # Mandatory business parameters
     [Parameter(Mandatory)]
+    [ValidateNotNullOrEmpty()]
     [string]$Project,
 
-    [Parameter(Mandatory)]
-    [int]$WorkItemId,
-
-    # Optional business parameters
     [Parameter()]
     [string]$Title,
 
-    [Parameter()]
-    [string]$Description,
-
-    # Infrastructure parameters (Organization second-to-last, PAT last)
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]$Organization = $env:ORGANIZATION,
@@ -183,100 +135,46 @@ param (
 )
 ```
 
-### Environment Variable Pattern
+Set the environment defaults once per machine:
 
-All Azure DevOps functions use:
-- `$env:ORGANIZATION` for organization name
-- `$env:PAT` for Personal Access Token
-
-Set via: `Set-PSUUserEnvironmentVariable -Name "ORGANIZATION" -Value "myorg"`
+```powershell
+Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<your-organization>'
+Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<your-pat>'
+```
 
 ---
 
-## Validation Pattern (MANDATORY)
+## Validation and setup
 
-All runtime validation **MUST** be in the `begin{}` block:
+All setup and runtime validation goes in `begin`, never in `process`. Azure
+DevOps commands use the shared private helpers so that the verbose output and
+the error messages stay identical across the module:
 
 ```powershell
 begin {
-    # 1. Display parameters (mask PAT)
-    Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
-    foreach ($param in $PSBoundParameters.GetEnumerator()) {
-        if ($param.Key -eq 'PAT') {
-            $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { 
-                $param.Value.Substring(0, 3) + "********" 
-            } else { "****" }
-            Write-Verbose "  $($param.Key) = $maskedPAT"
-        } else {
-            Write-Verbose "  $($param.Key) = $($param.Value)"
-        }
-    }
+    Write-PSUAdoParameterTrace -Invocation $MyInvocation -BoundParameters $PSBoundParameters
+    Confirm-PSUAdoConnectionParameter -Organization $Organization -PAT $PAT
 
-    # 2. Validate Organization
-    if ([string]::IsNullOrWhiteSpace($Organization)) {
-        throw "Organization parameter is required. Set via: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<your-organization>'"
-    }
-
-    # 3. Validate PAT
-    if ([string]::IsNullOrWhiteSpace($PAT)) {
-        throw "PAT parameter is required. Set via: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<your-pat>'"
-    }
-
-    # 4. Create authentication header
-    $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
-    $headers = @{
-        Authorization = "Basic $base64AuthInfo"
-        'Content-Type' = 'application/json'
-    }
+    $headers = Get-PSUAdoAuthHeader -PAT $PAT
 }
 ```
 
-**⚠️ NO validation in `process{}` blocks** - All setup code goes in `begin{}` only.
+`ValidateNotNullOrEmpty` does not check parameter default values, which is why
+`Confirm-PSUAdoConnectionParameter` re-checks the environment-backed defaults at
+runtime. Never write the PAT to any stream unmasked;
+`Write-PSUAdoParameterTrace` handles the masking.
+
+Use `begin`/`process`/`end` so commands work in a pipeline. Return
+`[PSCustomObject]` with a `PSTypeName` so callers can format and filter the
+output. Surface failures with `$PSCmdlet.ThrowTerminatingError($_)`.
 
 ---
 
-## Performance Pattern (Pipeline Support)
+## Formatting
 
-Use `begin/process/end` blocks for pipeline-compatible functions:
-
-```powershell
-function Get-PSUADOWorkItem {
-    param (
-        [Parameter(Mandatory, ValueFromPipeline)]
-        [int[]]$WorkItemId,
-
-        [Parameter()]
-        [string]$Organization = $env:ORGANIZATION,
-
-        [Parameter()]
-        [string]$PAT = $env:PAT
-    )
-
-    begin {
-        # Setup code (validation, auth header creation)
-    }
-
-    process {
-        # Process each pipeline item
-        foreach ($id in $WorkItemId) {
-            # API call logic
-        }
-    }
-
-    end {
-        # Cleanup code (if needed)
-    }
-}
-```
-
----
-
-## Code Formatting (K&R Brace Style)
-
-**Opening braces on same line, closing braces aligned with statement**:
+K&R braces, four-space indentation:
 
 ```powershell
-# CORRECT (K&R)
 if ($condition) {
     # code
 } elseif ($otherCondition) {
@@ -290,241 +188,66 @@ try {
 } catch {
     # error handling
 }
-
-foreach ($item in $collection) {
-    # code
-}
-
-# WRONG (Allman style)
-if ($condition)
-{
-    # code
-}
 ```
 
----
-
-## Development Workflow
-
-### Adding a New Function
-
-1. **Create function file**: `Public/Verb-PSUADONoun.ps1` (one function per file)
-2. **Write function** following all patterns above
-3. **Update module manifests**: Run `Reset-OMGModuleManifests -ModuleName "OMG.PSUtilities.ModuleName"`
-4. **Build and test**: Run `Build-OMGModuleLocally -ModuleName "OMG.PSUtilities.ModuleName"`
-5. **Run tests**: Execute `.github\Instructions-OMG.PSUtilities.AzureDevOps\Run-MasterTest.ps1`
-6. **Update CHANGELOG.md** with new function details
-7. **Version bump**: Run `Update-OMGModuleVersion -ModuleName "OMG.PSUtilities.ModuleName" -BumpType Minor`
-
-### Developer Tools (Tools/ folder)
-
-- **`Reset-OMGModuleManifests.ps1`** - Auto-updates `.psm1` and `.psd1` after adding/removing functions
-- **`Build-OMGModuleLocally.ps1`** - Builds and imports module for testing
-- **`Update-OMGModuleVersion.ps1`** - Increments version in manifest and CHANGELOG
-- **`New-OMGModuleStructure.ps1`** - Creates new module scaffold with Plaster
-- **`Invoke-GitAutoTagAndPush.ps1`** - Git tagging and push automation
-
-**⚠️ ALWAYS run `Reset-OMGModuleManifests` after modifying Public/ or Private/ folders.**
+`PSScriptAnalyzerSettings.psd1` enforces brace placement, indentation, and the
+alias ban. `.vscode/settings.json` configures the formatter to match.
 
 ---
 
-## Testing Infrastructure
+## Adding a command
 
-### Test Architecture (AzureDevOps Module)
+1. Create `Public/Verb-PSUNoun.ps1`, one command per file.
+2. Follow the patterns above; copy the closest existing command in the module.
+3. Regenerate the manifest and module file (`omgbuild`).
+4. Add a CHANGELOG entry and increase `ModuleVersion` in the manifest.
+5. Run the quality gate:
 
-Located in: `.github\Instructions-OMG.PSUtilities.AzureDevOps\`
+   ```powershell
+   .\build\Test-Repository.ps1 -IncludeScriptAnalyzer
+   Invoke-Pester -Path .\tests -Output Detailed
+   .\build\Build-Modules.ps1 -Clean
+   ```
 
-**Master Test Orchestrator**: `Run-MasterTest.ps1`
+CI runs the same three commands. A merge to `main` publishes only the module
+versions that are newer than PowerShell Gallery, so an unchanged version is
+silently skipped rather than failing.
+
+---
+
+## Live Azure DevOps tests
+
+`.github\Instructions-OMG.PSUtilities.AzureDevOps\` holds manual tests that call
+a real organization. They are not part of pull-request validation. Start with
+`Test-PreFlightValidation.ps1`, then `Run-MasterTest.ps1`. Their JSON and HTML
+output is ignored by `.gitignore` and must not be committed.
+
+---
+
+## Troubleshooting
+
+| Symptom | Cause | Fix |
+| --- | --- | --- |
+| `The default value for the 'ORGANIZATION' environment variable is not set` | `$env:ORGANIZATION` missing and no `-Organization` supplied | `Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>'` |
+| `The default value for the 'PAT' environment variable is not set` | `$env:PAT` missing and no `-PAT` supplied | `Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>'` |
+| New command not exported | Manifest not regenerated | Run `omgbuild`, then re-import the module |
+| Command loads but is missing from `Get-Command` | File name ends in `--wip.ps1` | Rename without the suffix and regenerate |
+| Validation fails on missing help | A required help keyword is absent | Add `.SYNOPSIS`, `.DESCRIPTION`, `.EXAMPLE`, `.OUTPUTS`, `.NOTES` |
+| Azure DevOps command not found from a Core command | `OMG.PSUtilities.AzureDevOps` not installed | `Install-Module -Name OMG.PSUtilities.AzureDevOps -Scope CurrentUser` |
+
+Quick environment check:
+
 ```powershell
-# Quick test (30 seconds)
-.\Run-MasterTest.ps1 -TestType Quick
+'ORGANIZATION', 'PAT' | ForEach-Object {
+    $value = [Environment]::GetEnvironmentVariable($_)
+    "{0} = {1}" -f $_, $(if ($value) { '<set>' } else { '<NOT SET>' })
+}
 
-# Comprehensive test (5-10 minutes, all 26 functions)
-.\Run-MasterTest.ps1 -TestType Comprehensive -VerboseOutput
-
-# Validation only (environment check)
-.\Run-MasterTest.ps1 -TestType Validation
-
-# With HTML report
-.\Run-MasterTest.ps1 -TestType Comprehensive -ExportReport
-```
-
-**Test Components**:
-1. **Pre-Flight Validation** (`Test-PreFlightValidation.ps1`) - 8 environment checks
-2. **Comprehensive Test** (`Test-AzureDevOps-Comprehensive.ps1`) - 26+ function tests
-3. **HTML Report Generation** - Auto-opens in browser with test results
-
-**Current Status**:
-- **80% success rate** (24/30 tests passing)
-- 6 known failures documented (API limitations, not code bugs)
-- Module quality: **98/100 (Production Ready)**
-
----
-
-## Known Issues and Limitations
-
-### Test Failures (Documented)
-
-1. **`Get-PSUADORepoBranchList`** - 404 error (repository not initialized, expected)
-2. **`Set-PSUADOVariableGroup`** - Name/Description not updated (Azure DevOps API limitation, not a bug)
-3. **`New-PSUADOPullRequest`** - 400 error (invalid test scenario - same branch PR)
-4. **`Set-PSUADOTask`** - 400 error (empty `AssignedTo` value handling issue)
-5. **`Set-PSUADOBug`** - 400 error (work item state transition validation)
-
-### Environment Requirements
-
-- **Environment Variables**: `ORGANIZATION` and `PAT` must be set
-- **Dependencies**: `ThreadJob` module for parallel testing
-- **Azure DevOps Access**: Valid PAT with appropriate permissions
-
----
-
-## Integration Points
-
-### Azure DevOps REST API
-
-All Azure DevOps functions use:
-- **Base URL**: `https://dev.azure.com/{organization}/{project}/_apis/...`
-- **API Version**: `api-version=7.0` or `7.1-preview.3`
-- **Authentication**: Basic auth with PAT (Base64 encoded)
-- **Response Format**: JSON (converted to PSCustomObject)
-
-### Common Private Functions
-
-- **`Get-PSUAdoAuthHeader`** - Creates authentication headers
-- **Private helper functions** in `Private/` folder (not exported)
-
----
-
-## Quick Reference for AI Agents
-
-### "I need to add a new Azure DevOps function"
-
-1. Check existing functions in `OMG.PSUtilities.AzureDevOps\Public\` for patterns
-2. Copy template from `.github\Instructions-OMG.PSUtilities.AzureDevOps\Instructions-Validation-Pattern.md`
-3. Follow parameter ordering: Business → Organization → PAT
-4. Put all validation in `begin{}` block
-5. Use `begin/process/end` for pipeline support
-6. Add comment-based help outside the function (Option A: zero-indent keywords, 4-space content)
-7. Run `Reset-OMGModuleManifests -ModuleName "OMG.PSUtilities.AzureDevOps"`
-8. Test with `Run-MasterTest.ps1 -TestType Comprehensive`
-
-### "I need to understand the module architecture"
-
-- Read: `README.md` (root) - Meta-module overview
-- Read: `OMG.PSUtilities.AzureDevOps\README.md` - 26 functions documented
-- Read: `.github\Instructions-OMG.PSUtilities.AzureDevOps\INDEX.md` - Complete documentation index
-
-### "I need to understand coding standards"
-
-- Read: `Module Developer Tools\OMG.PSUtilities.StyleGuide.md` (504 lines, authoritative)
-- Read: `.github\Instructions-OMG.PSUtilities.AzureDevOps\Instructions-Validation-Pattern.md` (630 lines)
-
-### "I need to understand test infrastructure"
-
-- Read: `.github\Instructions-OMG.PSUtilities.AzureDevOps\TEST-ARCHITECTURE.md` - Flow diagrams
-- Read: `.github\Instructions-OMG.PSUtilities.AzureDevOps\TEST-RESULTS-SUMMARY-2025-10-15.md` - Latest test analysis
-- Run: `Run-MasterTest.ps1 -TestType Validation` to check environment
-
-### "I need to fix a bug"
-
-1. Review `.github\Instructions-OMG.PSUtilities.AzureDevOps\COMPREHENSIVE-REVIEW-2025-01-15-FINAL.md` - Recent bug fixes
-2. Check test results in `.github\Instructions-OMG.PSUtilities.AzureDevOps\TestResults-*.json`
-3. Run `Run-MasterTest.ps1 -VerboseOutput` to see detailed errors
-4. Update function in `Public/` folder
-5. Run `Reset-OMGModuleManifests` and test again
-
----
-
-## Key Documentation Files
-
-- **Authoritative Style Guide**: `Module Developer Tools\OMG.PSUtilities.StyleGuide.md` (504 lines)
-- **Validation Pattern**: `.github\Instructions-OMG.PSUtilities.AzureDevOps\Instructions-Validation-Pattern.md` (630 lines)
-- **Test Architecture**: `.github\Instructions-OMG.PSUtilities.AzureDevOps\TEST-ARCHITECTURE.md` (315 lines)
-- **Quality Review**: `.github\Instructions-OMG.PSUtilities.AzureDevOps\COMPREHENSIVE-REVIEW-2025-01-15-FINAL.md` (475 lines)
-- **Documentation Index**: `.github\Instructions-OMG.PSUtilities.AzureDevOps\INDEX.md` (385 lines)
-- **Developer Tools**: `Tools\README.md` (build/release workflow)
-
----
-
-## Expandable Practices for Future Use
-
-### Suggestions for Standardization
-
-1. **Create Function Template Script**: Automate new function creation with pre-filled comment-based help and parameter ordering
-2. **Pre-Commit Hook**: Add git pre-commit hook to validate K&R brace style and parameter ordering
-3. **CI/CD Pipeline**: Integrate `Run-MasterTest.ps1` into GitHub Actions for automated testing
-4. **Documentation Generator**: Auto-generate README.md function tables from comment-based help
-5. **PAT Rotation Reminder**: Add expiration tracking for Azure DevOps PAT tokens
-6. **Test Coverage Report**: Add code coverage metrics to HTML test reports
-7. **Module Dependency Graph**: Visualize inter-module dependencies and common patterns
-
-### Automation Opportunities
-
-- **Auto-update CHANGELOG.md** from git commit messages
-- **Auto-bump versions** based on semantic commit messages
-- **Auto-generate release notes** from CHANGELOG.md
-- **Auto-tag releases** in GitHub when version changes detected
-- **Validate all functions** have matching tests before allowing commits
-
----
-
-## Summary
-
-This codebase prioritizes **consistency, automation, and enterprise-grade quality**. All new code must:
-
-✅ Follow K&R brace style  
-✅ Use begin/process/end blocks for pipeline support  
-✅ Put all validation in `begin{}` block  
-✅ Follow parameter ordering (Business → Organization → PAT)  
-✅ Place comment-based help outside the function (zero-indent keywords, 4-space content)  
-✅ Use environment variables (`$env:ORGANIZATION`, `$env:PAT`)  
-✅ Mask PAT in verbose output  
-✅ Use approved PowerShell verbs  
-✅ Have matching test coverage  
-✅ Update CHANGELOG.md  
-✅ Run `Reset-OMGModuleManifests` after changes  
-
-**When in doubt, examine existing functions in the target module and follow their patterns exactly.**
-
----
-
-## Troubleshooting & Common Pitfalls
-
-| Symptom | Likely Cause | Fix | Preventive Practice |
-|---------|--------------|-----|---------------------|
-| `PAT parameter is required` error thrown immediately | `$env:PAT` not set and parameter omitted | Set PAT: `Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<token>'` | Always run Validation test first (`Run-MasterTest.ps1 -TestType Validation`) |
-| `Organization parameter is required` | `$env:ORGANIZATION` missing | Set organization env var similarly | Keep a dev profile script exporting these vars |
-| New function file not loaded / not exported | Forgot to run `Reset-OMGModuleManifests` after adding file | Run `Reset-OMGModuleManifests -ModuleName 'OMG.PSUtilities.AzureDevOps'` then rebuild | Add a git pre-commit hook to diff `Public/` vs manifest |
-| Function loads but missing in `Get-Command` | Name mismatch or file named `*-wip.ps1` | Rename file without `--wip` suffix, re-run reset | Only append `--wip` while drafting |
-| Duplicate validation logic in `process{}` | Copied from template incorrectly | Move all validation to `begin{}` and remove from `process{}` | Use template snippet exactly; do not improvise |
-| Test suite shows 404 for repository branches | Repo not initialized with branch data | Initialize repo/ push at least one commit/branch | Add a setup script to seed test repo |
-| Variable Group update test fails (name/description unchanged) | Azure DevOps API limitation (documented) | Accept as known limitation | Keep note in CHANGELOG Known Issues |
-| PR creation 400 (same branch) | Source == Target branch | Supply distinct source branch | Enhance test data generator to create feature branch |
-| Work item state update 400 | Invalid transition for process template | Query allowed states first, then reattempt | Implement helper (future) to map valid transitions |
-| PAT value printed in logs | Not masking custom logging | Use provided PAT masking pattern; never write PAT directly | Centralize all verbose parameter echoing in `begin{}` |
-| Style drift (brace placement) | Non K&R formatting applied manually | Reformat to one-line open brace | Add formatting linter/pre-commit check |
-
-### Quick Diagnostic Script
-Run this lightweight checklist before deeper debugging:
-```powershell
-Write-Host '== OMG.PSUtilities Quick Diagnostic ==' -ForegroundColor Cyan
-$required = 'ORGANIZATION','PAT'
-$required | ForEach-Object { Write-Host ("$_=`"{0}`"" -f ($env:$_ ?? '<NOT SET>')) }
 Import-Module .\OMG.PSUtilities.AzureDevOps\OMG.PSUtilities.AzureDevOps.psd1 -Force
-Write-Host "Exported Functions:" (Get-Command -Module OMG.PSUtilities.AzureDevOps | Measure-Object).Count
-Get-ChildItem .\OMG.PSUtilities.AzureDevOps\Public -Filter *.ps1 | Select-Object -First 5 | ForEach-Object { $_.BaseName }
+Get-Command -Module OMG.PSUtilities.AzureDevOps | Measure-Object | Select-Object -ExpandProperty Count
 ```
 
-### Escalation Flow
-1. Re-run Validation test
-2. Check env vars
-3. Rebuild module (`Build-OMGModuleLocally`)
-4. Reset manifests
-5. Re-run Comprehensive test with `-VerboseOutput`
-6. Inspect latest `TestResults-*.json`
-7. Open HTML report (if `-ExportReport` used)
-8. Consult known issues list above
+---
 
-If still unresolved, compare the function with the template in `Instructions-Validation-Pattern.md` line-by-line.
-
+When in doubt, open the closest existing command in the target module and follow
+it exactly. Consistency with the surrounding code beats any rule written here.

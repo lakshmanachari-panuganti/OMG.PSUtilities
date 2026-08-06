@@ -26,6 +26,9 @@ local development and published artifacts aligned without path translation.
 | --- | --- |
 | Module folders | Runtime code and module-specific documentation |
 | `OMG.PSUtilities/` | Meta-module with explicit dependencies on every portfolio module |
+| `OMG.DevTools/` | Repository tooling for local build and publish; validated but never released |
+| `Module Developer Tools/` | Helper functions that `OMG.DevTools` lazy-loads, plus the Azure Function OpenAI proxy |
+| `Tools/` | Standalone one-off maintenance scripts, not run by CI |
 | `build/` | Validation and deterministic artifact construction |
 | `tests/` | Pester architecture and behavior tests |
 | `.github/workflows/` | Pull-request validation and Gallery release automation |

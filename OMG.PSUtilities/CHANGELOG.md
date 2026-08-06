@@ -2,6 +2,12 @@
 
 All notable changes to the OMG.PSUtilities meta-module are documented here.
 
+## [1.2.0] - 2026-08-06
+
+### Changed
+
+- Raised the minimum dependency versions for ActiveDirectory, AI, AzureDevOps, Core, ServiceNow, and VSphere.
+
 ## [1.1.0] - 2026-07-26
 
 ### Changed

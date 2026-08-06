@@ -13,7 +13,7 @@ declare their own minimum PowerShell versions.
 
 | Module | Purpose | Public commands |
 | --- | --- | ---: |
-| `OMG.PSUtilities.Core` | General automation, reporting, credentials, and workstation utilities | 29 |
+| `OMG.PSUtilities.Core` | General automation, reporting, credentials, and workstation utilities | 30 |
 | `OMG.PSUtilities.AzureDevOps` | Azure DevOps REST API automation | 28 |
 | `OMG.PSUtilities.AI` | AI provider and prompt automation | 12 |
 | `OMG.PSUtilities.AzureCore` | Azure and Kubernetes governance utilities | 4 |
@@ -21,6 +21,10 @@ declare their own minimum PowerShell versions.
 | `OMG.PSUtilities.ServiceNow` | ServiceNow integration boundary | 1 |
 | `OMG.PSUtilities.VSphere` | VMware integration boundary | 1 |
 | `OMG.PSUtilities` | Meta-module that installs the complete portfolio | 0 |
+
+`OMG.DevTools` also lives in this repository. It is repository tooling for
+building and publishing the portfolio, is validated by the same quality gate, and
+is not published to PowerShell Gallery. See [OMG.DevTools](OMG.DevTools/README.md).
 
 ## Installation
 
