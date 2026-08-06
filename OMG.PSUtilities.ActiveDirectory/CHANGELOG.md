@@ -1,5 +1,9 @@
 ## Changelog
 
+## [1.0.5] - 6th August 2026
+### Fixed
+- Importing the module no longer writes "Cannot find path ... \Private\" to the console. The module has no `Private` folder, and the loader now tolerates that.
+
 ## [1.0.4] - 2025-08-19
 ### Changed
 - Updated Find-PSUADServiceAccountMisuse function to comply with OMG.PSUtilities.StyleGuide.md standards

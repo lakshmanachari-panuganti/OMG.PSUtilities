@@ -1,4 +1,9 @@
 ## Changelog
+
+## [1.0.1] - 6th August 2026
+### Fixed
+- Importing the module no longer writes "Cannot find path ... \Private\" to the console. The empty `Private` folder was removed and the loader now tolerates its absence.
+
 - Initial scaffolding for OMG.PSUtilities.ServiceNow
 
 ## [1.0.0] - 2025-07-16

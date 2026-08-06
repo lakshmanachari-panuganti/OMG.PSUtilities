@@ -97,10 +97,10 @@
             )
 
             # A URL to the license for this module.
-            LicenseUri = 'https://github.com/yourusername/OMG.DevTools/blob/main/LICENSE'
+            LicenseUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/blob/main/LICENSE'
 
             # A URL to the main website for this project.
-            ProjectUri = 'https://github.com/yourusername/OMG.DevTools'
+            ProjectUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities'
 
             # A URL to an icon representing this module.
             # IconUri = ''
@@ -147,7 +147,7 @@
     } # End of PrivateData hashtable
 
     # HelpInfo URI of this module
-    # HelpInfoURI = 'https://github.com/yourusername/OMG.DevTools/blob/main/docs'
+    # HelpInfoURI = ''
 
     # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
     # DefaultCommandPrefix = ''
