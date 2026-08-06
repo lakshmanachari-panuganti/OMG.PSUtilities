@@ -56,54 +56,40 @@ function Invoke-PSUADOPipeline {
         https://www.powershellgallery.com/packages/OMG.PSUtilities.AzureDevOps
         https://learn.microsoft.com/en-us/rest/api/azure/devops/pipelines/runs/run-pipeline?view=azure-devops-rest-7.1
     #>
-        [CmdletBinding()]
-        param (
-            [Parameter(Mandatory)]
-            [string]$Project,
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory)]
+        [ValidateNotNullOrEmpty()]
+        [string]$Project,
 
-            [Parameter(Mandatory)]
-            [int]$PipelineId,
+        [Parameter(Mandatory)]
+        [ValidateRange(1, [int]::MaxValue)]
+        [int]$PipelineId,
 
-            [Parameter()]
-            [string]$Branch,
+        [Parameter()]
+        [string]$Branch,
 
-            [Parameter()]
-            [ValidateNotNullOrEmpty()]
-            [string]$Organization = $env:ORGANIZATION,
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$Organization = $env:ORGANIZATION,
 
-            [Parameter()]
-            [ValidateNotNullOrEmpty()]
-            [string]$PAT = $env:PAT
-        )
+        [Parameter()]
+        [ValidateNotNullOrEmpty()]
+        [string]$PAT = $env:PAT
+    )
 
-        begin {
-            Write-Verbose "[$($MyInvocation.MyCommand.Name)] Parameters:"
-            foreach ($param in $PSBoundParameters.GetEnumerator()) {
-                if ($param.Key -eq 'PAT') {
-                    $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
-                    Write-Verbose "  $($param.Key): $maskedPAT"
-                } else {
-                    Write-Verbose "  $($param.Key): $($param.Value)"
-                }
-            }
+    begin {
+        Write-PSUAdoParameterTrace -Invocation $MyInvocation -BoundParameters $PSBoundParameters
+        Confirm-PSUAdoConnectionParameter -Organization $Organization -PAT $PAT
 
-            if ([string]::IsNullOrWhiteSpace($Organization)) {
-                throw "Organization parameter is required. Set via: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<your-organization>'"
-            }
-            if ([string]::IsNullOrWhiteSpace($PAT)) {
-                throw "PAT parameter is required. Set via: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<your-pat>'"
-            }
+        $headers = Get-PSUAdoAuthHeader -PAT $PAT
+    }
 
-            $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
-            $headers = @{
-                Authorization = "Basic $base64AuthInfo"
-                'Content-Type' = 'application/json'
-            }
-        }
-
-        process {
+    process {
+        try {
             $escapedProject = [uri]::EscapeDataString($Project)
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/pipelines/$PipelineId/runs?api-version=7.1-preview.1"
+
             Write-Verbose "Triggering pipeline: $PipelineId in project: $Project"
             Write-Verbose "API URI: $uri"
 
@@ -113,20 +99,20 @@ function Invoke-PSUADOPipeline {
                 '{}' # Default body triggers default branch
             }
 
-            try {
-                $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
-                [PSCustomObject]@{
-                    PipelineId   = $PipelineId
-                    Project      = $Project
-                    Organization = $Organization
-                    Branch       = $Branch
-                    RunId        = $response.id
-                    Status       = $response.state
-                    Url          = $response._links.web.href
-                    PSTypeName   = 'PSU.ADO.PipelineRun'
-                }
-            } catch {
-                $PSCmdlet.ThrowTerminatingError($_)
+            $response = Invoke-RestMethod -Uri $uri -Headers $headers -Method Post -Body $body -ErrorAction Stop
+
+            [PSCustomObject]@{
+                PipelineId   = $PipelineId
+                Project      = $Project
+                Organization = $Organization
+                Branch       = $Branch
+                RunId        = $response.id
+                Status       = $response.state
+                Url          = $response._links.web.href
+                PSTypeName   = 'PSU.ADO.PipelineRun'
             }
+        } catch {
+            $PSCmdlet.ThrowTerminatingError($_)
         }
+    }
 }

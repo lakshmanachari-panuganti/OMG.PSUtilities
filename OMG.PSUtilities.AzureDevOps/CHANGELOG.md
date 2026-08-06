@@ -1,3 +1,11 @@
+## [1.0.20] - 6th August 2026
+### Changed
+- Added `Write-PSUAdoParameterTrace` and `Confirm-PSUAdoConnectionParameter` (Private): the verbose parameter trace with PAT masking and the `ORGANIZATION`/`PAT` validation are now defined once instead of being repeated in every public command.
+- All public commands now use the shared helpers, so the verbose output and the missing-environment-variable message are identical across the module.
+- `Invoke-PSUADOPipeline` and `Get-PSUADOVariableGroupInventory` (Public): now build request headers with `Get-PSUAdoAuthHeader` instead of encoding the PAT inline.
+- `Invoke-PSUADOPipeline` (Public): corrected the function body indentation and added the missing `Project` and `PipelineId` parameter validation.
+- `Get-PSUADOVariableGroup` and `Set-PSUADOVariableGroup` (Public): now emit the same verbose parameter trace as the rest of the module.
+
 ## [1.0.19] - 24th December 2025
 ### Added
 - `Get-PSUADOVariableGroup` (Public): Retrieves Azure DevOps Variable Groups for a specified project, or by Variable Group ID or Name.

@@ -68,13 +68,8 @@ function Set-PSUADOVariableGroup {
     )
 
     begin {
-        if (-not $Organization) {
-            throw "The 'ORGANIZATION' environment variable is not set."
-        }
-
-        if (-not $PAT) {
-            throw "The 'PAT' environment variable is not set."
-        }
+        Write-PSUAdoParameterTrace -Invocation $MyInvocation -BoundParameters $PSBoundParameters
+        Confirm-PSUAdoConnectionParameter -Organization $Organization -PAT $PAT
 
         $headers = Get-PSUAdoAuthHeader -PAT $PAT
     }
