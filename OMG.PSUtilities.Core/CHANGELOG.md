@@ -1,3 +1,7 @@
+## [1.0.22] - 6th August 2026
+### Fixed
+- Renamed `Public/Resolve-PSUGitMergeConflict.ps1-----wip` to `Public/Resolve-PSUGitMergeConflict--wip.ps1` so `build/Build-Modules.ps1`'s `*--wip.ps1` exclusion actually matches it. The old name was being packaged into published Core builds; this bump is required to ship the corrected package since `Publish-Modules.yml` skips publishing when the local version is not greater than the gallery version.
+
 ## [1.0.21] - 27th July 2026
 ### Documentation
 - `Get-PSUUserEnvironmentVariable` (Public): updated the pipeline example to use `GEMINI_API_KEY`, following the environment variable rename in `OMG.PSUtilities.AI` 1.0.43.
