@@ -158,23 +158,11 @@ function Get-PSUADOVariableGroupInventory {
     begin {
         Write-Host "Starting Azure DevOps Variable Group inventory process"
 
-        # Validate Organization (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
-        if (-not $Organization) {
-            throw "The default value for the 'ORGANIZATION' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'ORGANIZATION' -Value '<org>' or provide via -Organization parameter."
-        }
-
-        # Validate PAT (required because ValidateNotNullOrEmpty doesn't check default values from environment variables)
-        if (-not $PAT) {
-            throw "The default value for the 'PAT' environment variable is not set.`nSet it using: Set-PSUUserEnvironmentVariable -Name 'PAT' -Value '<pat>' or provide via -PAT parameter."
-        }
+        Confirm-PSUAdoConnectionParameter -Organization $Organization -PAT $PAT
 
         # Setup authentication headers
-        $base64AuthInfo = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$PAT"))
-        $authHeaders = @{
-            Authorization  = "Basic $base64AuthInfo"
-            'Content-Type' = 'application/json'
-            'Accept'       = 'application/json'
-        }
+        $authHeaders = Get-PSUAdoAuthHeader -PAT $PAT
+        $authHeaders['Accept'] = 'application/json'
 
         # Initialize results collection
         $variableGroupInventory = [System.Collections.Generic.List[PSCustomObject]]::new()
