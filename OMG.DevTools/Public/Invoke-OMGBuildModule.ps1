@@ -273,7 +273,7 @@ function Invoke-OMGBuildModule {
 
                     $psm1Content = @"
 # Load private functions
-Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse | Where-Object{`$_.name -notlike "*--wip.ps1"} | ForEach-Object {
+Get-ChildItem -Path "`$PSScriptRoot\Private\*.ps1" -Recurse -ErrorAction SilentlyContinue | Where-Object{`$_.name -notlike "*--wip.ps1"} | ForEach-Object {
     try {
         . `$(`$_.FullName)
     } catch {
