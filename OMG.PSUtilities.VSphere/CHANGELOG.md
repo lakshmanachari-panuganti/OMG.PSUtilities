@@ -1,3 +1,7 @@
+## [1.0.3] - 6th August 2026
+### Fixed
+- Importing the module no longer writes "Cannot find path ... \Private\" to the console. The module has no `Private` folder, and the loader now tolerates that.
+
 ## [1.0.2] - 9th December 2025
 
 ## [1.0.1] - 21st November 2025
