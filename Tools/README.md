@@ -1,11 +1,21 @@
-# 🛠 OMG.PSUtilities - Internal Tools
+# OMG.PSUtilities - internal tools
 
-These scripts are used for developing, building, and maintaining the OMG.PSUtilities module family.
+Standalone maintenance scripts. They are not packaged with any module and are not
+run by CI. The day-to-day build and publish workflow lives in the `OMG.DevTools`
+module and in `Module Developer Tools\functions\`; these scripts cover one-off
+maintenance instead.
 
 ## Scripts
 
-- `New-OMGModuleStructure.ps1` – Creates a new module folder layout with Plaster, readme, changelog.
-- `Reset-OMGModuleManifests.ps1` – Auto-updates .psm1 & .psd1 exports for each submodule.
-- `Build-OMGModuleLocally.ps1` – Builds & imports the module into current session.
-- `Bump-ModuleVersion.ps1` – (Optional) Increments version in `.psd1`.
-- `Git-AutoTagAndPush.ps1` – (Optional) Git version tagging & push automation.
+| Script | Purpose |
+| --- | --- |
+| `New-OMGModuleStructure.ps1` | Creates a new module folder layout with Plaster, README, and CHANGELOG. |
+| `Move-OMGFunctionsToModules.ps1` | Moves function files between modules. |
+| `Export-PSUFunctionalSummary.ps1` | Exports a functional summary of the exported commands. |
+| `Run-PSUAzureDevOpsFunctionalTests.ps1` | Runs the Azure DevOps functional tests against a live organization. |
+| `Test-UpdatedFunctions.ps1` | Imports and smoke-tests the functions changed in the working tree. |
+
+## Reference documents
+
+- `PowerShell-Function-Consistency-Check-Prompt.md`
+- `OMG-PSUtilities-Consistency-Analysis-Report.md`
