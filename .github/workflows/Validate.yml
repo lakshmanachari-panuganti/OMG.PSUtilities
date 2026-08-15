@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - main
+      - ai-driven1
   push:
     branches-ignore:
       - main
@@ -24,6 +25,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
       - name: Configure PowerShell Module Path
         shell: pwsh
@@ -42,7 +45,16 @@ jobs:
 
       - name: Validate Repository
         shell: pwsh
-        run: .\build\Test-Repository.ps1 -IncludeScriptAnalyzer
+        env:
+          BASE_REF: ${{ github.event.pull_request.base.sha }}
+          HEAD_REF: ${{ github.event.pull_request.head.sha }}
+        run: |
+          $parameters = @{ IncludeScriptAnalyzer = $true }
+          if ($env:BASE_REF) {
+              $parameters.BaseRef = $env:BASE_REF
+              $parameters.HeadRef = $env:HEAD_REF
+          }
+          .\build\Test-Repository.ps1 @parameters
 
       - name: Run Pester Tests
         shell: pwsh
