@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.1.1] - 2026-08-15
+### Fixed
+- Republished the loader behavior that tolerates an absent optional `Private` folder.
+- Republished the `Invoke-PSUAzureAppRegAudit` `ShouldProcess` guard before tenant enumeration.
+
 ## [1.1.0] - 2025-07-03
 ### Added
 - `Invoke-PSUAzureAppRegAudit` (Public): Comprehensive Azure App Registration cleanup and governance audit.
