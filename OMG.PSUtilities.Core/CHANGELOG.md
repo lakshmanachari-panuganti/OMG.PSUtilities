@@ -1,3 +1,16 @@
+## [1.0.23] - 15th August 2026
+### Added
+- `Complete-PSUGithubPullRequest` (Public): merge open GitHub pull requests with merge, squash, or rebase and optionally delete the source branch after a confirmed merge.
+- `tests/OMG.PSUtilities.Core.Tests.ps1`: focused coverage for provider dispatch, dependency guidance, `-WhatIf`, manifest version integrity, and Terraform credential isolation.
+
+### Fixed
+- `Approve-PSUPullRequest` and `Complete-PSUPullRequest` (Public): resolve optional provider commands before invocation and return actionable module installation guidance instead of raw command-not-found failures.
+- `New-PSUGithubPullRequest`, `New-PSUOutlookMeeting`, and `Unlock-PSUTerraformStateAWS` (Public): honor `ShouldProcess`; `-WhatIf` no longer performs external mutations.
+- `Update-OMGModuleVersion` (Public): update only the top-level manifest version without changing nested dependency versions.
+
+### Security
+- `Unlock-PSUTerraformStateAWS` (Public): pass AWS credentials through temporarily scoped environment variables instead of Terraform command-line arguments, restore prior values in `finally`, and redact credentials from Terraform failures.
+
 ## [1.0.22] - 6th August 2026
 ### Fixed
 - Renamed `Public/Resolve-PSUGitMergeConflict.ps1-----wip` to `Public/Resolve-PSUGitMergeConflict--wip.ps1` so `build/Build-Modules.ps1`'s `*--wip.ps1` exclusion actually matches it. The old name was being packaged into published Core builds; this bump is required to ship the corrected package since `Publish-Modules.yml` skips publishing when the local version is not greater than the gallery version.

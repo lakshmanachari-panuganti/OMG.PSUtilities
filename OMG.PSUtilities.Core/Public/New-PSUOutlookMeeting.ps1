@@ -148,10 +148,6 @@ function New-PSUOutlookMeeting {
             throw "Microsoft.Graph.Calendar module is not installed. Please install it using: Install-Module Microsoft.Graph.Calendar"
         }
 
-        # Import the module if not already loaded
-        if (-not (Get-Module -Name Microsoft.Graph.Calendar)) {
-            Import-Module Microsoft.Graph.Calendar
-        }
     }
 
     process {
@@ -257,6 +253,14 @@ function New-PSUOutlookMeeting {
             $jsonBody = $EventBody | ConvertTo-Json -Depth 10
             Write-Verbose "Event body JSON:"
             Write-Verbose $jsonBody
+
+            if (-not $PSCmdlet.ShouldProcess($User, "Create Outlook meeting '$Subject'")) {
+                return
+            }
+
+            if (-not (Get-Module -Name Microsoft.Graph.Calendar)) {
+                Import-Module Microsoft.Graph.Calendar
+            }
 
             # Create the meeting
             Write-Verbose "Creating meeting via Microsoft Graph API..."

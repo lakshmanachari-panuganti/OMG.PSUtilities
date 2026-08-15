@@ -39,9 +39,13 @@
     Version: 1.0
     Requires the Terraform CLI. Force-unlock can corrupt state when another
     Terraform operation is still active.
+    Explicit credentials remain string parameters for compatibility. They are
+    supplied to Terraform through temporary process environment variables and
+    restored after execution. Secure credential acquisition is handled in a
+    later migration.
 #>
 function Unlock-PSUTerraformStateAWS {
-    [CmdletBinding(SupportsShouldProcess)]
+    [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
     param(
         [Parameter(Mandatory = $false)]
         [string]$Path = (Get-Location).Path,
@@ -62,7 +66,28 @@ function Unlock-PSUTerraformStateAWS {
         [switch]$Force
     )
 
+    function Get-SanitizedTerraformOutput {
+        param (
+            [Parameter()]
+            [object[]]$Output
+        )
+
+        $sanitizedOutput = ($Output | ForEach-Object { [string]$_ }) -join "`n"
+        foreach ($sensitiveValue in @($AccessKey, $SecretKey)) {
+            if (-not [string]::IsNullOrEmpty($sensitiveValue)) {
+                $sanitizedOutput = $sanitizedOutput.Replace($sensitiveValue, '***')
+            }
+        }
+        $sanitizedOutput
+    }
+
     $originalLocation = Get-Location
+    $locationChanged = $false
+    $credentialsChanged = $false
+    $hadAccessKey = Test-Path Env:\AWS_ACCESS_KEY_ID
+    $hadSecretKey = Test-Path Env:\AWS_SECRET_ACCESS_KEY
+    $originalAccessKey = $env:AWS_ACCESS_KEY_ID
+    $originalSecretKey = $env:AWS_SECRET_ACCESS_KEY
     try {
         Write-Host "Validating Terraform directory..."
         if (-not (Test-Path $Path -PathType Container)) {
@@ -81,19 +106,6 @@ function Unlock-PSUTerraformStateAWS {
             throw "Path does not appear to be a Terraform directory (no .tf files or .terraform directory found): $Path"
         }
 
-        if (-not $LockId) {
-            do {
-                $LockId = Read-Host "Enter the Terraform Lock ID"
-                if ([string]::IsNullOrWhiteSpace($LockId)) {
-                    Write-Host "Lock ID cannot be empty. Please try again."
-                }
-            } while ([string]::IsNullOrWhiteSpace($LockId))
-        }
-        Write-Host "Lock ID: $LockId"
-
-        Set-Location -Path $Path
-        Write-Host "Working in Terraform directory: $Path"
-
         # Detect backend type
         $tfFiles = Get-ChildItem -Path $Path -Filter "*.tf" -Recurse
         $backendType = ( $tfFiles | Get-Content | Select-String -Pattern 'backend\s+"(\w+)"' -AllMatches |
@@ -105,14 +117,39 @@ function Unlock-PSUTerraformStateAWS {
         }
         Write-Host "Detected backend type: $backendType"
 
+        if ($Force) {
+            $ConfirmPreference = 'None'
+        }
+        if (-not $PSCmdlet.ShouldProcess($Path, 'Initialize Terraform and force-unlock remote state')) {
+            return
+        }
+
+        if (-not $LockId) {
+            do {
+                $LockId = Read-Host "Enter the Terraform Lock ID"
+                if ([string]::IsNullOrWhiteSpace($LockId)) {
+                    Write-Host "Lock ID cannot be empty. Please try again."
+                }
+            } while ([string]::IsNullOrWhiteSpace($LockId))
+        }
+        Write-Host "Lock ID: $LockId"
+
+        Set-Location -Path $Path
+        $locationChanged = $true
+        Write-Host "Working in Terraform directory: $Path"
+
+        if ($AccessKey -and $SecretKey) {
+            $env:AWS_ACCESS_KEY_ID = $AccessKey
+            $env:AWS_SECRET_ACCESS_KEY = $SecretKey
+            $credentialsChanged = $true
+        }
+
         Write-Host "Initializing Terraform backend..."
         if ($backendType -eq "s3") {
             if ($AccessKey -and $SecretKey) {
                 Write-Host "Using provided AWS credentials..."
                 $initArgs = @(
                     "init",
-                    "-backend-config=access_key=$AccessKey",
-                    "-backend-config=secret_key=$SecretKey",
                     "-backend-config=region=$Region"
                 )
             } else {
@@ -126,7 +163,7 @@ function Unlock-PSUTerraformStateAWS {
 
         $initResult = & terraform $initArgs 2>&1
         if ($LASTEXITCODE -ne 0) {
-            throw "Terraform init failed. Output: $($initResult -join "`n")"
+            throw "Terraform init failed. Output: $(Get-SanitizedTerraformOutput -Output $initResult)"
         }
         Write-Host "Terraform backend initialized successfully"
 
@@ -134,7 +171,7 @@ function Unlock-PSUTerraformStateAWS {
         Write-Host "Retrieving available workspaces..."
         $workspaceOutput = terraform workspace list 2>&1
         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to list workspaces. Output: $($workspaceOutput -join "`n")"
+            throw "Failed to list workspaces. Output: $(Get-SanitizedTerraformOutput -Output $workspaceOutput)"
         }
 
         $workspaces = @($workspaceOutput | Where-Object { $_ -match '\S' } | 
@@ -184,29 +221,19 @@ function Unlock-PSUTerraformStateAWS {
         Write-Host "Selecting workspace: $selectedWorkspace"
         $selectResult = terraform workspace select $selectedWorkspace 2>&1
         if ($LASTEXITCODE -ne 0) {
-            throw "Failed to select workspace '$selectedWorkspace'. Output: $($selectResult -join "`n")"
+            throw "Failed to select workspace '$selectedWorkspace'. Output: $(Get-SanitizedTerraformOutput -Output $selectResult)"
         }
         Write-Host "Workspace '$selectedWorkspace' selected successfully"
 
         # Only force-unlock if backend = s3
         if ($backendType -eq "s3") {
-            if (-not $Force) {
-                Write-Host "WARNING: Force unlocking may cause state corruption if another operation is running."
-                do {
-                    $confirm = Read-Host "Are you sure you want to force unlock the state? (yes/no)"
-                    if ($confirm -eq 'yes') { break }
-                    elseif ($confirm -eq 'no') { Write-Host "Operation cancelled by user"; return }
-                    else { Write-Host "Please type 'yes' or 'no'" }
-                } while ($true)
-            }
-
             Write-Host "Unlocking state with Lock ID: $LockId"
             $unlockResult = terraform force-unlock -force $LockId 2>&1
             if ($LASTEXITCODE -ne 0) {
                 if ($unlockResult -match "lock.*not found" -or $unlockResult -match "no lock found") {
                     Write-Host "No lock found with ID '$LockId' - the state may already be unlocked"
                 } else {
-                    throw "Failed to unlock state. Output: $($unlockResult -join "`n")"
+                    throw "Failed to unlock state. Output: $(Get-SanitizedTerraformOutput -Output $unlockResult)"
                 }
             } else {
                 Write-Host "State successfully unlocked!"
@@ -224,7 +251,21 @@ function Unlock-PSUTerraformStateAWS {
         $PSCmdlet.ThrowTerminatingError($_)
     }
     finally {
-        Set-Location -Path $originalLocation
-        Write-Host "Restored to original location: $originalLocation"
+        if ($credentialsChanged) {
+            if ($hadAccessKey) {
+                $env:AWS_ACCESS_KEY_ID = $originalAccessKey
+            } else {
+                Remove-Item Env:\AWS_ACCESS_KEY_ID -ErrorAction SilentlyContinue
+            }
+            if ($hadSecretKey) {
+                $env:AWS_SECRET_ACCESS_KEY = $originalSecretKey
+            } else {
+                Remove-Item Env:\AWS_SECRET_ACCESS_KEY -ErrorAction SilentlyContinue
+            }
+        }
+        if ($locationChanged) {
+            Set-Location -Path $originalLocation
+            Write-Host "Restored to original location: $originalLocation"
+        }
     }
 }

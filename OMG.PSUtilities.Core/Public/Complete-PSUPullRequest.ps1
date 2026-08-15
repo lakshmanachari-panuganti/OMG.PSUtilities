@@ -112,8 +112,13 @@ function Complete-PSUPullRequest {
                     $params.CommitMessage = $CommitMessage
                 }
 
+                $providerCommand = Get-Command -Name 'Complete-PSUGithubPullRequest' -ErrorAction SilentlyContinue
+                if (-not $providerCommand) {
+                    throw "GitHub completion support is unavailable. Run 'Update-Module OMG.PSUtilities.Core' or 'Install-Module OMG.PSUtilities.Core', then import the module again."
+                }
+
                 Write-Host "Completing GitHub pull request #$PullRequestId..." -ForegroundColor Blue
-                return Complete-PSUGithubPullRequest @params
+                return & $providerCommand @params
 
             } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                 Write-Verbose "Detected Azure DevOps repository"
@@ -131,8 +136,13 @@ function Complete-PSUPullRequest {
                     $params.DeleteSourceBranch = $true
                 }
 
+                $providerCommand = Get-Command -Name 'Complete-PSUADOPullRequest' -ErrorAction SilentlyContinue
+                if (-not $providerCommand) {
+                    throw "Azure DevOps completion support is unavailable. Run 'Install-Module OMG.PSUtilities.AzureDevOps' and 'Import-Module OMG.PSUtilities.AzureDevOps'."
+                }
+
                 Write-Host "Completing Azure DevOps pull request #$PullRequestId..." -ForegroundColor Blue
-                return Complete-PSUADOPullRequest @params
+                return & $providerCommand @params
 
             } else {
                 throw "Unsupported git provider. This function supports GitHub and Azure DevOps repositories only. Remote URL: $remoteUrl"

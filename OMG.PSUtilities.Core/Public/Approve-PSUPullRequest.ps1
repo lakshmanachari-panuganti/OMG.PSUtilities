@@ -99,8 +99,13 @@ function Approve-PSUPullRequest {
                     $params.Comment = $Comment
                 }
 
+                $providerCommand = Get-Command -Name 'Approve-PSUGithubPullRequest' -ErrorAction SilentlyContinue
+                if (-not $providerCommand) {
+                    throw "GitHub approval support is unavailable. Run 'Update-Module OMG.PSUtilities.Core' or 'Install-Module OMG.PSUtilities.Core', then import the module again."
+                }
+
                 Write-Host "Reviewing GitHub pull request #$PullRequestId..." -ForegroundColor Blue
-                return Approve-PSUGithubPullRequest @params
+                return & $providerCommand @params
 
             } elseif ($remoteUrl -match 'dev\.azure\.com|visualstudio\.com') {
                 Write-Verbose "Detected Azure DevOps repository"
@@ -122,8 +127,13 @@ function Approve-PSUPullRequest {
                     $params.Comment = $Comment
                 }
 
+                $providerCommand = Get-Command -Name 'Approve-PSUADOPullRequest' -ErrorAction SilentlyContinue
+                if (-not $providerCommand) {
+                    throw "Azure DevOps approval support is unavailable. Run 'Install-Module OMG.PSUtilities.AzureDevOps' and 'Import-Module OMG.PSUtilities.AzureDevOps'."
+                }
+
                 Write-Host "Reviewing Azure DevOps pull request #$PullRequestId..." -ForegroundColor Blue
-                return Approve-PSUADOPullRequest @params
+                return & $providerCommand @params
 
             } else {
                 throw "Unsupported git provider. This function supports GitHub and Azure DevOps repositories only. Remote URL: $remoteUrl"

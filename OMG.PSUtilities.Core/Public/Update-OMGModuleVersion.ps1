@@ -83,9 +83,21 @@ function Update-OMGModuleVersion {
         $newVersion = "$major.$minor.$patch"
         Write-Host "Attempting to update module version from $currentVersion to $newVersion..." -ForegroundColor Cyan
 
-        # Update .psd1
-        $newContent = $content -replace "(ModuleVersion\s*=\s*)['""][^'""]+['""]", "`$1'$newVersion'"
-        Set-Content -Path $psd1Path.FullName -Value $newContent -Encoding UTF8
+        # Update only the top-level manifest version, not nested dependency versions.
+        $versionLineIndex = -1
+        for ($index = 0; $index -lt $content.Count; $index++) {
+            if ($content[$index] -match '^ModuleVersion\s*=') {
+                $versionLineIndex = $index
+                break
+            }
+        }
+        if ($versionLineIndex -lt 0) {
+            Write-Error "Top-level ModuleVersion assignment not found in $($psd1Path.Name)"
+            return
+        }
+
+        $content[$versionLineIndex] = $content[$versionLineIndex] -replace "^(ModuleVersion\s*=\s*)['""][^'""]+['""]", "`$1'$newVersion'"
+        Set-Content -Path $psd1Path.FullName -Value $content -Encoding UTF8
         Write-Host "Updated $newVersion in $($psd1Path.Name)" -ForegroundColor Green
 
         # Update plasterManifest.xml
