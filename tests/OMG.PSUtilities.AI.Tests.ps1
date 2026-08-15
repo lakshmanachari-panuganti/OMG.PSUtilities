@@ -4,7 +4,13 @@
 BeforeAll {
     $repositoryRoot = Split-Path -Parent $PSScriptRoot
     $env:PSModulePath = "$repositoryRoot$([System.IO.Path]::PathSeparator)$env:PSModulePath"
-    Import-Module (Join-Path $repositoryRoot 'OMG.PSUtilities.AI\OMG.PSUtilities.AI.psd1') -Force
+    $moduleManifestPath = if ($env:PSU_AI_TEST_MANIFEST) {
+        $env:PSU_AI_TEST_MANIFEST
+    } else {
+        Join-Path $repositoryRoot 'OMG.PSUtilities.AI\OMG.PSUtilities.AI.psd1'
+    }
+    Remove-Module OMG.PSUtilities.AI -Force -ErrorAction SilentlyContinue
+    Import-Module $moduleManifestPath -Force
 }
 
 Describe 'Invoke-GeminiAIApi authentication headers' {
@@ -13,7 +19,13 @@ Describe 'Invoke-GeminiAIApi authentication headers' {
             Mock Write-Host {}
             Mock Invoke-RestMethod { throw "Unexpected request to $Uri" }
             Mock Invoke-RestMethod -ParameterFilter { $Uri -like '*issuetoken*' } -MockWith {
-                @{ HeaderScript = "`$Headers = @{ 'Authorization' = 'Bearer T'; 'psu-clientusername' = 'u'; 'psu-clientdevice' = 'd'; 'psu-clientip' = '1.2.3.4' }" }
+                @{
+                    authorization  = 'Bearer T'
+                    clientUsername = 'u'
+                    clientDevice   = 'd'
+                    clientIp       = '1.2.3.4'
+                    expiresOn      = [DateTimeOffset]::UtcNow.AddHours(1).ToString('o')
+                }
             }
             $script:sentHeaders = $null
             Mock Invoke-RestMethod -ParameterFilter { $Uri -like '*api/proxy*' } -MockWith {
@@ -60,6 +72,97 @@ Describe 'Invoke-GeminiAIApi authentication headers' {
             $script:PSU_API_HEADERS = @{ Authorization = 'Bearer OLD' }
 
             try { New-PSUApiKey -Confirm:$false -ErrorAction Stop } catch { }
+            $script:PSU_API_HEADERS | Should -BeNullOrEmpty
+        }
+    }
+}
+
+Describe 'New-PSUApiKey issuer contract' {
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.AI {
+            $script:PSU_API_KEY = $null
+            $script:PSU_API_KEY_EXPIRY = $null
+            $script:PSU_API_HEADERS = $null
+            $script:verboseMessages = @()
+            $script:hostMessages = @()
+            Mock Write-Verbose { $script:verboseMessages += [string]$Message }
+            Mock Write-Host { $script:hostMessages += [string]$Object }
+            Mock Write-Error {}
+        }
+    }
+
+    It 'constructs headers locally from a valid data-only response without logging the token' {
+        InModuleScope OMG.PSUtilities.AI {
+            $script:testToken = 'SAFE-TOKEN-VALUE'
+            Mock Invoke-RestMethod {
+                @{
+                    authorization  = "Bearer $script:testToken"
+                    clientUsername = 'build-user'
+                    clientDevice   = 'build-device'
+                    clientIp       = '203.0.113.10'
+                    expiresOn      = [DateTimeOffset]::UtcNow.AddHours(1).ToString('o')
+                }
+            }
+
+            New-PSUApiKey -Confirm:$false | Should -Be $script:testToken
+            $script:PSU_API_HEADERS.Authorization | Should -Be "Bearer $script:testToken"
+            $script:PSU_API_HEADERS['psu-clientusername'] | Should -Be 'build-user'
+            $script:PSU_API_HEADERS['psu-clientdevice'] | Should -Be 'build-device'
+            $script:PSU_API_HEADERS['psu-clientip'] | Should -Be '203.0.113.10'
+            $script:PSU_API_KEY_EXPIRY | Should -BeGreaterThan ([DateTime]::UtcNow)
+            (($script:verboseMessages + $script:hostMessages) -join "`n") | Should -Not -Match ([regex]::Escape($script:testToken))
+        }
+    }
+
+    It 'rejects executable issuer content without running it' {
+        InModuleScope OMG.PSUtilities.AI {
+            $script:issuerCodeRan = $false
+            Mock Invoke-RestMethod {
+                @{
+                    authorization  = 'Bearer SAFE-TOKEN'
+                    clientUsername = 'build-user'
+                    clientDevice   = 'build-device'
+                    clientIp       = '203.0.113.10'
+                    expiresOn      = [DateTimeOffset]::UtcNow.AddHours(1).ToString('o')
+                    HeaderScript   = '$script:issuerCodeRan = $true'
+                }
+            }
+
+            { New-PSUApiKey -Confirm:$false -ErrorAction Stop } | Should -Throw '*executable*'
+            $script:issuerCodeRan | Should -BeFalse
+            $script:PSU_API_HEADERS | Should -BeNullOrEmpty
+        }
+    }
+
+    It 'rejects a response with a missing required field' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Invoke-RestMethod {
+                @{
+                    authorization  = 'Bearer SAFE-TOKEN'
+                    clientUsername = 'build-user'
+                    clientDevice   = 'build-device'
+                    expiresOn      = [DateTimeOffset]::UtcNow.AddHours(1).ToString('o')
+                }
+            }
+
+            { New-PSUApiKey -Confirm:$false -ErrorAction Stop } | Should -Throw '*clientIp*'
+            $script:PSU_API_HEADERS | Should -BeNullOrEmpty
+        }
+    }
+
+    It 'rejects an expired token' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Invoke-RestMethod {
+                @{
+                    authorization  = 'Bearer SAFE-TOKEN'
+                    clientUsername = 'build-user'
+                    clientDevice   = 'build-device'
+                    clientIp       = '203.0.113.10'
+                    expiresOn      = [DateTimeOffset]::UtcNow.AddMinutes(-1).ToString('o')
+                }
+            }
+
+            { New-PSUApiKey -Confirm:$false -ErrorAction Stop } | Should -Throw '*future*'
             $script:PSU_API_HEADERS | Should -BeNullOrEmpty
         }
     }
@@ -175,23 +278,144 @@ Describe 'Update-PSUChangeLog' {
     }
 }
 
+Describe 'New-PSUAiPoweredPullRequest prompt binding' {
+    It 'accepts a supported Read-Host choice without a parameter-binding error' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Write-Host {}
+            Mock Write-Warning {}
+            Mock Set-Location {}
+            Mock Set-Clipboard {}
+            Mock Convert-PSUPullRequestSummaryToHtml {}
+            Mock Get-PSUAiPoweredGitChangeSummary {
+                @([pscustomobject]@{
+                        File         = 'reviewed.ps1'
+                        TypeOfChange = 'Modified'
+                        Summary      = 'Updated behavior'
+                    })
+            }
+            Mock Invoke-PSUAiPrompt { '{"title":"Review update","description":"Updated behavior"}' }
+            Mock git {
+                $global:LASTEXITCODE = 0
+                if ("$args" -eq 'rev-parse --show-toplevel') {
+                    'C:/repos/fake'
+                }
+            }
+            $script:promptAnswers = @('N', 'N')
+            $script:promptIndex = 0
+            Mock Read-Host {
+                $answer = $script:promptAnswers[$script:promptIndex]
+                $script:promptIndex++
+                $answer
+            }
+
+            {
+                New-PSUAiPoweredPullRequest `
+                    -BaseBranch main `
+                    -FeatureBranch feature/review `
+                    -Confirm:$false
+            } | Should -Not -Throw
+            Should -Invoke Read-Host -Times 2 -Exactly
+        }
+    }
+}
+
 Describe 'Invoke-PSUGitCommit' {
-    It 'commits once when the user regenerates the message' {
+    It 'stages only reviewed repository-relative paths' {
         InModuleScope OMG.PSUtilities.AI {
             Mock Write-Host {}
             Mock Set-Location {}
             Mock Popup-SensitiveContent { $true }
             Mock Invoke-PSUAiPrompt { 'chore: test message' }
-            $script:commitCount = 0
+            Mock Read-Host { '' }
+            Mock Get-Item { [System.IO.FileInfo]'C:\repos\fake\reviewed.ps1' }
+            $script:gitCalls = [System.Collections.Generic.List[string]]::new()
             Mock git {
-                switch -Regex ("$args") {
-                    'rev-parse --show-toplevel' { $global:LASTEXITCODE = 0; 'C:/repos/fake' }
+                $call = "$args"
+                $script:gitCalls.Add($call)
+                $global:LASTEXITCODE = 0
+                switch -Regex ($call) {
+                    '^rev-parse --show-toplevel$' { 'C:/repos/fake' }
                     'status --porcelain' { ' M file1.ps1' }
+                    '^diff --' { 'diff content' }
+                    default { '' }
+                }
+            }
+
+            Invoke-PSUGitCommit
+
+            $script:gitCalls | Should -Contain 'add -- file1.ps1'
+            $script:gitCalls | Should -Not -Contain 'add .'
+        }
+    }
+
+    It 'aborts before prompting when no reviewed path remains' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Write-Host {}
+            Mock Set-Location {}
+            Mock Popup-SensitiveContent { $true }
+            Mock Invoke-PSUAiPrompt { 'chore: should not run' }
+            Mock Read-Host { '' }
+            $script:gitCalls = [System.Collections.Generic.List[string]]::new()
+            Mock git {
+                $call = "$args"
+                $script:gitCalls.Add($call)
+                $global:LASTEXITCODE = 0
+                switch -Regex ($call) {
+                    '^rev-parse --show-toplevel$' { 'C:/repos/fake' }
+                    'status --porcelain' { '?? settings.env' }
+                    default { '' }
+                }
+            }
+
+            Invoke-PSUGitCommit
+
+            Should -Invoke Invoke-PSUAiPrompt -Times 0 -Exactly
+            @($script:gitCalls | Where-Object { $_ -match '^(add|commit|pull|push)( |$)' }) | Should -BeNullOrEmpty
+        }
+    }
+
+    It 'rejects pre-staged paths outside the reviewed set' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Write-Host {}
+            Mock Write-Error {}
+            Mock Set-Location {}
+            Mock Popup-SensitiveContent { $true }
+            Mock Invoke-PSUAiPrompt { 'chore: should not run' }
+            Mock Get-Item { [System.IO.FileInfo]'C:\repos\fake\reviewed.ps1' }
+            Mock git {
+                $global:LASTEXITCODE = 0
+                switch -Regex ("$args") {
+                    '^rev-parse --show-toplevel$' { 'C:/repos/fake' }
+                    'status --porcelain' { @('M  secrets.env', ' M reviewed.ps1') }
+                    default { '' }
+                }
+            }
+
+            { Invoke-PSUGitCommit } | Should -Throw '*pre-staged*secrets.env*'
+            Should -Invoke Invoke-PSUAiPrompt -Times 0 -Exactly
+        }
+    }
+
+    It 'regenerates in place and commits once' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Write-Host {}
+            Mock Set-Location {}
+            Mock Popup-SensitiveContent { $true }
+            Mock Get-Item { [System.IO.FileInfo]'C:\repos\fake\file1.ps1' }
+            $script:promptCount = 0
+            Mock Invoke-PSUAiPrompt { $script:promptCount++; 'chore: test message' }
+            $script:commitCount = 0
+            $script:rootCount = 0
+            Mock git {
+                $global:LASTEXITCODE = 0
+                switch -Regex ("$args") {
+                    '^rev-parse --show-toplevel$' { $script:rootCount++; 'C:/repos/fake' }
+                    'status --porcelain' { ' M file1.ps1' }
+                    '^diff --' { 'diff content' }
                     '^commit' { $script:commitCount++ }
                     default { '' }
                 }
             }
-            # First prompt answers R, the nested call accepts with Enter
             $script:answers = @('R', '')
             $script:answerIndex = 0
             Mock Read-Host {
@@ -203,6 +427,74 @@ Describe 'Invoke-PSUGitCommit' {
             Invoke-PSUGitCommit
 
             $script:commitCount | Should -Be 1
+            $script:promptCount | Should -Be 2
+            $script:rootCount | Should -Be 1
+        }
+    }
+
+    It 'stops at a failed native Git command' -ForEach @(
+        @{ Command = 'status' }
+        @{ Command = 'diff' }
+        @{ Command = 'add' }
+        @{ Command = 'commit' }
+        @{ Command = 'pull' }
+        @{ Command = 'push' }
+    ) {
+        InModuleScope OMG.PSUtilities.AI -Parameters @{ FailingCommand = $Command } {
+            param ($FailingCommand)
+
+            Mock Set-Location {}
+            Mock Popup-SensitiveContent { $true }
+            Mock Get-Item { [System.IO.FileInfo]'C:\repos\fake\file1.ps1' }
+            Mock Invoke-PSUAiPrompt { 'chore: test message' }
+            Mock Read-Host { '' }
+            Mock Write-Error {}
+            $script:hostMessages = @()
+            Mock Write-Host { $script:hostMessages += [string]$Object }
+            $script:failingCommand = $FailingCommand
+            Mock git {
+                $commandName = [string]$args[0]
+                if ($commandName -eq $script:failingCommand) {
+                    $global:LASTEXITCODE = 1
+                    return 'native failure'
+                }
+
+                $global:LASTEXITCODE = 0
+                switch -Regex ("$args") {
+                    '^rev-parse --show-toplevel$' { 'C:/repos/fake' }
+                    'status --porcelain' { ' M file1.ps1' }
+                    '^diff --' { 'diff content' }
+                    default { '' }
+                }
+            }
+
+            { Invoke-PSUGitCommit } | Should -Throw "*git $FailingCommand failed*"
+            ($script:hostMessages -join "`n") | Should -Not -Match 'Sync complete'
+        }
+    }
+}
+
+Describe 'OMG.PSUtilities.AI module loading' {
+    It 'imports when the optional Private folder is absent' {
+        $repositoryRoot = Split-Path -Parent $PSScriptRoot
+        $sourceModule = if ($env:PSU_AI_TEST_MANIFEST) {
+            Split-Path -Parent $env:PSU_AI_TEST_MANIFEST
+        } else {
+            Join-Path $repositoryRoot 'OMG.PSUtilities.AI'
+        }
+        $isolatedModule = Join-Path $TestDrive 'OMG.PSUtilities.AI'
+        New-Item -Path $isolatedModule -ItemType Directory -Force | Out-Null
+        Copy-Item -LiteralPath (Join-Path $sourceModule 'OMG.PSUtilities.AI.psd1') -Destination $isolatedModule
+        Copy-Item -LiteralPath (Join-Path $sourceModule 'OMG.PSUtilities.AI.psm1') -Destination $isolatedModule
+        Copy-Item -LiteralPath (Join-Path $sourceModule 'Public') -Destination $isolatedModule -Recurse
+
+        try {
+            Remove-Module OMG.PSUtilities.AI -Force -ErrorAction SilentlyContinue
+            { Import-Module (Join-Path $isolatedModule 'OMG.PSUtilities.AI.psd1') -Force -ErrorAction Stop } |
+                Should -Not -Throw
+        } finally {
+            Remove-Module OMG.PSUtilities.AI -Force -ErrorAction SilentlyContinue
+            Import-Module (Join-Path $sourceModule 'OMG.PSUtilities.AI.psd1') -Force
         }
     }
 }
