@@ -186,6 +186,10 @@ function New-PSUGithubPullRequest {
             Write-Verbose "Target branch: $TargetBranch"
             Write-Verbose "API URI: $uri"
 
+            if (-not $PSCmdlet.ShouldProcess("$Owner/$Repository", "Create pull request from '$SourceBranch' to '$TargetBranch'")) {
+                return
+            }
+
             $response = Invoke-RestMethod -Method Post -Uri $uri -Headers $headers -Body $bodyJson -ContentType "application/json" -ErrorAction Stop
 
             $pullRequestNumber = $response.number
