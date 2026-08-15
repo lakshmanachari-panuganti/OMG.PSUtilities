@@ -79,10 +79,31 @@ function Find-PSUADServiceAccountMisuse {
         $InteractiveLogonTypes = @(2, 10, 11)
 
         Write-Progress -Activity "Collecting Event Logs..." -Status "Scanning event logs for logon activity..."
-        $AllLogonEvents = Get-WinEvent -ComputerName $Server -Credential $Credential -FilterHashtable @{
-            LogName = 'Security'; ID = 4624; StartTime = $StartDate; EndTime = $EndDate
-        } -ErrorAction SilentlyContinue | Where-Object {
-            $_.Properties[8].Value -in $InteractiveLogonTypes
+        $EventQueryParameters = @{
+            ComputerName   = $Server
+            FilterHashtable = @{
+                LogName = 'Security'; ID = 4624; StartTime = $StartDate; EndTime = $EndDate
+            }
+            ErrorAction    = 'Stop'
+        }
+        if ($Credential) {
+            $EventQueryParameters.Credential = $Credential
+        }
+
+        try {
+            $AllLogonEvents = @(
+                Get-WinEvent @EventQueryParameters | Where-Object {
+                    $_.Properties[8].Value -in $InteractiveLogonTypes
+                }
+            )
+        }
+        catch {
+            if ($_.FullyQualifiedErrorId -like 'NoMatchingEventsFound*') {
+                $AllLogonEvents = @()
+            }
+            else {
+                throw
+            }
         }
 
         $Results = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -104,16 +125,16 @@ function Find-PSUADServiceAccountMisuse {
 
             $LogonCount = $UserEvents.Count
             $RiskScore = switch ($LogonCount) {
-                { $_ -ge 10 } { 10 }
-                { $_ -ge 5 }  { 5 }
-                { $_ -ge 1 }  { 3 }
+                { $_ -ge 10 } { 10; break }
+                { $_ -ge 5 }  { 5; break }
+                { $_ -ge 1 }  { 3; break }
                 default       { 0 }
             }
 
             $RiskLevel = switch ($RiskScore) {
-                { $_ -ge 10 } { "High" }
-                { $_ -ge 5 }  { "Medium" }
-                { $_ -ge 1 }  { "Low" }
+                { $_ -ge 10 } { "High"; break }
+                { $_ -ge 5 }  { "Medium"; break }
+                { $_ -ge 1 }  { "Low"; break }
                 default       { "None" }
             }
 

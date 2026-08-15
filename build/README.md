@@ -14,9 +14,10 @@ private boundaries, and comment-based help.
 
 ### PSScriptAnalyzer warning ratchet
 
-The committed `psscriptanalyzer-baseline.json` records the 1,683 warnings
-measured after Phase 6 across 15 rules. The largest groups are 938 indentation,
-362 `PSAvoidUsingWriteHost`, and 323 closing-brace findings.
+The committed `psscriptanalyzer-baseline.json` was initialized from the 1,683
+warnings measured after Phase 6 across 15 rules. The largest groups were 938
+indentation, 362 `PSAvoidUsingWriteHost`, and 323 closing-brace findings. Its
+`warningCount` records the current total as debt is removed.
 
 The baseline is a per-finding multiset keyed by rule, repository-relative path,
 and a SHA256 hash of normalized source context. Duplicate identities retain an
