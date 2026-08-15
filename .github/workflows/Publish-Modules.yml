@@ -90,6 +90,12 @@ jobs:
         shell: pwsh
         run: .\build\Build-Modules.ps1 -Clean
 
+      - name: Compare Existing Gallery Packages
+        shell: pwsh
+        run: |
+          $modules = $env:MODULES -split ',' | ForEach-Object { $_.Trim() }
+          .\build\Compare-PublishedModule.ps1 -ModuleName $modules
+
       - name: Upload Release Artifacts
         uses: actions/upload-artifact@v7
         with:
@@ -118,6 +124,9 @@ jobs:
               try {
                   $galleryVersion = [version](Find-Module -Name $module -Repository PSGallery -ErrorAction Stop).Version
               } catch {
+                  if ($_.FullyQualifiedErrorId -notmatch 'NoMatchFoundForCriteria') {
+                  throw
+                  }
                   Write-Host "$module is not currently published."
               }
 
@@ -168,6 +177,19 @@ jobs:
           }
 
           "PUBLISHED_MODULES=$($publishedModules -join ',')" >> $env:GITHUB_ENV
+
+      - name: Verify Published Module Artifacts
+        if: env.PUBLISHED_MODULES != ''
+        shell: pwsh
+        run: |
+          $modules = $env:PUBLISHED_MODULES -split ',' | ForEach-Object {
+              ($_ -split '@', 2)[0].Trim()
+          }
+          .\build\Compare-PublishedModule.ps1 `
+              -ModuleName $modules `
+              -RequirePublishedVersion `
+              -RetryCount 18 `
+              -RetryDelaySeconds 10
 
       - name: Tag Published Versions
         if: env.PUBLISHED_MODULES != ''

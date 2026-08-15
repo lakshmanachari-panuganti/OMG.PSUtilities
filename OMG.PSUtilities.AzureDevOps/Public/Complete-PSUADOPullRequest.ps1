@@ -22,13 +22,15 @@ function Complete-PSUADOPullRequest {
 
     .PARAMETER MergeStrategy
         (Optional) The merge strategy to use: 'merge', 'squash', or 'rebase'.
-        Default value is 'merge'.
+        An explicitly supplied value overrides CompletionOptions.mergeStrategy.
+        Defaults to 'merge' when neither input specifies a strategy.
 
     .PARAMETER DeleteSourceBranch
         (Optional) Switch parameter to delete the source branch after completion.
 
     .PARAMETER CompletionOptions
-        (Optional) Additional completion options as a hashtable.
+        (Optional) Additional completion options as a hashtable. Explicit MergeStrategy
+        and DeleteSourceBranch parameters take precedence over matching hashtable keys.
 
     .PARAMETER PAT
         (Optional) Personal Access Token for Azure DevOps authentication.
@@ -131,33 +133,27 @@ function Complete-PSUADOPullRequest {
 
             $currentPr = Invoke-RestMethod -Method Get -Uri $getPrUri -Headers $headers -ErrorAction Stop
 
-            # Prepare completion options (use a fresh ordered hashtable to avoid any collection mutation issues later)
-            $completionOptions = [ordered]@{}
-
-            if ($MergeStrategy -eq 'merge') {
-                $completionOptions.mergeStrategy = 'noFastForward'
-            } elseif ($MergeStrategy -eq 'squash') {
-                $completionOptions.mergeStrategy = 'squash'
-            } elseif ($MergeStrategy -eq 'rebase') {
-                $completionOptions.mergeStrategy = 'rebase'
-            } elseif ($MergeStrategy -eq 'rebaseMerge') {
-                $completionOptions.mergeStrategy = 'rebaseMerge'
-            }
-
-            if ($DeleteSourceBranch) {
-                $completionOptions.deleteSourceBranch = $true
-            }
-
-            # Add any additional completion options (snapshot keys first to avoid 'collection modified' issues if caller mutates outside)
+            $mergeOptions = [ordered]@{}
             if ($CompletionOptions) {
-                $additional = @{}
-                foreach ($entry in @($CompletionOptions.GetEnumerator())) { # snapshot enumeration safely
-                    $additional[$entry.Key] = $entry.Value
-                }
-                foreach ($k in $additional.Keys) {
-                    $completionOptions[$k] = $additional[$k]
+                foreach ($entry in @($CompletionOptions.GetEnumerator())) {
+                    $mergeOptions[$entry.Key] = $entry.Value
                 }
             }
+
+            if ($PSBoundParameters.ContainsKey('MergeStrategy') -or -not $mergeOptions.Contains('mergeStrategy')) {
+                $mergeOptions.mergeStrategy = switch ($MergeStrategy) {
+                    'merge' { 'noFastForward' }
+                    'squash' { 'squash' }
+                    'rebase' { 'rebase' }
+                    'rebaseMerge' { 'rebaseMerge' }
+                }
+            }
+
+            if ($PSBoundParameters.ContainsKey('DeleteSourceBranch')) {
+                $mergeOptions.deleteSourceBranch = $DeleteSourceBranch.IsPresent
+            }
+
+            $deleteSourceBranchRequested = [bool]$mergeOptions.deleteSourceBranch
 
             # Determine source commit id; fall back defensively if property missing
             $sourceCommitId = $null
@@ -171,7 +167,7 @@ function Complete-PSUADOPullRequest {
 
             $bodyObject = [ordered]@{
                 status = 'completed'
-                completionOptions = $completionOptions
+                completionOptions = $mergeOptions
             }
             if ($sourceCommitId) {
                 $bodyObject.lastMergeSourceCommit = @{ commitId = $sourceCommitId }
@@ -205,7 +201,7 @@ function Complete-PSUADOPullRequest {
             Write-Host "PR URL: $WebUrl" -ForegroundColor Cyan
             Write-Host "Merge strategy: $MergeStrategy" -ForegroundColor Yellow
 
-            if ($DeleteSourceBranch) {
+            if ($deleteSourceBranchRequested) {
                 Write-Host "Source branch will be deleted." -ForegroundColor Green
             }
 
@@ -220,7 +216,7 @@ function Complete-PSUADOPullRequest {
                 CompletedBy         = $response.closedBy.displayName
                 CompletionDate      = $response.closedDate
                 MergeId             = $response.mergeId
-                DeletedSourceBranch = $DeleteSourceBranch.IsPresent
+                DeletedSourceBranch = $deleteSourceBranchRequested
                 Organization        = $Organization
                 Project             = $Project
                 Repository          = $Repository

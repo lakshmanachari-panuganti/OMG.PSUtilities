@@ -11,6 +11,12 @@
 .PARAMETER RepositoryRoot
     The repository root. Defaults to the parent folder of this script.
 
+.PARAMETER BaseRef
+    Optional Git revision used to enforce module version increases.
+
+.PARAMETER HeadRef
+    The Git revision containing changes relative to BaseRef. Defaults to HEAD.
+
 .PARAMETER IncludeScriptAnalyzer
     Runs PSScriptAnalyzer when the module is installed.
 
@@ -23,6 +29,11 @@
     .\build\Test-Repository.ps1 -IncludeScriptAnalyzer
 
     Validates every module and runs PSScriptAnalyzer.
+
+.EXAMPLE
+    .\build\Test-Repository.ps1 -BaseRef origin/main
+
+    Validates the repository and requires version increases for changed modules.
 
 .OUTPUTS
     [PSCustomObject]
@@ -38,6 +49,14 @@ param (
     [Parameter()]
     [ValidateNotNullOrEmpty()]
     [string]$RepositoryRoot = (Split-Path -Parent $PSScriptRoot),
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$BaseRef,
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$HeadRef = 'HEAD',
 
     [Parameter()]
     [switch]$IncludeScriptAnalyzer
@@ -59,6 +78,13 @@ $moduleDirectories = Get-ChildItem -Path $RepositoryRoot -Directory |
 
 if ($moduleDirectories.Count -eq 0) {
     throw "No PowerShell modules were found in '$RepositoryRoot'."
+}
+
+if ($BaseRef) {
+    & (Join-Path $PSScriptRoot 'Test-ModuleVersionChange.ps1') `
+        -RepositoryRoot $RepositoryRoot `
+        -BaseRef $BaseRef `
+        -HeadRef $HeadRef | Out-Null
 }
 
 foreach ($moduleDirectory in $moduleDirectories) {
