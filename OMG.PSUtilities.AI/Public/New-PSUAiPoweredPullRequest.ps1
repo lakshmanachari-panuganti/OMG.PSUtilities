@@ -205,7 +205,7 @@ If any rule is violated, regenerate the response until it strictly matches the r
             Write-Host '  N - Cancel and exit' -ForegroundColor Cyan
             Write-Host '  R - Regenerate with new AI content' -ForegroundColor Cyan
             Write-Host '  D - Draft the PR' -ForegroundColor Cyan
-            $readHost = Read-Host 'Enter your choice (Y/N/R/D)' -ForegroundColor Yellow
+            $readHost = Read-Host 'Enter your choice (Y/N/R/D)'
         } while ($readHost -notin 'Y','N','R','D')
 
         switch ($readHost) {
