@@ -12,6 +12,25 @@ The build folder is the authoritative automation entry point for this repository
 Validation covers PowerShell syntax, manifests, Public-to-manifest exports,
 private boundaries, and comment-based help.
 
+### PSScriptAnalyzer warning ratchet
+
+The committed `psscriptanalyzer-baseline.json` records the 1,683 warnings
+measured after Phase 6 across 15 rules. The largest groups are 938 indentation,
+362 `PSAvoidUsingWriteHost`, and 323 closing-brace findings.
+
+The baseline is a per-finding multiset keyed by rule, repository-relative path,
+and a SHA256 hash of normalized source context. Duplicate identities retain an
+exact count. This is stricter than a per-rule total: a warning moved to a new
+file or context cannot consume unrelated historical debt. Matching warnings
+remain visible; any unmatched warning fails validation.
+
+Regenerate the baseline only when intentionally recording warning removal or
+reviewed debt:
+
+```powershell
+.\build\Test-Repository.ps1 -UpdateWarningBaseline
+```
+
 ## Build artifacts
 
 ```powershell

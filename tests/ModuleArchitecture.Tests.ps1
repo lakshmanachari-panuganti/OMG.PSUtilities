@@ -869,3 +869,121 @@ Describe 'Module release integrity' {
         Should -Invoke Save-Module -Exactly 1
     }
 }
+
+Describe 'PSScriptAnalyzer warning ratchet' {
+    BeforeAll {
+        $warningRatchetRepositoryRoot = Split-Path -Parent $PSScriptRoot
+        $testRepositoryPath = Join-Path $warningRatchetRepositoryRoot 'build/Test-Repository.ps1'
+
+        function New-WarningRatchetFixture {
+            param (
+                [Parameter(Mandatory)]
+                [string]$RootPath
+            )
+
+            $fixturePath = Join-Path $RootPath 'warning-ratchet'
+            $moduleName = 'OMG.PSUtilities.Fixture'
+            $modulePath = Join-Path $fixturePath $moduleName
+            $publicPath = Join-Path $modulePath 'Public'
+            New-Item -Path $publicPath -ItemType Directory -Force | Out-Null
+            Copy-Item `
+                -LiteralPath (Join-Path $warningRatchetRepositoryRoot 'PSScriptAnalyzerSettings.psd1') `
+                -Destination $fixturePath
+
+            Set-Content -LiteralPath (Join-Path $modulePath "$moduleName.psd1") -Value @"
+@{
+    RootModule = '$moduleName.psm1'
+    ModuleVersion = '1.0.0'
+    GUID = '22fc9f20-9700-4078-a967-cd82c5a9c9c1'
+    Author = 'Architecture Test'
+    Description = 'Warning ratchet fixture'
+    FunctionsToExport = @('Get-WarningRatchetFixture')
+    CmdletsToExport = @()
+    VariablesToExport = @()
+    AliasesToExport = @()
+}
+"@
+            Set-Content `
+                -LiteralPath (Join-Path $modulePath "$moduleName.psm1") `
+                -Value ". '`$PSScriptRoot/Public/Get-WarningRatchetFixture.ps1'"
+            $publicFile = Join-Path $publicPath 'Get-WarningRatchetFixture.ps1'
+            Set-Content -LiteralPath $publicFile -Value @'
+function Get-WarningRatchetFixture {
+    <#
+    .SYNOPSIS
+        Returns fixture output.
+    .DESCRIPTION
+        Produces one deliberate analyzer warning for baseline testing.
+    .EXAMPLE
+        Get-WarningRatchetFixture
+    .OUTPUTS
+        None
+    .NOTES
+        Test fixture only.
+    #>
+    [CmdletBinding()]
+    param ()
+
+    Write-Host 'existing baseline warning'
+}
+'@
+
+            [PSCustomObject]@{
+                BaselinePath  = Join-Path $fixturePath 'warning-baseline.json'
+                PublicFile    = $publicFile
+                RepositoryRoot = $fixturePath
+            }
+        }
+    }
+
+    It 'blocks a new warning and records warning removal' {
+        $fixture = New-WarningRatchetFixture -RootPath $TestDrive
+        $initialResult = & $testRepositoryPath `
+            -RepositoryRoot $fixture.RepositoryRoot `
+            -WarningBaseline $fixture.BaselinePath `
+            -UpdateWarningBaseline `
+            -WarningAction SilentlyContinue
+        $initialBaseline = Get-Content -LiteralPath $fixture.BaselinePath -Raw | ConvertFrom-Json
+
+        $initialResult.NewAnalyzerWarnings | Should -Be 0
+        $initialBaseline.warningCount | Should -BeGreaterThan 0
+
+        $content = Get-Content -LiteralPath $fixture.PublicFile -Raw
+        $content = $content.Replace(
+            "    Write-Host 'existing baseline warning'",
+            "    Write-Host 'existing baseline warning'`n    Write-Host 'new unbaselined warning'"
+        )
+        Set-Content -LiteralPath $fixture.PublicFile -Value $content
+
+        {
+            & $testRepositoryPath `
+                -RepositoryRoot $fixture.RepositoryRoot `
+                -WarningBaseline $fixture.BaselinePath `
+                -IncludeScriptAnalyzer `
+                -WarningAction SilentlyContinue | Out-Null
+        } | Should -Throw '*Repository validation failed*'
+
+        $content = $content.Replace("`n    Write-Host 'new unbaselined warning'", '')
+        Set-Content -LiteralPath $fixture.PublicFile -Value $content
+        $restoredResult = & $testRepositoryPath `
+            -RepositoryRoot $fixture.RepositoryRoot `
+            -WarningBaseline $fixture.BaselinePath `
+            -IncludeScriptAnalyzer `
+            -WarningAction SilentlyContinue
+        $restoredResult.NewAnalyzerWarnings | Should -Be 0
+
+        $content = $content.Replace(
+            "    Write-Host 'existing baseline warning'",
+            "    Write-Output 'warning removed'"
+        )
+        Set-Content -LiteralPath $fixture.PublicFile -Value $content
+        & $testRepositoryPath `
+            -RepositoryRoot $fixture.RepositoryRoot `
+            -WarningBaseline $fixture.BaselinePath `
+            -UpdateWarningBaseline `
+            -WarningAction SilentlyContinue | Out-Null
+        $reducedBaseline = Get-Content -LiteralPath $fixture.BaselinePath -Raw | ConvertFrom-Json
+
+        $reducedBaseline.warningCount | Should -BeLessThan $initialBaseline.warningCount
+    }
+}
