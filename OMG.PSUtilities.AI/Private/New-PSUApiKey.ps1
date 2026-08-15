@@ -39,11 +39,6 @@
         '',
         Justification = 'Function is interactive and provides user feedback during key generation'
     )]
-    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
-        'PSAvoidUsingInvokeExpression',
-        '',
-        Justification = 'Invoke-Expression used to execute trusted token issuer HeaderScript from controlled Azure endpoint. This is intentional architecture for secure token distribution.'
-    )]
     [OutputType([string])]
     param(
         [Parameter()]
@@ -69,8 +64,7 @@
                     Write-Verbose "Using cached API key (expires in $($timeLeft.TotalHours.ToString('F1')) hours)"
                     Write-Host "✓ Using cached API key (expires in $($timeLeft.TotalHours.ToString('F1')) hours)" -ForegroundColor Green
                     return $script:PSU_API_KEY
-                }
-                else {
+                } else {
                     Write-Verbose "Cached API key has expired, generating new one"
                 }
             }
@@ -93,58 +87,54 @@
             try {
                 $tokenResponse = Invoke-RestMethod -Uri $tokenUrl -Method Post -TimeoutSec 30 -ErrorAction Stop
 
-                if (-not $tokenResponse.HeaderScript) {
-                    throw "Token issuer did not return HeaderScript"
+                $responseFields = if ($tokenResponse -is [System.Collections.IDictionary]) {
+                    @($tokenResponse.Keys)
+                } else {
+                    @($tokenResponse.PSObject.Properties.Name)
+                }
+                $executableFields = @($responseFields | Where-Object {
+                        $_ -match '(?i)(script|commands?)$|^executable'
+                    })
+                if ($executableFields.Count -gt 0) {
+                    throw "Token issuer returned executable content, which is not supported."
                 }
 
-                # Execute the header script to set local variables
-                Write-Verbose "Executing header script from token issuer..."
-                Invoke-Expression $tokenResponse.HeaderScript
-
-                # Extract the authorization token from $Headers (set by HeaderScript)
-                if (-not $Headers -or -not $Headers['Authorization']) {
-                    throw "HeaderScript did not set Authorization header"
+                foreach ($requiredField in 'authorization', 'clientUsername', 'clientDevice', 'clientIp', 'expiresOn') {
+                    if ([string]::IsNullOrWhiteSpace([string]$tokenResponse.$requiredField)) {
+                        throw "Token issuer response is missing required field '$requiredField'."
+                    }
                 }
 
-                $apiKey = $Headers['Authorization'] -replace '^Bearer\s+', ''
-                $clientUsername = $Headers['psu-clientusername']
-                $clientDevice = $Headers['psu-clientdevice']
-                $clientIP = $Headers['psu-clientip']
+                $authorization = [string]$tokenResponse.authorization
+                if ($authorization -notmatch '^Bearer\s+\S+$') {
+                    throw "Token issuer response field 'authorization' must contain a Bearer token."
+                }
+
+                $expiry = [DateTimeOffset]::MinValue
+                if (-not [DateTimeOffset]::TryParse([string]$tokenResponse.expiresOn, [ref]$expiry) -or
+                    $expiry -le [DateTimeOffset]::UtcNow) {
+                    throw "Token issuer response field 'expiresOn' must be a valid future timestamp."
+                }
+
+                $apiKey = $authorization -replace '^Bearer\s+', ''
+                $clientUsername = [string]$tokenResponse.clientUsername
+                $clientDevice = [string]$tokenResponse.clientDevice
+                $clientIP = [string]$tokenResponse.clientIp
+                $headers = @{
+                    Authorization        = $authorization
+                    'psu-clientusername' = $clientUsername
+                    'psu-clientdevice'   = $clientDevice
+                    'psu-clientip'       = $clientIP
+                }
+                $script:PSU_API_KEY_EXPIRY = $expiry.UtcDateTime
 
                 Write-Verbose "Token received from issuer service"
                 Write-Verbose "Username: $clientUsername"
                 Write-Verbose "Device: $clientDevice"
                 Write-Verbose "IP: $clientIP"
-            }
-            catch {
+            } catch {
                 $errorMsg = "Failed to retrieve token from issuer service: $($_.Exception.Message)"
                 throw $errorMsg
-            }
-
-            # ============================================
-            # 7. Parse expiry from token (if possible)
-            # ============================================
-            try {
-                # Token format: IP|xx|startISO|xx|endISO|xx|signature (Base64 encoded)
-                $decoded = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($apiKey))
-                $parts = $decoded -split '\|xx\|'
-
-                if ($parts.Count -ge 3) {
-                    $expiryISO = $parts[2]
-                    $expiryDate = [DateTimeOffset]::Parse($expiryISO)
-                    $script:PSU_API_KEY_EXPIRY = $expiryDate.UtcDateTime
-                    Write-Verbose "Token expires: $expiryISO"
-                }
-                else {
-                    # Default to requested expiry time
-                    $script:PSU_API_KEY_EXPIRY = [DateTime]::UtcNow.AddHours($ExpireTimeHours)
-                    Write-Verbose "Using default expiry: $ExpireTimeHours hours from now"
-                }
-            }
-            catch {
-                # If parsing fails, use default expiry
-                $script:PSU_API_KEY_EXPIRY = [DateTime]::UtcNow.AddHours($ExpireTimeHours)
-                Write-Verbose "Token parsing failed, using default expiry"
             }
 
             # ============================================
@@ -156,7 +146,7 @@
             $script:PSU_API_KEY_IP = $clientIP
 
             # Cache the whole header set - callers need the psu-client* headers, not just the token
-            $script:PSU_API_HEADERS = $Headers
+            $script:PSU_API_HEADERS = $headers
 
             # ============================================
             # 9. Display success message
@@ -178,11 +168,8 @@
             Write-Host "║  Cached    : Yes (session-wide reuse enabled)          ║" -ForegroundColor Green
             Write-Host "╚════════════════════════════════════════════════════════╝" -ForegroundColor Cyan
             Write-Host ""
-            Write-Verbose "API key length: $($apiKey.Length) characters"
-
             return $apiKey
-        }
-        catch {
+        } catch {
             # Clear any partial cache on error
             $script:PSU_API_KEY = $null
             $script:PSU_API_KEY_EXPIRY = $null

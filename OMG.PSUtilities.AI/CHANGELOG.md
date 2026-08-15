@@ -1,3 +1,18 @@
+## [1.0.44] - 15th August 2026
+### Security
+- `New-PSUApiKey` (Private): consume only validated data fields from the token issuer and construct authentication headers locally, replacing remote script execution. Bearer values and expiry timestamps are validated, and token values are excluded from diagnostic output.
+- `Invoke-PSUGitCommit` (Public): stage only reviewed repository-relative paths and reject pre-staged paths outside that reviewed set.
+
+### Fixed
+- `New-PSUAiPoweredPullRequest` (Public): remove the unsupported `-ForegroundColor` argument from `Read-Host`, which caused a parameter-binding failure at the confirmation prompt.
+- `Invoke-PSUGitCommit` (Public): check every native Git command and stop immediately on failure. "Sync complete" is now shown only after a successful push.
+
+### Changed
+- `Invoke-PSUGitCommit` (Public): regenerate commit messages in place instead of recursively restarting the workflow.
+
+### Added
+- `tests/OMG.PSUtilities.AI.Tests.ps1`: regression coverage for the issuer data contract, prompt binding, reviewed-only staging, empty and pre-staged path handling, regeneration, native Git failures, and optional Private-folder loading.
+
 ## [1.0.43] - 27th July 2026
 ### Fixed
 - `Invoke-GeminiAIApi` (Private): read request headers from `$script:PSU_API_HEADERS` instead of an undefined `$headers` variable. The Gemini proxy path and `Convert-PSUContext` previously failed on every call with "Cannot index into a null array".
