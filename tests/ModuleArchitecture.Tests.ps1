@@ -232,6 +232,402 @@ Describe 'Repository architecture guardrails' {
     }
 }
 
+Describe 'Live public function contracts' {
+    BeforeAll {
+        $liveModuleNames = @(
+            'OMG.PSUtilities.ActiveDirectory'
+            'OMG.PSUtilities.AI'
+            'OMG.PSUtilities.AzureCore'
+            'OMG.PSUtilities.AzureDevOps'
+            'OMG.PSUtilities.Core'
+            'OMG.PSUtilities.ServiceNow'
+            'OMG.PSUtilities.VSphere'
+            'OMG.DevTools'
+        )
+        $approvedExternalCommands = @(
+            'az'
+            'Close-ExcelPackage'
+            'Connect-AzAccount'
+            'Export-Excel'
+            'Get-ADUser'
+            'Get-AzAccessToken'
+            'Get-AzCognitiveServicesAccount'
+            'Get-AzCognitiveServicesAccountKey'
+            'Get-AzContext'
+            'Get-AzResourceGroup'
+            'Get-AzRoleAssignment'
+            'Get-AzSubscription'
+            'Get-MgApplication'
+            'Get-MgAuditLogSignIn'
+            'Get-MgContext'
+            'Get-MgIdentityConditionalAccessPolicy'
+            'Get-MgOauth2PermissionGrant'
+            'Get-MgOrganization'
+            'Get-MgRoleManagementDirectoryRoleAssignment'
+            'Get-MgRoleManagementDirectoryRoleDefinition'
+            'Get-MgServicePrincipal'
+            'Get-MgServicePrincipalAppRoleAssignedTo'
+            'Get-MgServicePrincipalAppRoleAssignment'
+            'Get-NetIPConfiguration'
+            'Get-WinEvent'
+            'git'
+            'Invoke-ScriptAnalyzer'
+            'kubectl'
+            'logoff'
+            'New-AzCognitiveServicesAccount'
+            'New-AzResourceGroup'
+            'New-MgUserEvent'
+            'netsh'
+            'query'
+            'Reset-OMGModuleManifests'
+            'Resolve-DnsName'
+            'Set-AzContext'
+            'Set-ExcelRange'
+            'Start-ThreadJob'
+            'terraform'
+        )
+        $requiredHelpTags = @('SYNOPSIS', 'DESCRIPTION', 'EXAMPLE', 'OUTPUTS', 'NOTES')
+        $operatorNames = @(
+            'as', 'contains', 'eq', 'ge', 'gt', 'in', 'is', 'isnot', 'join',
+            'le', 'like', 'lt', 'match', 'ne', 'notcontains', 'notin',
+            'notlike', 'notmatch', 'replace', 'split'
+        )
+
+        function ConvertTo-ArchitectureFunctionAst {
+            param (
+                [Parameter(Mandatory)]
+                [string]$Source
+            )
+
+            $tokens = $null
+            $parseErrors = $null
+            $scriptAst = [System.Management.Automation.Language.Parser]::ParseInput(
+                $Source,
+                [ref]$tokens,
+                [ref]$parseErrors
+            )
+            if ($parseErrors.Count -gt 0) {
+                throw "Fixture parse failed: $($parseErrors[0].Message)"
+            }
+
+            $functions = @($scriptAst.FindAll(
+                    { param ($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] },
+                    $true
+                ))
+            if ($functions.Count -ne 1) {
+                throw "Expected one fixture function, found $($functions.Count)."
+            }
+
+            $functions[0]
+        }
+
+        function Test-ActionableCommandGuard {
+            param (
+                [Parameter(Mandatory)]
+                [System.Management.Automation.Language.FunctionDefinitionAst]$FunctionAst,
+
+                [Parameter()]
+                [string]$CommandName
+            )
+
+            $availabilityChecks = @($FunctionAst.Body.FindAll(
+                    {
+                        param ($node)
+                        $node -is [System.Management.Automation.Language.CommandAst] -and
+                        $node.GetCommandName() -eq 'Get-Command'
+                    },
+                    $true
+                ))
+            if ($availabilityChecks.Count -eq 0) {
+                return $false
+            }
+
+            if ($CommandName -and -not @($availabilityChecks | Where-Object {
+                        $_.Extent.Text -match [regex]::Escape($CommandName)
+                    })) {
+                return $false
+            }
+
+            $failureGuidance = @($FunctionAst.Body.FindAll(
+                    {
+                        param ($node)
+                        $node -is [System.Management.Automation.Language.ThrowStatementAst] -or
+                        ($node -is [System.Management.Automation.Language.CommandAst] -and
+                            $node.GetCommandName() -eq 'Write-Error')
+                    },
+                    $true
+                ))
+
+            [bool]@($failureGuidance | Where-Object {
+                    $_.Extent.Text -match '(?i)\b(install|import|update|configure)\b'
+                })
+        }
+
+        function Test-OperatorExpressionCommand {
+            param (
+                [Parameter(Mandatory)]
+                [System.Management.Automation.Language.CommandAst]$CommandAst
+            )
+
+            $CommandAst.CommandElements.Count -gt 1 -and
+            $CommandAst.CommandElements[1] -is [System.Management.Automation.Language.CommandParameterAst] -and
+            $CommandAst.CommandElements[1].ParameterName -in $operatorNames
+        }
+
+        function Assert-FunctionCommandsResolve {
+            param (
+                [Parameter(Mandatory)]
+                [System.Management.Automation.Language.FunctionDefinitionAst]$FunctionAst,
+
+                [Parameter(Mandatory)]
+                [AllowEmptyCollection()]
+                [string[]]$KnownCommand,
+
+                [Parameter(Mandatory)]
+                [AllowEmptyCollection()]
+                [string[]]$ApprovedExternalCommand
+            )
+
+            $unresolvedCommands = [System.Collections.Generic.List[string]]::new()
+            $commandAsts = @($FunctionAst.Body.FindAll(
+                    { param ($node) $node -is [System.Management.Automation.Language.CommandAst] },
+                    $true
+                ))
+
+            foreach ($commandAst in $commandAsts) {
+                if (Test-OperatorExpressionCommand -CommandAst $commandAst) {
+                    continue
+                }
+
+                $commandName = $commandAst.GetCommandName()
+                if (-not $commandName) {
+                    if (-not (Test-ActionableCommandGuard -FunctionAst $FunctionAst)) {
+                        $unresolvedCommands.Add("dynamic command at line $($commandAst.Extent.StartLineNumber)")
+                    }
+                    continue
+                }
+
+                if ($commandName -in $KnownCommand -or
+                    $commandName -in $ApprovedExternalCommand -or
+                    (Get-Command -Name $commandName -ErrorAction SilentlyContinue) -or
+                    (Test-ActionableCommandGuard -FunctionAst $FunctionAst -CommandName $commandName)) {
+                    continue
+                }
+
+                $unresolvedCommands.Add("$commandName at line $($commandAst.Extent.StartLineNumber)")
+            }
+
+            if ($unresolvedCommands.Count -gt 0) {
+                throw "[$($FunctionAst.Name)] Unresolved command invocation(s): $($unresolvedCommands -join ', ')."
+            }
+        }
+
+        function Assert-FunctionUsesShouldProcess {
+            param (
+                [Parameter(Mandatory)]
+                [System.Management.Automation.Language.FunctionDefinitionAst]$FunctionAst
+            )
+
+            $supportsShouldProcess = @($FunctionAst.Body.ParamBlock.Attributes | Where-Object {
+                    $_.TypeName.Name -eq 'CmdletBinding' -and
+                    @($_.NamedArguments | Where-Object {
+                            $_.ArgumentName -eq 'SupportsShouldProcess' -and
+                            (-not $_.Argument -or $_.Argument.Extent.Text -ne '$false')
+                        }).Count -gt 0
+                }).Count -gt 0
+            if (-not $supportsShouldProcess) {
+                return
+            }
+
+            $shouldProcessCalls = @($FunctionAst.Body.FindAll(
+                    {
+                        param ($node)
+                        $node -is [System.Management.Automation.Language.InvokeMemberExpressionAst] -and
+                        $node.Member.Extent.Text -eq 'ShouldProcess'
+                    },
+                    $true
+                ))
+            if ($shouldProcessCalls.Count -eq 0) {
+                throw "[$($FunctionAst.Name)] SupportsShouldProcess is declared without a ShouldProcess method call."
+            }
+        }
+
+        function Assert-FunctionUsesApprovedVerb {
+            param (
+                [Parameter(Mandatory)]
+                [System.Management.Automation.Language.FunctionDefinitionAst]$FunctionAst
+            )
+
+            $verb = ($FunctionAst.Name -split '-', 2)[0]
+            if ($verb -notin @((Get-Verb).Verb)) {
+                throw "[$($FunctionAst.Name)] '$verb' is not an approved PowerShell verb."
+            }
+        }
+
+        $architectureRepositoryRoot = Split-Path -Parent $PSScriptRoot
+        $knownCommands = [System.Collections.Generic.HashSet[string]]::new(
+            [System.StringComparer]::OrdinalIgnoreCase
+        )
+        $livePublicFunctions = [System.Collections.Generic.List[object]]::new()
+
+        foreach ($moduleName in $liveModuleNames) {
+            $modulePath = Join-Path $architectureRepositoryRoot $moduleName
+            $manifest = Import-PowerShellDataFile -LiteralPath (Join-Path $modulePath "$moduleName.psd1")
+            foreach ($exportName in @($manifest.FunctionsToExport) + @($manifest.CmdletsToExport) + @($manifest.AliasesToExport)) {
+                if ($exportName) {
+                    [void]$knownCommands.Add([string]$exportName)
+                }
+            }
+
+            foreach ($scriptFile in (Get-ChildItem -LiteralPath $modulePath -Recurse -Filter '*.ps1' -File |
+                    Where-Object { $_.Name -notlike '*--wip.ps1' })) {
+                $tokens = $null
+                $parseErrors = $null
+                $scriptAst = [System.Management.Automation.Language.Parser]::ParseFile(
+                    $scriptFile.FullName,
+                    [ref]$tokens,
+                    [ref]$parseErrors
+                )
+                if ($parseErrors.Count -gt 0) {
+                    throw "[$moduleName] Unable to parse '$($scriptFile.FullName)': $($parseErrors[0].Message)"
+                }
+
+                foreach ($functionAst in @($scriptAst.FindAll(
+                            { param ($node) $node -is [System.Management.Automation.Language.FunctionDefinitionAst] },
+                            $true
+                        ))) {
+                    [void]$knownCommands.Add($functionAst.Name)
+                }
+            }
+
+            foreach ($functionName in @($manifest.FunctionsToExport)) {
+                $publicFile = Join-Path $modulePath "Public/$functionName.ps1"
+                $content = Get-Content -LiteralPath $publicFile -Raw
+                $tokens = $null
+                $parseErrors = $null
+                $scriptAst = [System.Management.Automation.Language.Parser]::ParseInput(
+                    $content,
+                    [ref]$tokens,
+                    [ref]$parseErrors
+                )
+                if ($parseErrors.Count -gt 0) {
+                    throw "[$moduleName] Unable to parse '$publicFile': $($parseErrors[0].Message)"
+                }
+
+                $functionAst = $scriptAst.Find(
+                    {
+                        param ($node)
+                        $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and
+                        $node.Name -eq $functionName
+                    },
+                    $true
+                )
+                $livePublicFunctions.Add([PSCustomObject]@{
+                        Content      = $content
+                        FunctionAst  = $functionAst
+                        RelativePath = [System.IO.Path]::GetRelativePath(
+                            $architectureRepositoryRoot,
+                            $publicFile
+                        ).Replace('\', '/')
+                    })
+            }
+        }
+    }
+
+    It 'resolves commands invoked by every live EIGHT-scope public function' {
+        $violations = @($livePublicFunctions | ForEach-Object {
+                try {
+                    Assert-FunctionCommandsResolve `
+                        -FunctionAst $_.FunctionAst `
+                        -KnownCommand @($knownCommands) `
+                        -ApprovedExternalCommand $approvedExternalCommands
+                } catch {
+                    "$($_.RelativePath): $($_.Exception.Message)"
+                }
+            })
+
+        $violations | Should -BeNullOrEmpty
+    }
+
+    It 'requires a ShouldProcess method call when SupportsShouldProcess is declared' {
+        $violations = @($livePublicFunctions | ForEach-Object {
+                try {
+                    Assert-FunctionUsesShouldProcess -FunctionAst $_.FunctionAst
+                } catch {
+                    "$($_.RelativePath): $($_.Exception.Message)"
+                }
+            })
+
+        $violations | Should -BeNullOrEmpty
+    }
+
+    It 'uses approved verbs for every live EIGHT-scope public function' {
+        $violations = @($livePublicFunctions | ForEach-Object {
+                try {
+                    Assert-FunctionUsesApprovedVerb -FunctionAst $_.FunctionAst
+                } catch {
+                    "$($_.RelativePath): $($_.Exception.Message)"
+                }
+            })
+
+        $violations | Should -BeNullOrEmpty
+    }
+
+    It 'retains all required comment-based help tags' {
+        $violations = @($livePublicFunctions | ForEach-Object {
+                $functionRecord = $_
+                $missingTags = @($requiredHelpTags | Where-Object {
+                        $functionRecord.Content -notmatch "(?im)^\s*\.$_\b"
+                    })
+                if ($missingTags.Count -gt 0) {
+                    "$($functionRecord.RelativePath): missing $($missingTags -join ', ')"
+                }
+            })
+
+        $violations | Should -BeNullOrEmpty
+    }
+
+    It 'rejects an unresolved command fixture' {
+        $functionAst = ConvertTo-ArchitectureFunctionAst -Source @'
+function Get-ArchitectureFixture {
+    Invoke-MissingArchitectureFixture
+}
+'@
+
+        {
+            Assert-FunctionCommandsResolve `
+                -FunctionAst $functionAst `
+                -KnownCommand @() `
+                -ApprovedExternalCommand @()
+        } | Should -Throw '*Invoke-MissingArchitectureFixture*'
+    }
+
+    It 'rejects a SupportsShouldProcess fixture without a method call' {
+        $functionAst = ConvertTo-ArchitectureFunctionAst -Source @'
+function Set-ArchitectureFixture {
+    [CmdletBinding(SupportsShouldProcess)]
+    param ()
+
+    Write-Output 'changed'
+}
+'@
+
+        { Assert-FunctionUsesShouldProcess -FunctionAst $functionAst } |
+            Should -Throw '*without a ShouldProcess method call*'
+    }
+
+    It 'rejects an unapproved verb fixture' {
+        $functionAst = ConvertTo-ArchitectureFunctionAst -Source @'
+function Frobnicate-ArchitectureFixture {
+    'fixture'
+}
+'@
+
+        { Assert-FunctionUsesApprovedVerb -FunctionAst $functionAst } |
+            Should -Throw "*'Frobnicate' is not an approved PowerShell verb*"
+    }
+}
+
 Describe 'Module release integrity' {
     BeforeAll {
         $versionGatePath = Join-Path (Split-Path -Parent $PSScriptRoot) 'build/Test-ModuleVersionChange.ps1'
