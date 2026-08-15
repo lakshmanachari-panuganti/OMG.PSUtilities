@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "identity": "RuleName + repository-relative path + SHA256 of normalized diagnostic source context; duplicate identities retain an exact count.",
-  "warningCount": 1683,
+  "warningCount": 1682,
   "findings": [
     {
       "ruleName": "PSAvoidOverwritingBuiltInCmdlets",
@@ -2863,12 +2863,6 @@
       "ruleName": "PSUseConsistentIndentation",
       "path": "OMG.PSUtilities.ActiveDirectory/OMG.PSUtilities.ActiveDirectory.psd1",
       "contextHash": "856cb9ba0eae7f2fc12464e192e68c5e363f22c4eba5d793e371e7b7c005f930",
-      "count": 1
-    },
-    {
-      "ruleName": "PSUseConsistentIndentation",
-      "path": "OMG.PSUtilities.ActiveDirectory/OMG.PSUtilities.ActiveDirectory.psd1",
-      "contextHash": "8f216bc0ba15cdc8fae73ccbcab4f9f417cba7726c3b944ea2c1ea8865d67405",
       "count": 1
     },
     {
