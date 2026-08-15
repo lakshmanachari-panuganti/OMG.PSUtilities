@@ -90,32 +90,45 @@ function Set-PSUADOVariableGroup {
 
             $uri = "https://dev.azure.com/$Organization/$escapedProject/_apis/distributedtask/variablegroups/$($InputObject.Id)?api-version=7.1-preview.2"
 
-            # Build variables payload (existing variables only)
             $variables = @{}
-            foreach ($key in $InputObject.Variables.Keys) {
-                $var = $InputObject.Variables[$key]
-
-                $variables[$key] = @{
-                    value    = $var.value
-                    isSecret = [bool]$var.isSecret
+            foreach ($variableProperty in $InputObject.Variables.PSObject.Properties) {
+                $variables[$variableProperty.Name] = @{
+                    value    = $variableProperty.Value.value
+                    isSecret = [bool]$variableProperty.Value.isSecret
                 }
+            }
+
+            $groupType = if ($InputObject.PSObject.Properties['Type'] -and $InputObject.Type) {
+                [string]$InputObject.Type
+            } else {
+                'Vsts'
+            }
+            $providerDataProperty = $InputObject.PSObject.Properties['ProviderData']
+            if ($groupType -eq 'AzureKeyVault' -and
+                (-not $providerDataProperty -or $null -eq $InputObject.ProviderData)) {
+                throw "Key Vault variable group '$($InputObject.Name)' is missing providerData and cannot be updated safely."
             }
 
             $body = @{
                 id          = $InputObject.Id
                 name        = $InputObject.Name
                 description = $InputObject.Description
-                type        = "Vsts"
+                type        = $groupType
                 variables   = $variables
             }
+            if ($providerDataProperty) {
+                $body.providerData = $InputObject.ProviderData
+            }
 
-            if ($PSCmdlet.ShouldProcess(
+            if (-not $PSCmdlet.ShouldProcess(
                 "$($InputObject.Name) [$($InputObject.Id)]",
                 "Update Azure DevOps Variable Group"
             )) {
-                $json = $body | ConvertTo-Json -Depth 10
-                Invoke-RestMethod -Uri $uri -Headers $headers -Method Put -Body $json -ContentType "application/json"
+                return
             }
+
+            $json = $body | ConvertTo-Json -Depth 10
+            $null = Invoke-RestMethod -Uri $uri -Headers $headers -Method Put -Body $json -ContentType "application/json"
 
             Get-PSUADOVariableGroup `
                 -Project $InputObject.Project `

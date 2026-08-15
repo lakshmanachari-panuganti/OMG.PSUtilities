@@ -240,7 +240,17 @@ function New-PSUADOPullRequest {
                 $verboseParams.Body = $verboseParams.Body | ConvertFrom-Json -Depth 10
             }
             Write-Verbose  "Invoke-RestMethod parameters for Pull Request creation: $($verboseParams | Out-String)"
-            
+
+            $repositoryTarget = if ($PSCmdlet.ParameterSetName -eq 'ByRepoId') {
+                $RepoId
+            } else {
+                $RepositoryName
+            }
+            $shouldProcessTarget = "Project '$Project', repository '$repositoryTarget', source '$SourceBranch', target '$TargetBranch'"
+            if (-not $PSCmdlet.ShouldProcess($shouldProcessTarget, 'Create Azure DevOps pull request')) {
+                return
+            }
+
             $response = Invoke-RestMethod @irmParams -Verbose:$false
             $WebUrl = "https://dev.azure.com/$Organization/$escapedProject/_git/$repositoryIdentifier/pullrequest/$($response.pullRequestId)"
             $draftText = if ($response.isDraft) { "Draft " } else { "" }

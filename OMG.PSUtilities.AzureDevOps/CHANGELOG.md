@@ -1,3 +1,9 @@
+## [1.0.21] - 15th August 2026
+### Fixed
+- `Set-PSUADOVariableGroup` now preserves JSON-derived variables, secret flags, group type, and supplied Key Vault provider data; missing Key Vault metadata is rejected, and `-WhatIf` performs neither the PUT nor the refresh.
+- `Complete-PSUADOPullRequest` now retains caller-supplied completion options, with explicitly bound merge parameters taking precedence.
+- `New-PSUADOPullRequest` now guards the creation POST with `ShouldProcess`, preventing PR creation and auto-completion under `-WhatIf`.
+
 ## [1.0.20] - 6th August 2026
 ### Changed
 - Added `Write-PSUAdoParameterTrace` and `Confirm-PSUAdoConnectionParameter` (Private): the verbose parameter trace with PAT masking and the `ORGANIZATION`/`PAT` validation are now defined once instead of being repeated in every public command.
