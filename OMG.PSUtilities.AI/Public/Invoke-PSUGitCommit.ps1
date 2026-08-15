@@ -59,98 +59,135 @@
         return $false
     }
 
-    # ------------------------------------------------------------------
+    function Invoke-CheckedGit {
+        param (
+            [Parameter(Mandatory)]
+            [string]$Operation,
+
+            [Parameter(Mandatory)]
+            [string[]]$Arguments
+        )
+
+        $output = @(& git @Arguments 2>&1)
+        $exitCode = $LASTEXITCODE
+        if ($exitCode -ne 0) {
+            $failureDetail = ($output | ForEach-Object { [string]$_ }) -join [Environment]::NewLine
+            throw "git $Operation failed with exit code $exitCode. $failureDetail"
+        }
+
+        $output
+    }
 
     try {
         $currentLocation = Get-Location
-        # Auto-detect git repository root
-        $gitRootOutput = git rev-parse --show-toplevel 2>&1
-
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "Not in a git repository. Please run this command from within a git repository." -ForegroundColor Red
-            return
-        }
-
-        # Convert Unix paths to Windows format
-        $RootPath = $gitRootOutput -replace '/', '\'
+        $gitRootOutput = @(Invoke-CheckedGit -Operation 'rev-parse' -Arguments @('rev-parse', '--show-toplevel'))
+        $RootPath = [string]($gitRootOutput | Select-Object -Last 1)
         Write-Verbose "Git repository root: $RootPath"
 
-        Set-Location $RootPath
+        Set-Location -LiteralPath $RootPath
 
-        $gitOutput = git status --porcelain -uall 2>&1 | Where-Object { $_ -and $_ -notlike '*.gitignore' }
-
+        $gitOutput = @(Invoke-CheckedGit -Operation 'status' -Arguments @('status', '--porcelain', '-uall') |
+                Where-Object { $_ })
         if (-not $gitOutput.Count) {
             Write-Host "No uncommitted changes found." -ForegroundColor Green
             return
         }
 
-        # Apply ignore filtering to changed file list
-        $changedItems = foreach ($line in $gitOutput) {
-            $line = $line.Trim()
-            $changeCode = $line.Split(' ')[0].Trim()
-            $path = $line.Split(' ', 2)[1].Trim().Trim('"')
-
-            if (Test-SkipFile $path) { continue }
-
-            $fullPath = Join-Path -Path $RootPath -ChildPath $path
-            $itemInfo = Get-Item $fullPath -ErrorAction SilentlyContinue
-
-            $itemType = if ($changeCode -eq 'D' -or -not $itemInfo) {
-                'File/Folder'
-            }
-            elseif ($itemInfo -is [System.IO.DirectoryInfo]) {
-                'Folder'
-            }
-            elseif ($itemInfo -is [System.IO.FileInfo]) {
-                'File'
-            }
-            else {
-                'Unknown'
-            }
-
-            [pscustomobject]@{
-                Name       = Split-Path $path -Leaf
-                ItemType   = $itemType
-                ChangeType = switch ($changeCode) {
-                    'M' { 'Modified' }
-                    'A' { 'Added' }
-                    'D' { 'Deleted' }
-                    'R' { 'Renamed' }
-                    'C' { 'Copied' }
-                    'U' { 'Unmerged' }
-                    '??' { 'New' }
-                    default { "Other: $changeCode" }
+        $statusEntries = @($gitOutput | ForEach-Object {
+                $line = [string]$_
+                if ($line.Length -lt 4) {
+                    return
                 }
-                Path       = $fullPath
-            }
+
+                $indexStatus = [string]$line[0]
+                $workTreeStatus = [string]$line[1]
+                $changeCode = "$indexStatus$workTreeStatus"
+                $path = $line.Substring(3).Trim()
+                if ($path -match ' -> ') {
+                    $path = ($path -split ' -> ')[-1]
+                }
+                $path = $path.Trim('"')
+
+                $changeType = if ($changeCode -eq '??') {
+                    'New'
+                } elseif ($changeCode -match 'D') {
+                    'Deleted'
+                } elseif ($changeCode -match 'R') {
+                    'Renamed'
+                } elseif ($changeCode -match 'C') {
+                    'Copied'
+                } elseif ($changeCode -match 'A') {
+                    'Added'
+                } elseif ($changeCode -match 'U') {
+                    'Unmerged'
+                } else {
+                    'Modified'
+                }
+
+                $fullPath = Join-Path -Path $RootPath -ChildPath $path
+                $itemInfo = Get-Item -LiteralPath $fullPath -ErrorAction SilentlyContinue
+
+                $itemType = if ($changeType -eq 'Deleted' -or -not $itemInfo) {
+                    'File/Folder'
+                } elseif ($itemInfo -is [System.IO.DirectoryInfo]) {
+                    'Folder'
+                } elseif ($itemInfo -is [System.IO.FileInfo]) {
+                    'File'
+                } else {
+                    'Unknown'
+                }
+
+                [pscustomobject]@{
+                    Name         = Split-Path $path -Leaf
+                    ItemType     = $itemType
+                    ChangeType   = $changeType
+                    Path         = $fullPath
+                    RelativePath = $path
+                    IsStaged     = $indexStatus -notin @(' ', '?')
+                }
+            })
+
+        $preStagedPaths = @($statusEntries |
+                Where-Object { $_.IsStaged } |
+                ForEach-Object { $_.RelativePath })
+        $changedItems = @($statusEntries |
+                Where-Object { -not (Test-SkipFile $_.RelativePath) })
+
+        if ($changedItems.Count -eq 0) {
+            Write-Host "No reviewed changes remain after applying the safety filters." -ForegroundColor Yellow
+            return
         }
 
-        # filter with the $ignorePatterns
-
-        $changedItems = $changedItems | Where-Object { -not (Test-SkipFile $_.Path) }
+        $reviewedPaths = @($changedItems.RelativePath | Sort-Object -Unique)
+        $preStagedOutsideReview = @($preStagedPaths |
+                Where-Object { $_ -notin $reviewedPaths } |
+                Sort-Object -Unique)
+        if ($preStagedOutsideReview.Count -gt 0) {
+            throw "Commit aborted because pre-staged paths are outside the reviewed set: $($preStagedOutsideReview -join ', ')"
+        }
 
         $popupResponse = Popup-SensitiveContent -Files ($changedItems | Where-Object { $_.ItemType -eq 'File' } | Select-Object -ExpandProperty Path)
-        if(-not $popupResponse){
+        if (-not $popupResponse) {
             Write-Host "Commit aborted due to sensitive content." -ForegroundColor Red
             return
         }
 
-        # Ignore files during diff extraction (SECOND filter)
         $fileChanges = $changedItems | ForEach-Object {
             $item = $_
             $status = $item.ChangeType
             $path = $item.Path
-            $itemType = $item.ItemType
 
-            $diff = switch ($status) {
-                'Modified' { git diff -- "$path" }
-                'New' { if ($itemType -eq 'File') { Get-Content -Path $path } }
-                default { "" }
+            $diff = if ($status -eq 'New') {
+                if ($item.ItemType -eq 'File') {
+                    Get-Content -LiteralPath $path
+                }
+            } else {
+                Invoke-CheckedGit -Operation 'diff' -Arguments @('diff', 'HEAD', '--', $item.RelativePath)
             }
 
             [PSCustomObject]@{
                 Path     = $path
-                ItemType = $itemType
+                ItemType = $item.ItemType
                 Status   = $status
                 Diff     = $diff -join "`n"
             }
@@ -271,32 +308,35 @@ $($item.Diff)
 "@
         }
 
-        $commitMessage = Invoke-PSUAiPrompt -Prompt ($prompt | Out-String)
-        $commitMessage = $commitMessage.Trim() | where-object { $_ }
-        Write-Host "Following is the Commit message!" -ForegroundColor Cyan
-        Write-Host $CommitMessage -ForegroundColor DarkYellow
+        do {
+            $commitMessage = [string](Invoke-PSUAiPrompt -Prompt ($prompt | Out-String))
+            if ([string]::IsNullOrWhiteSpace($commitMessage)) {
+                throw "AI did not generate a commit message."
+            }
+            $commitMessage = $commitMessage.Trim()
 
-        Write-Host "`n[R]      --> Regenerate a new commit message!" -ForegroundColor Cyan
-        Write-Host "[Ctrl+C] --> Abort commit process!" -ForegroundColor Cyan
-        Write-Host "[Enter]  --> Accept the above commit message!" -ForegroundColor Cyan
+            Write-Host "Following is the Commit message!" -ForegroundColor Cyan
+            Write-Host $commitMessage -ForegroundColor DarkYellow
+            Write-Host "`n[R]      --> Regenerate a new commit message!" -ForegroundColor Cyan
+            Write-Host "[Ctrl+C] --> Abort commit process!" -ForegroundColor Cyan
+            Write-Host "[Enter]  --> Accept the above commit message!" -ForegroundColor Cyan
 
-        $CustomCommitMsg = Read-Host -Prompt "Enter your choice"
-        $CustomCommitMsg = ($CustomCommitMsg).Trim()
+            $customCommitMessage = ([string](Read-Host -Prompt "Enter your choice")).Trim()
+            if ($customCommitMessage -ieq 'R') {
+                continue
+            }
+            if ($customCommitMessage) {
+                $commitMessage = $customCommitMessage
+            }
+            break
+        } while ($true)
 
-        if ($CustomCommitMsg -ieq 'R') {
-            # The nested call does the commit and push, so stop here
-            Invoke-PSUGitCommit
-            return
-        } elseif ($CustomCommitMsg) {
-            $commitMessage = $CustomCommitMsg
-        }
-        # Stage and commit
-        git add . *> $null
-        git commit -m "$commitMessage" *> $null
-        # Sync with remote
+        $null = Invoke-CheckedGit -Operation 'add' -Arguments (@('add', '--') + $reviewedPaths)
+        $null = Invoke-CheckedGit -Operation 'commit' -Arguments @('commit', '-m', $commitMessage)
+
         Write-Host "`⇅ Syncing with remote..." -ForegroundColor Cyan
-        git pull --rebase *> $null
-        git push *> $null
+        $null = Invoke-CheckedGit -Operation 'pull' -Arguments @('pull', '--rebase')
+        $null = Invoke-CheckedGit -Operation 'push' -Arguments @('push')
 
         Write-Host "Sync complete." -ForegroundColor Green
 
