@@ -9,28 +9,52 @@ $moduleDirectories = Get-ChildItem -Path $repositoryRoot -Directory |
     Where-Object { Test-Path (Join-Path $_.FullName "$($_.Name).psd1") }
 
 Describe 'Module portfolio architecture' {
+    BeforeAll {
+        function Assert-ManifestExportsSynchronized {
+            param (
+                [Parameter(Mandatory)]
+                [string]$ModulePath
+            )
+
+            $moduleName = Split-Path -Leaf $ModulePath
+            $manifestPath = Join-Path $ModulePath "$moduleName.psd1"
+            $manifest = Import-PowerShellDataFile -LiteralPath $manifestPath
+            $publicPath = Join-Path $ModulePath 'Public'
+            $publicFunctions = if (Test-Path -LiteralPath $publicPath) {
+                @(Get-ChildItem -LiteralPath $publicPath -Recurse -Filter '*.ps1' -File |
+                    Where-Object { $_.Name -notlike '*--wip.ps1' } |
+                    ForEach-Object { $_.BaseName } |
+                    Sort-Object -Unique)
+            } else {
+                @()
+            }
+            $manifestFunctions = @($manifest.FunctionsToExport | Sort-Object -Unique)
+            $missingFromManifest = @($publicFunctions | Where-Object { $_ -notin $manifestFunctions })
+            $missingFromPublic = @($manifestFunctions | Where-Object { $_ -notin $publicFunctions })
+
+            if ($missingFromManifest.Count -gt 0 -or $missingFromPublic.Count -gt 0) {
+                $missingFromManifestText = if ($missingFromManifest.Count -gt 0) {
+                    $missingFromManifest -join ', '
+                } else {
+                    '(none)'
+                }
+                $missingFromPublicText = if ($missingFromPublic.Count -gt 0) {
+                    $missingFromPublic -join ', '
+                } else {
+                    '(none)'
+                }
+                throw "[$moduleName] Export mismatch. Missing from manifest: $missingFromManifestText. Not found in Public: $missingFromPublicText."
+            }
+        }
+    }
+
     It 'contains a valid manifest for every module' -ForEach $moduleDirectories {
         $manifestPath = Join-Path $_.FullName "$($_.Name).psd1"
         { Test-ModuleManifest -Path $manifestPath -ErrorAction Stop } | Should -Not -Throw
     }
 
     It 'keeps manifest exports synchronized with Public files' -ForEach $moduleDirectories {
-        $publicPath = Join-Path $_.FullName 'Public'
-        if (-not (Test-Path $publicPath)) {
-            Set-ItResult -Skipped -Because 'the meta-module has no Public folder'
-            return
-        }
-
-        $manifestPath = Join-Path $_.FullName "$($_.Name).psd1"
-        $manifest = Test-ModuleManifest -Path $manifestPath
-        $publicFunctions = Get-ChildItem -Path $publicPath -Recurse -Filter '*.ps1' -File |
-            Where-Object { $_.Name -notlike '*--wip.ps1' } |
-            ForEach-Object { $_.BaseName } |
-            Sort-Object -Unique
-        $manifestFunctions = @($manifest.ExportedFunctions.Keys) | Sort-Object -Unique
-
-        Compare-Object -ReferenceObject $publicFunctions -DifferenceObject $manifestFunctions |
-            Should -BeNullOrEmpty
+        { Assert-ManifestExportsSynchronized -ModulePath $_.FullName } | Should -Not -Throw
     }
 
     It 'does not export a function from Private' -ForEach $moduleDirectories {
@@ -47,6 +71,164 @@ Describe 'Module portfolio architecture' {
 
         @($manifest.ExportedFunctions.Keys | Where-Object { $_ -in $privateFunctions }) |
             Should -BeNullOrEmpty
+    }
+
+    It 'rejects an export that has no Public function' {
+        $modulePath = Join-Path $TestDrive 'OMG.PSUtilities.InvalidExport'
+        New-Item -Path (Join-Path $modulePath 'Public') -ItemType Directory -Force | Out-Null
+        Set-Content -LiteralPath (Join-Path $modulePath 'OMG.PSUtilities.InvalidExport.psd1') -Value @"
+@{
+    ModuleVersion = '1.0.0'
+    FunctionsToExport = @('Get-MissingFixture')
+}
+"@
+
+        {
+            Assert-ManifestExportsSynchronized -ModulePath $modulePath
+        } | Should -Throw '*Get-MissingFixture*'
+    }
+}
+
+Describe 'Repository architecture guardrails' {
+    BeforeAll {
+        function Get-ModuleDependencyGraph {
+            param (
+                [Parameter(Mandatory)]
+                [System.IO.DirectoryInfo[]]$ModuleDirectory
+            )
+
+            $moduleNames = @($ModuleDirectory.Name)
+            $graph = @{}
+
+            foreach ($directory in $ModuleDirectory) {
+                $manifestPath = Join-Path $directory.FullName "$($directory.Name).psd1"
+                $manifest = Import-PowerShellDataFile -LiteralPath $manifestPath
+                $dependencyNames = @($manifest.RequiredModules | ForEach-Object {
+                        if ($null -eq $_) {
+                            return
+                        } elseif ($_ -is [string]) {
+                            $_
+                        } elseif ($_ -is [System.Collections.IDictionary]) {
+                            [string]$_['ModuleName']
+                        } elseif ($_.PSObject.Properties['Name']) {
+                            [string]$_.Name
+                        } elseif ($_.PSObject.Properties['ModuleName']) {
+                            [string]$_.ModuleName
+                        }
+                    } | Where-Object { $_ -in $moduleNames })
+                $graph[$directory.Name] = $dependencyNames
+            }
+
+            $graph
+        }
+
+        function Find-ModuleDependencyCycle {
+            param (
+                [Parameter(Mandatory)]
+                [hashtable]$Graph
+            )
+
+            foreach ($startModule in ($Graph.Keys | Sort-Object)) {
+                $paths = [System.Collections.Generic.Stack[object]]::new()
+                $paths.Push([PSCustomObject]@{
+                        Module = $startModule
+                        Path   = @($startModule)
+                    })
+
+                while ($paths.Count -gt 0) {
+                    $currentPath = $paths.Pop()
+                    foreach ($dependency in @($Graph[$currentPath.Module])) {
+                        if (-not $Graph.ContainsKey($dependency)) {
+                            continue
+                        }
+
+                        if ($dependency -eq $startModule) {
+                            return (@($currentPath.Path) + $dependency) -join ' -> '
+                        }
+
+                        if ($dependency -notin $currentPath.Path) {
+                            $paths.Push([PSCustomObject]@{
+                                    Module = $dependency
+                                    Path   = @($currentPath.Path) + $dependency
+                                })
+                        }
+                    }
+                }
+            }
+
+            $null
+        }
+
+        function Assert-NoModuleDependencyCycle {
+            param (
+                [Parameter(Mandatory)]
+                [hashtable]$Graph
+            )
+
+            $cycle = Find-ModuleDependencyCycle -Graph $Graph
+            if ($cycle) {
+                throw "Module dependency cycle detected: $cycle"
+            }
+        }
+
+        function Assert-NoPackagedWipScript {
+            param (
+                [Parameter(Mandatory)]
+                [string]$PackageRoot
+            )
+
+            $wipFiles = @(Get-ChildItem -LiteralPath $PackageRoot -Recurse -File -Filter '*--wip.ps1')
+            if ($wipFiles.Count -gt 0) {
+                $relativePaths = @($wipFiles | ForEach-Object {
+                        [System.IO.Path]::GetRelativePath($PackageRoot, $_.FullName).Replace('\', '/')
+                    } | Sort-Object)
+                throw "Built package contains work-in-progress scripts: $($relativePaths -join ', ')"
+            }
+        }
+
+        $architectureRepositoryRoot = Split-Path -Parent $PSScriptRoot
+        $architectureModuleDirectories = @(Get-ChildItem -Path $architectureRepositoryRoot -Directory |
+            Where-Object {
+                $_.Name -eq 'OMG.PSUtilities' -or
+                $_.Name -like 'OMG.PSUtilities.*' -or
+                $_.Name -eq 'OMG.DevTools'
+            } |
+            Where-Object { Test-Path (Join-Path $_.FullName "$($_.Name).psd1") })
+        $dependencyGraph = Get-ModuleDependencyGraph -ModuleDirectory $architectureModuleDirectories
+        $builtModuleRoot = Join-Path $TestDrive 'built-modules'
+        & (Join-Path $architectureRepositoryRoot 'build/Build-Modules.ps1') `
+            -RepositoryRoot $architectureRepositoryRoot `
+            -OutputPath $builtModuleRoot `
+            -Clean | Out-Null
+    }
+
+    It 'contains no module dependency cycle' {
+        { Assert-NoModuleDependencyCycle -Graph $dependencyGraph } | Should -Not -Throw
+    }
+
+    It 'packages no work-in-progress scripts' {
+        { Assert-NoPackagedWipScript -PackageRoot $builtModuleRoot } | Should -Not -Throw
+    }
+
+    It 'rejects a dependency-cycle fixture' {
+        $cyclicGraph = @{
+            'OMG.PSUtilities.A' = @('OMG.PSUtilities.B')
+            'OMG.PSUtilities.B' = @('OMG.PSUtilities.C')
+            'OMG.PSUtilities.C' = @('OMG.PSUtilities.A')
+        }
+
+        { Assert-NoModuleDependencyCycle -Graph $cyclicGraph } |
+            Should -Throw '*Module dependency cycle detected*'
+    }
+
+    It 'rejects a built-package WIP fixture' {
+        $packageRoot = Join-Path $TestDrive 'invalid-built-package'
+        $wipPath = Join-Path $packageRoot 'OMG.PSUtilities.Fixture/Public/Get-Fixture--wip.ps1'
+        New-Item -Path (Split-Path -Parent $wipPath) -ItemType Directory -Force | Out-Null
+        Set-Content -LiteralPath $wipPath -Value 'function Get-Fixture { }'
+
+        { Assert-NoPackagedWipScript -PackageRoot $packageRoot } |
+            Should -Throw '*Get-Fixture--wip.ps1*'
     }
 }
 
