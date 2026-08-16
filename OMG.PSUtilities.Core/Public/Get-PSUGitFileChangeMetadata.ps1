@@ -6,8 +6,7 @@ function Get-PSUGitFileChangeMetadata {
     .DESCRIPTION
         Compares two Git branches using `git diff --name-status` and returns structured metadata.
         It includes file paths, type of change (New, Modify, Delete, Rename), and supports rename detection with similarity scoring.
-        By default, untracked files are automatically staged using `git add .` and marked as "New".
-        Use -ExcludeUntrackedFiles to prevent auto-staging and exclude untracked files from output.
+        Untracked files are reported as "Untracked" without changing the Git index.
 
     .PARAMETER BaseBranch
         (Optional) The name of the base branch to compare from.
@@ -18,8 +17,7 @@ function Get-PSUGitFileChangeMetadata {
         Defaults to the currently checked-out branch.
 
     .PARAMETER ExcludeUntrackedFiles
-        (Optional) When specified, prevents automatic staging of untracked files.
-        Untracked files will appear in the output with TypeOfChange = "Untracked" without being staged.
+        Retained for backward compatibility. Untracked files are always reported without being staged.
 
     .EXAMPLE
         Get-PSUGitFileChangeMetadata
@@ -35,7 +33,7 @@ function Get-PSUGitFileChangeMetadata {
 
     .EXAMPLE
         Get-PSUGitFileChangeMetadata -ExcludeUntrackedFiles
-        Returns all changes without staging untracked files. Untracked files appear as TypeOfChange = "Untracked".
+        Returns all changes without staging untracked files.
 
     .OUTPUTS
         [PSCustomObject]
@@ -101,28 +99,18 @@ function Get-PSUGitFileChangeMetadata {
         }
     }
 
-    # Get untracked files and stage them by default
+    # Get untracked files without changing the index.
     $untrackedFiles = git ls-files --others --exclude-standard
     if ($untrackedFiles) {
         if ($ExcludeUntrackedFiles) {
-            $untrackedFiles | ForEach-Object {
-                [PSCustomObject]@{
-                    File         = $_
-                    TypeOfChange = "Untracked"
-                    Comment      = "New file not yet added to git"
-                }
-            }
+            Write-Verbose '-ExcludeUntrackedFiles is retained for compatibility; untracked files are always read-only.'
         }
-        else {
-            Write-Verbose "Staging $(@($untrackedFiles).Count) untracked file(s)..."
-            git add .
 
-            $untrackedFiles | ForEach-Object {
-                [PSCustomObject]@{
-                    File         = $_
-                    TypeOfChange = "New"
-                    Comment      = "New file staged to git"
-                }
+        $untrackedFiles | ForEach-Object {
+            [PSCustomObject]@{
+                File         = $_
+                TypeOfChange = "Untracked"
+                Comment      = "New file not yet added to git"
             }
         }
     }

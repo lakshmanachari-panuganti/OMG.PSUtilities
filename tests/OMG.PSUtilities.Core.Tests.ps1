@@ -208,6 +208,93 @@ Describe 'Complete-PSUGithubPullRequest' {
     }
 }
 
+Describe 'New-PSUGithubPullRequest auto-merge' {
+    It 'enables auto-merge through GraphQL with the pull request node ID' {
+        InModuleScope OMG.PSUtilities.Core {
+            $script:graphqlBody = $null
+            Mock Write-Host {}
+            Mock Invoke-RestMethod {
+                if ($Uri -eq 'https://api.github.com/graphql') {
+                    $script:graphqlBody = $Body | ConvertFrom-Json
+                    return [pscustomobject]@{
+                        data = [pscustomobject]@{
+                            enablePullRequestAutoMerge = [pscustomobject]@{
+                                pullRequest = [pscustomobject]@{ number = 42 }
+                            }
+                        }
+                    }
+                }
+
+                [pscustomobject]@{
+                    number = 42
+                    node_id = 'PR_node_id'
+                    id = 1234
+                    title = 'Test pull request'
+                    body = 'Test description'
+                    state = 'open'
+                    draft = $false
+                    head = [pscustomobject]@{ ref = 'feature/test' }
+                    base = [pscustomobject]@{ ref = 'main' }
+                    user = [pscustomobject]@{ login = 'example' }
+                    html_url = 'https://github.com/example/repository/pull/42'
+                    url = 'https://api.github.com/repos/example/repository/pulls/42'
+                    mergeable = $true
+                    mergeable_state = 'clean'
+                    created_at = '2026-08-16T00:00:00Z'
+                    updated_at = '2026-08-16T00:00:00Z'
+                }
+            }
+
+            New-PSUGithubPullRequest `
+                -Owner 'example' `
+                -Repository 'repository' `
+                -SourceBranch 'feature/test' `
+                -TargetBranch 'main' `
+                -Title 'Test pull request' `
+                -Description 'Test description' `
+                -Token 'test-token' `
+                -CompleteOnApproval `
+                -Confirm:$false | Out-Null
+
+            Should -Invoke Invoke-RestMethod -Times 1 -Exactly -ParameterFilter {
+                $Method -eq 'Post' -and $Uri -eq 'https://api.github.com/graphql'
+            }
+            $script:graphqlBody.variables.pullRequestId | Should -Be 'PR_node_id'
+            $script:graphqlBody.query | Should -Match 'enablePullRequestAutoMerge'
+            $script:graphqlBody.query | Should -Match 'mergeMethod:\s*MERGE'
+        }
+    }
+}
+
+Describe 'Get-PSUGitFileChangeMetadata index safety' {
+    It 'reports untracked files without changing the index' {
+        $gitRepository = Join-Path $TestDrive 'git-metadata'
+        New-Item -Path $gitRepository -ItemType Directory -Force | Out-Null
+        git -C $gitRepository init --quiet
+        git -C $gitRepository config user.name 'Core Tests'
+        git -C $gitRepository config user.email 'core-tests@example.invalid'
+        Set-Content -Path (Join-Path $gitRepository 'tracked.txt') -Value 'tracked'
+        git -C $gitRepository add tracked.txt
+        git -C $gitRepository commit --quiet -m 'Initial commit'
+        git -C $gitRepository branch -M main
+        git -C $gitRepository checkout --quiet -b feature/test
+        Set-Content -Path (Join-Path $gitRepository 'untracked.txt') -Value 'untracked'
+
+        Push-Location $gitRepository
+        try {
+            $stagedBefore = @(git diff --cached --name-only)
+            $changes = @(Get-PSUGitFileChangeMetadata -BaseBranch main -FeatureBranch feature/test)
+            $stagedAfter = @(git diff --cached --name-only)
+        } finally {
+            Pop-Location
+        }
+
+        $untrackedChange = $changes | Where-Object File -eq 'untracked.txt'
+        $untrackedChange.TypeOfChange | Should -Be 'Untracked'
+        ($stagedAfter -join "`n") | Should -Be ($stagedBefore -join "`n")
+    }
+}
+
 Describe 'Core WhatIf guards' {
     It 'does not call GitHub under WhatIf' {
         InModuleScope OMG.PSUtilities.Core {
@@ -221,6 +308,7 @@ Describe 'Core WhatIf guards' {
                 -Title 'Test pull request' `
                 -Description 'Test description' `
                 -Token 'test-token' `
+                -CompleteOnApproval `
                 -WhatIf
 
             Should -Invoke Invoke-RestMethod -Times 0 -Exactly

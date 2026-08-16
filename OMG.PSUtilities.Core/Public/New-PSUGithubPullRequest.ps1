@@ -225,17 +225,31 @@ function New-PSUGithubPullRequest {
             # Enable auto-merge if specified
             if ($CompleteOnApproval) {
                 try {
-                    # GitHub auto-merge uses the GraphQL API via REST
-                    $autoMergeHeaders = $headers.Clone()
-                    $autoMergeHeaders['Accept'] = 'application/vnd.github.v3+json'
+                    if (-not $response.node_id) {
+                        throw 'GitHub did not return the pull request node ID required for auto-merge.'
+                    }
 
-                    $enableAutoMergeUri = "https://api.github.com/repos/$Owner/$Repository/pulls/$pullRequestNumber/merge"
+                    $enableAutoMergeUri = 'https://api.github.com/graphql'
                     $enableAutoMergeBody = @{
-                        merge_method = "merge"
-                    } | ConvertTo-Json
+                        query = @'
+mutation EnablePullRequestAutoMerge($pullRequestId: ID!) {
+  enablePullRequestAutoMerge(input: { pullRequestId: $pullRequestId, mergeMethod: MERGE }) {
+    pullRequest {
+      number
+    }
+  }
+}
+'@
+                        variables = @{
+                            pullRequestId = $response.node_id
+                        }
+                    } | ConvertTo-Json -Depth 10
 
                     Write-Host "Attempting to enable auto-merge..." -ForegroundColor Yellow
-                    Invoke-RestMethod -Method Put -Uri $enableAutoMergeUri -Headers $autoMergeHeaders -Body $enableAutoMergeBody -ContentType "application/json" -ErrorAction Stop
+                    $autoMergeResponse = Invoke-RestMethod -Method Post -Uri $enableAutoMergeUri -Headers $headers -Body $enableAutoMergeBody -ContentType "application/json" -ErrorAction Stop
+                    if ($autoMergeResponse.errors) {
+                        throw "GitHub GraphQL error: $($autoMergeResponse.errors.message -join '; ')"
+                    }
                     Write-Host "Auto-merge enabled. It will trigger when all required checks pass and approvals are met." -ForegroundColor Green
                 }
                 catch {
