@@ -20,6 +20,14 @@
 .PARAMETER IncludeScriptAnalyzer
     Runs PSScriptAnalyzer when the module is installed.
 
+.PARAMETER WarningBaseline
+    Path to the committed PSScriptAnalyzer warning baseline. Relative paths are
+    resolved from RepositoryRoot.
+
+.PARAMETER UpdateWarningBaseline
+    Regenerates WarningBaseline from the complete current warning backlog.
+    Implies IncludeScriptAnalyzer.
+
 .EXAMPLE
     .\build\Test-Repository.ps1
 
@@ -29,6 +37,11 @@
     .\build\Test-Repository.ps1 -IncludeScriptAnalyzer
 
     Validates every module and runs PSScriptAnalyzer.
+
+.EXAMPLE
+    .\build\Test-Repository.ps1 -UpdateWarningBaseline
+
+    Validates every module and intentionally regenerates the warning baseline.
 
 .EXAMPLE
     .\build\Test-Repository.ps1 -BaseRef origin/main
@@ -59,13 +72,177 @@ param (
     [string]$HeadRef = 'HEAD',
 
     [Parameter()]
-    [switch]$IncludeScriptAnalyzer
+    [switch]$IncludeScriptAnalyzer,
+
+    [Parameter()]
+    [ValidateNotNullOrEmpty()]
+    [string]$WarningBaseline = (Join-Path $PSScriptRoot 'psscriptanalyzer-baseline.json'),
+
+    [Parameter()]
+    [switch]$UpdateWarningBaseline
 )
 
 $ErrorActionPreference = 'Stop'
+$IncludeScriptAnalyzer = $IncludeScriptAnalyzer -or $UpdateWarningBaseline
 $env:PSModulePath = "$RepositoryRoot$([System.IO.Path]::PathSeparator)$env:PSModulePath"
 $validationErrors = [System.Collections.Generic.List[string]]::new()
 $validationWarnings = [System.Collections.Generic.List[string]]::new()
+$analyzerWarningRecords = [System.Collections.Generic.List[object]]::new()
+$newAnalyzerWarningCount = 0
+$staleBaselineWarningCount = 0
+
+function Get-StringSha256 {
+    param (
+        [Parameter(Mandatory)]
+        [AllowEmptyString()]
+        [string]$Value
+    )
+
+    $algorithm = [System.Security.Cryptography.SHA256]::Create()
+    try {
+        $hashBytes = $algorithm.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($Value))
+        ([System.BitConverter]::ToString($hashBytes)).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $algorithm.Dispose()
+    }
+}
+
+function Get-AnalyzerWarningRecord {
+    param (
+        [Parameter(Mandatory)]
+        [string]$ModuleName,
+
+        [Parameter(Mandatory)]
+        [object]$AnalysisResult
+    )
+
+    $relativePath = if ($AnalysisResult.ScriptPath) {
+        [System.IO.Path]::GetRelativePath($RepositoryRoot, $AnalysisResult.ScriptPath).Replace('\', '/')
+    } else {
+        [string]$AnalysisResult.ScriptName
+    }
+    $context = [string]$AnalysisResult.Extent.Text
+    if ([string]::IsNullOrWhiteSpace($context) -and
+        $AnalysisResult.ScriptPath -and
+        (Test-Path -LiteralPath $AnalysisResult.ScriptPath -PathType Leaf)) {
+        $sourceLines = [System.IO.File]::ReadAllLines($AnalysisResult.ScriptPath)
+        $lineIndex = [int]$AnalysisResult.Line - 1
+        if ($lineIndex -ge 0 -and $lineIndex -lt $sourceLines.Count) {
+            $context = $sourceLines[$lineIndex]
+        }
+    }
+    if ([string]::IsNullOrWhiteSpace($context)) {
+        $context = [string]$AnalysisResult.Message
+    }
+
+    $normalizedContext = ([regex]::Replace($context, '\s+', ' ')).Trim()
+    $message = "[$ModuleName] $relativePath`:$($AnalysisResult.Line) [$($AnalysisResult.RuleName)] $($AnalysisResult.Message)"
+
+    [PSCustomObject]@{
+        RuleName    = [string]$AnalysisResult.RuleName
+        Path        = $relativePath
+        ContextHash = Get-StringSha256 -Value $normalizedContext
+        Message     = $message
+    }
+}
+
+function Get-AnalyzerWarningKey {
+    param (
+        [Parameter(Mandatory)]
+        [object]$WarningRecord
+    )
+
+    $separator = [char]31
+    "$($WarningRecord.RuleName)$separator$($WarningRecord.Path)$separator$($WarningRecord.ContextHash)"
+}
+
+function Import-AnalyzerWarningBaseline {
+    param (
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw "PSScriptAnalyzer warning baseline not found: '$Path'. Run Test-Repository.ps1 -UpdateWarningBaseline."
+    }
+
+    try {
+        $baseline = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json -ErrorAction Stop
+    } catch {
+        throw "Unable to read PSScriptAnalyzer warning baseline '$Path': $($_.Exception.Message)"
+    }
+    if ([int]$baseline.schemaVersion -ne 1) {
+        throw "Unsupported PSScriptAnalyzer warning baseline schema '$($baseline.schemaVersion)' in '$Path'."
+    }
+
+    $remainingFindings = @{}
+    foreach ($finding in @($baseline.findings)) {
+        if (-not $finding.ruleName -or -not $finding.path -or -not $finding.contextHash -or [int]$finding.count -lt 1) {
+            throw "Invalid PSScriptAnalyzer warning baseline entry in '$Path'."
+        }
+
+        $key = Get-AnalyzerWarningKey -WarningRecord ([PSCustomObject]@{
+                RuleName    = [string]$finding.ruleName
+                Path        = [string]$finding.path
+                ContextHash = [string]$finding.contextHash
+            })
+        if ($remainingFindings.ContainsKey($key)) {
+            $remainingFindings[$key] += [int]$finding.count
+        } else {
+            $remainingFindings[$key] = [int]$finding.count
+        }
+    }
+
+    $remainingFindings
+}
+
+function Export-AnalyzerWarningBaseline {
+    param (
+        [Parameter(Mandatory)]
+        [AllowEmptyCollection()]
+        [object[]]$WarningRecord,
+
+        [Parameter(Mandatory)]
+        [string]$Path
+    )
+
+    $findings = @($WarningRecord |
+        Group-Object RuleName, Path, ContextHash |
+        ForEach-Object {
+            $record = $_.Group[0]
+            [PSCustomObject][ordered]@{
+                ruleName    = $record.RuleName
+                path        = $record.Path
+                contextHash = $record.ContextHash
+                count       = $_.Count
+            }
+        } |
+        Sort-Object ruleName, path, contextHash)
+    $baseline = [ordered]@{
+        schemaVersion = 1
+        identity      = 'RuleName + repository-relative path + SHA256 of normalized diagnostic source context; duplicate identities retain an exact count.'
+        warningCount  = $WarningRecord.Count
+        findings      = $findings
+    }
+    $parentPath = Split-Path -Parent $Path
+    if ($parentPath -and -not (Test-Path -LiteralPath $parentPath)) {
+        New-Item -Path $parentPath -ItemType Directory -Force | Out-Null
+    }
+
+    $json = $baseline | ConvertTo-Json -Depth 5
+    Set-Content -LiteralPath $Path -Value $json -Encoding utf8
+}
+
+$warningBaselinePath = if ([System.IO.Path]::IsPathRooted($WarningBaseline)) {
+    $WarningBaseline
+} else {
+    Join-Path $RepositoryRoot $WarningBaseline
+}
+$baselineRemainingFindings = if ($IncludeScriptAnalyzer -and -not $UpdateWarningBaseline) {
+    Import-AnalyzerWarningBaseline -Path $warningBaselinePath
+} else {
+    @{}
+}
 
 $moduleDirectories = Get-ChildItem -Path $RepositoryRoot -Directory |
     Where-Object {
@@ -151,12 +328,45 @@ foreach ($moduleDirectory in $moduleDirectories) {
         $settingsPath = Join-Path $RepositoryRoot 'PSScriptAnalyzerSettings.psd1'
         $analysisResults = Invoke-ScriptAnalyzer -Path $moduleDirectory.FullName -Recurse -Settings $settingsPath
         foreach ($analysisResult in $analysisResults) {
-            $message = "[$moduleName] $($analysisResult.ScriptName):$($analysisResult.Line) [$($analysisResult.RuleName)] $($analysisResult.Message)"
+            $relativePath = [System.IO.Path]::GetRelativePath($RepositoryRoot, $analysisResult.ScriptPath).Replace('\', '/')
+            $message = "[$moduleName] $relativePath`:$($analysisResult.Line) [$($analysisResult.RuleName)] $($analysisResult.Message)"
             if ($analysisResult.Severity -eq 'Error') {
                 $validationErrors.Add($message)
             } else {
-                $validationWarnings.Add($message)
+                $analyzerWarningRecords.Add(
+                    (Get-AnalyzerWarningRecord -ModuleName $moduleName -AnalysisResult $analysisResult)
+                )
             }
+        }
+    }
+}
+
+if ($IncludeScriptAnalyzer) {
+    if ($UpdateWarningBaseline) {
+        if ($validationErrors.Count -eq 0) {
+            Export-AnalyzerWarningBaseline `
+                -WarningRecord @($analyzerWarningRecords) `
+                -Path $warningBaselinePath
+        }
+        foreach ($warningRecord in $analyzerWarningRecords) {
+            $validationWarnings.Add("[BASELINED] $($warningRecord.Message)")
+        }
+    } else {
+        foreach ($warningRecord in $analyzerWarningRecords) {
+            $key = Get-AnalyzerWarningKey -WarningRecord $warningRecord
+            if ($baselineRemainingFindings.ContainsKey($key) -and $baselineRemainingFindings[$key] -gt 0) {
+                $baselineRemainingFindings[$key]--
+                $validationWarnings.Add("[BASELINED] $($warningRecord.Message)")
+            } else {
+                $newAnalyzerWarningCount++
+                $validationErrors.Add("[NEW ANALYZER WARNING] $($warningRecord.Message)")
+            }
+        }
+
+        $staleBaselineWarningCount = @($baselineRemainingFindings.Values |
+                Measure-Object -Sum).Sum
+        if ($staleBaselineWarningCount -gt 0) {
+            Write-Warning "The analyzer baseline contains $staleBaselineWarningCount warning(s) that are no longer present. Regenerate it with -UpdateWarningBaseline to record the reduction."
         }
     }
 }
@@ -174,9 +384,12 @@ if ($validationErrors.Count -gt 0) {
 }
 
 $result = [PSCustomObject]@{
-    ModulesValidated = $moduleDirectories.Count
-    AnalyzerWarnings = $validationWarnings.Count
-    Status           = 'Passed'
+    ModulesValidated       = $moduleDirectories.Count
+    AnalyzerWarnings       = $analyzerWarningRecords.Count
+    NewAnalyzerWarnings    = $newAnalyzerWarningCount
+    StaleBaselineWarnings  = $staleBaselineWarningCount
+    WarningBaseline        = if ($IncludeScriptAnalyzer) { $warningBaselinePath } else { $null }
+    Status                 = 'Passed'
 }
 
 $result
