@@ -1,5 +1,10 @@
 ## Changelog
 
+## [1.0.6] - 2026-08-15
+### Fixed
+- Made service-account risk scoring return one deterministic score and level.
+- Omitted null credentials from event-log queries and preserved query failures while treating no matching events as an empty result.
+
 ## [1.0.5] - 6th August 2026
 ### Fixed
 - Importing the module no longer writes "Cannot find path ... \Private\" to the console. The module has no `Private` folder, and the loader now tolerates that.

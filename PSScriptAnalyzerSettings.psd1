@@ -1,7 +1,6 @@
 @{
-    Severity     = @('Error')
+    Severity     = @('Error', 'Warning')
     ExcludeRules = @(
-        'PSAvoidUsingWriteHost'
         'PSUseBOMForUnicodeEncodedFile'
     )
     Rules        = @{
