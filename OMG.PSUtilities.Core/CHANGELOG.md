@@ -1,3 +1,11 @@
+## [1.0.24] - 16th August 2026
+### Fixed
+- `New-PSUGithubPullRequest` (Public): enable approval-gated auto-merge through GitHub's `enablePullRequestAutoMerge` GraphQL mutation instead of immediately merging through the REST endpoint.
+- `Get-PSUGitFileChangeMetadata` (Public): report untracked files without staging them or otherwise changing the Git index.
+
+### Tests
+- Added focused GraphQL contract, `-WhatIf`, and Git index safety regressions.
+
 ## [1.0.23] - 15th August 2026
 ### Added
 - `Complete-PSUGithubPullRequest` (Public): merge open GitHub pull requests with merge, squash, or rebase and optionally delete the source branch after a confirmed merge.
