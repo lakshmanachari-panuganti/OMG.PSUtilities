@@ -5850,6 +5850,12 @@
     {
       "ruleName": "PSUseConsistentIndentation",
       "path": "OMG.PSUtilities.Core/OMG.PSUtilities.Core.psd1",
+      "contextHash": "875ea056cca9d860c86bf3ae5f5017634cb89fe393d0e275059a79671109d40b",
+      "count": 1
+    },
+    {
+      "ruleName": "PSUseConsistentIndentation",
+      "path": "OMG.PSUtilities.Core/OMG.PSUtilities.Core.psd1",
       "contextHash": "8b77d96c1b0478244e72c3c8e086c1deaeac5342867f522e339a25c569cf9d77",
       "count": 1
     },
@@ -5989,12 +5995,6 @@
       "ruleName": "PSUseConsistentIndentation",
       "path": "OMG.PSUtilities.Core/OMG.PSUtilities.Core.psd1",
       "contextHash": "c6cae985917c4cd6e0e58f4e56310cc37500103de09a4594fd4a1b63e3a4c929",
-      "count": 1
-    },
-    {
-      "ruleName": "PSUseConsistentIndentation",
-      "path": "OMG.PSUtilities.Core/OMG.PSUtilities.Core.psd1",
-      "contextHash": "cba0337b863823d4ab5c81c152340f69fba515eb6c3750881cf2df2d1aca595b",
       "count": 1
     },
     {
