@@ -1,4 +1,4 @@
-function Initialize-OMGEnvironment {
+﻿function Initialize-OMGEnvironment {
     <#
     .SYNOPSIS
         Initializes and validates required environment variables for OMG DevTools.
