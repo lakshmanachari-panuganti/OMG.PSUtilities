@@ -6,11 +6,13 @@ function Get-PSUPublicIP {
     .DESCRIPTION
         Attempts to determine public IP using multiple methods with caching:
         1. DNS lookup via OpenDNS (fastest)
-        2. Parallel HTTP requests to multiple endpoints
+        2. HTTP requests to several endpoints in turn, taking the first valid answer
         Results are cached for 5 minutes to improve performance.
 
     .PARAMETER TimeoutSec
-        Timeout in seconds for HTTP requests. Default is 3 seconds.
+        Timeout in seconds for each HTTP request. Default is 3 seconds. The HTTP fallback
+        tries endpoints one at a time, so a total outage of all four can take up to four
+        times this value before the command reports failure.
 
     .PARAMETER NoCache
         Skip cache and force fresh lookup.
@@ -73,8 +75,13 @@ function Get-PSUPublicIP {
         Write-Verbose "DNS lookup failed: $($_.Exception.Message)"
     }
 
-    # 2️⃣ Fallback: Try multiple HTTP endpoints in parallel
-    Write-Verbose "DNS failed, trying HTTP endpoints in parallel..."
+    # 2️⃣ Fallback: try HTTP endpoints in order and take the first valid answer.
+    # Sequential on purpose. The parallel version used Start-ThreadJob, which Windows
+    # PowerShell 5.1 does not ship, so on 5.1 this fallback raised CommandNotFoundException
+    # instead of returning an address. Declaring ThreadJob in the manifest would have pushed
+    # that dependency onto every module that requires Core, for a path that only runs when
+    # the DNS lookup above has already failed.
+    Write-Verbose "DNS failed, trying HTTP endpoints..."
 
     $endpoints = @(
         'https://checkip.amazonaws.com'
@@ -83,43 +90,25 @@ function Get-PSUPublicIP {
         'https://ifconfig.me/ip'
     )
 
-    $jobs = foreach ( $endpoint in $endpoints ) {
-        Start-ThreadJob -ScriptBlock {
-            param($url, $timeout)
-            try {
-                $response = Invoke-RestMethod -Uri $url -TimeoutSec $timeout -ErrorAction Stop
-                return $response.Trim()
-            }
-            catch {
-                return $null
-            }
-        } -ArgumentList $endpoint, $TimeoutSec
-    }
-
-    # Wait for first successful response
     $ip = $null
-    $waitTime = 0
-    $maxWait = $TimeoutSec * 1000  # Convert to milliseconds
-    $checkInterval = 100  # Check every 100ms
+    foreach ($endpoint in $endpoints) {
+        try {
+            Write-Verbose "Querying $endpoint ..."
+            $response = Invoke-RestMethod -Uri $endpoint -TimeoutSec $TimeoutSec -ErrorAction Stop
+            $candidate = ([string]$response).Trim()
 
-    while ($waitTime -lt $maxWait -and -not $ip) {
-        Start-Sleep -Milliseconds $checkInterval
-        $waitTime += $checkInterval
-
-        foreach ($job in $jobs) {
-            if ($job.State -eq 'Completed') {
-                $result = Receive-Job -Job $job -ErrorAction SilentlyContinue
-                if ($result -match '^\d{1,3}(\.\d{1,3}){3}$') {
-                    $ip = $result
-                    Write-Verbose "Received valid IP from endpoint: $ip"
-                    break
-                }
+            if ($candidate -match '^\d{1,3}(\.\d{1,3}){3}$') {
+                $ip = $candidate
+                Write-Verbose "Received valid IP from ${endpoint}: $ip"
+                break
             }
+
+            Write-Verbose "Endpoint $endpoint returned no usable address."
+        }
+        catch {
+            Write-Verbose "Endpoint $endpoint failed: $($_.Exception.Message)"
         }
     }
-
-    # Cleanup all jobs
-    $jobs | Stop-Job -PassThru | Remove-Job -Force
 
     if ($ip) {
         $script:CachedPublicIP = $ip

@@ -616,3 +616,38 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
         }
     }
 }
+Describe 'Get-PSUPublicIP dependency-free fallback' {
+    It 'invokes no ThreadJob command in module source' {
+        # Windows PowerShell 5.1 does not ship ThreadJob, and Core is required by every other
+        # module, so this fallback must not reintroduce that dependency. Comments are excluded
+        # deliberately: the source explains why ThreadJob was removed and would otherwise
+        # match its own explanation.
+        $sourceModule = Split-Path -Parent $moduleManifestPath
+        $hits = Get-ChildItem -Path $sourceModule -Include '*.ps1', '*.psm1' -Recurse |
+            Select-String -Pattern '\bStart-ThreadJob\b' |
+            Where-Object { $_.Line.Trim() -notmatch '^#' }
+        $hits | Should -BeNullOrEmpty
+    }
+
+    It 'returns the first endpoint that yields a valid address when DNS fails' {
+        InModuleScope OMG.PSUtilities.Core {
+            Mock Resolve-DnsName { throw 'dns down' }
+            Mock Invoke-RestMethod { 'not-an-ip' } -ParameterFilter { $Uri -eq 'https://checkip.amazonaws.com' }
+            Mock Invoke-RestMethod { "  203.0.113.42`n" } -ParameterFilter { $Uri -eq 'https://api.ipify.org' }
+            Mock Invoke-RestMethod { throw 'should not be reached' } -ParameterFilter { $Uri -eq 'https://icanhazip.com' }
+
+            Get-PSUPublicIP -NoCache | Should -Be '203.0.113.42'
+            Should -Invoke Invoke-RestMethod -ParameterFilter { $Uri -eq 'https://icanhazip.com' } -Times 0 -Exactly
+        }
+    }
+
+    It 'throws when DNS and every endpoint fail' {
+        InModuleScope OMG.PSUtilities.Core {
+            Mock Resolve-DnsName { throw 'dns down' }
+            Mock Invoke-RestMethod { throw 'endpoint down' }
+            Mock Write-Error {}
+
+            { Get-PSUPublicIP -NoCache -ErrorAction Stop } | Should -Throw '*Unable to determine public IP*'
+        }
+    }
+}
