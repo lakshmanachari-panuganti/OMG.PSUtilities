@@ -87,7 +87,7 @@ function Unlock-PSUTerraformStateAWS {
             '(?i)(-backend-config(?:=|\s+))(?:"[^"]*"|''[^'']*''|\S+)',
             '$1***'
         )
-        $sensitiveValues = @($env:AWS_ACCESS_KEY_ID, $env:AWS_SECRET_ACCESS_KEY)
+        $sensitiveValues = @($env:AWS_ACCESS_KEY_ID, $env:AWS_SECRET_ACCESS_KEY, $env:AWS_SESSION_TOKEN)
         foreach ($sensitiveValue in $sensitiveValues) {
             if (-not [string]::IsNullOrEmpty($sensitiveValue)) {
                 $sanitizedOutput = $sanitizedOutput.Replace($sensitiveValue, '***')
