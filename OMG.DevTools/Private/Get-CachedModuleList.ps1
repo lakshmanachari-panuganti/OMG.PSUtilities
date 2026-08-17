@@ -1,4 +1,4 @@
-function Get-CachedModuleList {
+﻿function Get-CachedModuleList {
     <#
     .SYNOPSIS
         Gets the cached list of OMG modules or refreshes the cache.

@@ -1,4 +1,4 @@
-function Invoke-OMGUpdateModule {
+﻿function Invoke-OMGUpdateModule {
     <#
     .SYNOPSIS
         Updates all OMG modules from PowerShell Gallery.
