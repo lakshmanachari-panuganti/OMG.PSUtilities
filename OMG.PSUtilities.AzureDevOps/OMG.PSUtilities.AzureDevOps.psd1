@@ -8,153 +8,168 @@
 
 @{
 
-# Script module or binary module file associated with this manifest.
-RootModule = 'OMG.PSUtilities.AzureDevOps.psm1'
+    # Script module or binary module file associated with this manifest.
+    RootModule           = 'OMG.PSUtilities.AzureDevOps.psm1'
 
-# Version number of this module.
-ModuleVersion = '1.0.21'
+    # Version number of this module.
+    ModuleVersion        = '1.1.0'
 
-# Supported PSEditions
-# CompatiblePSEditions = @()
+    # Supported PSEditions
+    # Tested: imports and exports all 28 commands on PowerShell 7 (Core). Windows PowerShell
+    # 5.1 (Desktop) is refused by the PowerShellVersion 7.0 floor below, so Core is the only
+    # edition claimed.
+    CompatiblePSEditions = @('Core')
 
-# ID used to uniquely identify this module
-GUID = '5892abf8-b59a-4bac-a74c-1902e4b578f1'
+    # ID used to uniquely identify this module
+    GUID                 = '5892abf8-b59a-4bac-a74c-1902e4b578f1'
 
-# Author of this module
-Author = 'Lakshmanachari Panuganti'
+    # Author of this module
+    Author               = 'Lakshmanachari Panuganti'
 
-# Company or vendor of this module
-CompanyName = 'OMG IT Solutions'
+    # Company or vendor of this module
+    CompanyName          = 'OMG IT Solutions'
 
-# Copyright statement for this module
-Copyright = '(c) Lakshmanachari Panuganti. All rights reserved.'
+    # Copyright statement for this module
+    Copyright            = '(c) 2025-2026 Lakshmanachari Panuganti'
 
-# Description of the functionality provided by this module
-Description = 'Interact with Azure DevOps APIs, pipelines, repos, and work items.'
+    # Description of the functionality provided by this module
+    Description          = 'Interact with Azure DevOps APIs, pipelines, repos, and work items.'
 
-# Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '7.0'
+    # Minimum version of the PowerShell engine required by this module
+    PowerShellVersion    = '7.0'
 
-# Name of the PowerShell host required by this module
-# PowerShellHostName = ''
+    # Name of the PowerShell host required by this module
+    # PowerShellHostName = ''
 
-# Minimum version of the PowerShell host required by this module
-# PowerShellHostVersion = ''
+    # Minimum version of the PowerShell host required by this module
+    # PowerShellHostVersion = ''
 
-# Minimum version of Microsoft .NET Framework required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-# DotNetFrameworkVersion = ''
+    # Minimum version of Microsoft .NET Framework required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
+    # DotNetFrameworkVersion = ''
 
-# Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-# ClrVersion = ''
+    # Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
+    # ClrVersion = ''
 
-# Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
+    # Processor architecture (None, X86, Amd64) required by this module
+    # ProcessorArchitecture = ''
 
-# Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @('OMG.PSUtilities.Core')
+    # Modules that must be imported into the global environment prior to importing this module.
+    # ThreadJob is deliberately optional rather than required: only
+    # Get-PSUADOVariableGroupInventory uses it, and that command falls back to tested
+    # sequential processing when the module is absent.
+    RequiredModules      = @('OMG.PSUtilities.Core')
 
-# Assemblies that must be loaded prior to importing this module
-# RequiredAssemblies = @()
+    # Assemblies that must be loaded prior to importing this module
+    # RequiredAssemblies = @()
 
-# Script files (.ps1) that are run in the caller's environment prior to importing this module.
-# ScriptsToProcess = @()
+    # Script files (.ps1) that are run in the caller's environment prior to importing this module.
+    # ScriptsToProcess = @()
 
-# Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
+    # Type files (.ps1xml) to be loaded when importing this module
+    # TypesToProcess = @()
 
-# Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+    # Format files (.ps1xml) to be loaded when importing this module
+    # FormatsToProcess = @()
 
-# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-# NestedModules = @()
+    # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
+    # NestedModules = @()
 
-# Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @(
-    'Approve-PSUADOPullRequest',
-    'Complete-PSUADOPullRequest',
-    'Get-PSUADOPipeline',
-    'Get-PSUADOPipelineBuild',
-    'Get-PSUADOPipelineLatestRun',
-    'Get-PSUADOProjectList',
-    'Get-PSUADOPullRequest',
-    'Get-PSUADOPullRequestInventory',
-    'Get-PSUADORepoBranchList',
-    'Get-PSUADORepositories',
-    'Get-PSUADOVariableGroup',
-    'Get-PSUADOVariableGroupInventory',
-    'Get-PSUADOWorkItem',
-    'Get-PSUADOWorkItemStates',
-    'Invoke-PSUADOPipeline',
-    'Invoke-PSUADORepoClone',
-    'New-PSUADOBug',
-    'New-PSUADOPullRequest',
-    'New-PSUADOSpike',
-    'New-PSUADOTask',
-    'New-PSUADOUserStory',
-    'New-PSUADOVariable',
-    'New-PSUADOVariableGroup',
-    'Set-PSUADOBug',
-    'Set-PSUADOSpike',
-    'Set-PSUADOTask',
-    'Set-PSUADOUserStory',
-    'Set-PSUADOVariableGroup'
-)
+    # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
+    FunctionsToExport    = @(
+        'Approve-PSUADOPullRequest',
+        'Complete-PSUADOPullRequest',
+        'Get-PSUADOPipeline',
+        'Get-PSUADOPipelineBuild',
+        'Get-PSUADOPipelineLatestRun',
+        'Get-PSUADOProjectList',
+        'Get-PSUADOPullRequest',
+        'Get-PSUADOPullRequestInventory',
+        'Get-PSUADORepoBranchList',
+        'Get-PSUADORepositories',
+        'Get-PSUADOVariableGroup',
+        'Get-PSUADOVariableGroupInventory',
+        'Get-PSUADOWorkItem',
+        'Get-PSUADOWorkItemStates',
+        'Invoke-PSUADOPipeline',
+        'Invoke-PSUADORepoClone',
+        'New-PSUADOBug',
+        'New-PSUADOPullRequest',
+        'New-PSUADOSpike',
+        'New-PSUADOTask',
+        'New-PSUADOUserStory',
+        'New-PSUADOVariable',
+        'New-PSUADOVariableGroup',
+        'Set-PSUADOBug',
+        'Set-PSUADOSpike',
+        'Set-PSUADOTask',
+        'Set-PSUADOUserStory',
+        'Set-PSUADOVariableGroup'
+    )
 
-# Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = @()
+    # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
+    CmdletsToExport      = @()
 
-# Variables to export from this module
-VariablesToExport = @()
+    # Variables to export from this module
+    VariablesToExport    = @()
 
-# Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @()
+    # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
+    AliasesToExport      = @()
 
-# DSC resources to export from this module
-# DscResourcesToExport = @()
+    # DSC resources to export from this module
+    # DscResourcesToExport = @()
 
-# List of all modules packaged with this module
-# ModuleList = @()
+    # List of all modules packaged with this module
+    # ModuleList = @()
 
-# List of all files packaged with this module
-# FileList = @()
+    # List of all files packaged with this module
+    # FileList = @()
 
-# Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
-PrivateData = @{
+    # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
+    PrivateData          = @{
 
-    PSData = @{
+        PSData = @{
 
-        # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+            # Tags applied to this module. These help with module discovery in online galleries.
+            Tags         = @('AzureDevOps', 'ADO', 'Pipelines', 'WorkItems', 'DevOps', 'PowerShell', 'Automation', 'OMG')
 
-        # A URL to the license for this module.
-        # LicenseUri = 'https://opensource.org/licenses/MIT'
+            # A URL to the license for this module.
+            LicenseUri   = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/blob/main/LICENSE'
 
-        # A URL to the main website for this project.
-        # ProjectUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities'
+            # A URL to the main website for this project.
+            ProjectUri   = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities'
 
-        # A URL to an icon representing this module.
-        # IconUri = ''
+            # A URL to an icon representing this module.
+            # IconUri = ''
 
-        # ReleaseNotes of this module
-        # ReleaseNotes = ''
+            # ReleaseNotes of this module
+            ReleaseNotes = @'
+1.1.0
+- Declared CompatiblePSEditions = Core, from tested imports rather than assumption.
+- Kept ThreadJob optional rather than required. Only Get-PSUADOVariableGroupInventory uses it,
+  and that command already falls back to sequential processing when the module is absent. The
+  fallback is now covered by tests, which is the condition for leaving the dependency
+  undeclared.
+- Applied the MIT license metadata approved in docs/decisions/0.5-licensing-selection.md,
+  replacing the commented opensource.org URL with the canonical repository LICENSE link.
+'@
 
-        # Prerelease string of this module
-        # Prerelease = ''
+            # Prerelease string of this module
+            # Prerelease = ''
 
-        # Flag to indicate whether the module requires explicit user acceptance for install/update/save
-        # RequireLicenseAcceptance = $false
+            # Flag to indicate whether the module requires explicit user acceptance for install/update/save
+            # RequireLicenseAcceptance = $false
 
-        # External dependent modules of this module
-        # ExternalModuleDependencies = @()
+            # External dependent modules of this module
+            # ExternalModuleDependencies = @()
 
-    } # End of PSData hashtable
+        } # End of PSData hashtable
 
-} # End of PrivateData hashtable
+    } # End of PrivateData hashtable
 
-# HelpInfo URI of this module
-# HelpInfoURI = ''
+    # HelpInfo URI of this module
+    # HelpInfoURI = ''
 
-# Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
+    # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
+    # DefaultCommandPrefix = ''
 
 }
