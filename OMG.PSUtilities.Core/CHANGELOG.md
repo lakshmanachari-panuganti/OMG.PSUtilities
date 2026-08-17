@@ -1,3 +1,13 @@
+## [1.0.25] - 16th August 2026
+### Security
+- `Unlock-PSUTerraformStateAWS` (Public): require `SecureString` AWS credentials, convert them only for the temporary child-process environment, clear unmanaged conversion buffers immediately, and redact backend configuration from Terraform failures.
+
+### Documentation
+- Document secure interactive credential acquisition with `Read-Host -AsSecureString`.
+
+### Tests
+- Added focused SecureString parameter, acquisition guidance, native-boundary conversion, argv/verbose isolation, environment restoration, and error-redaction regressions.
+
 ## [1.0.24] - 16th August 2026
 ### Fixed
 - `New-PSUGithubPullRequest` (Public): enable approval-gated auto-merge through GitHub's `enablePullRequestAutoMerge` GraphQL mutation instead of immediately merging through the REST endpoint.
