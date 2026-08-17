@@ -470,8 +470,11 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
                 -LockId 'lock-id' `
                 -AccessKey $SecureAccessKey `
                 -SecretKey $SecureSecretKey `
-                -Force `
-                -Verbose 4>&1 | Out-String | Should -Not -Match 'KEY-SENTINEL'
+                -Force
+
+            Should -Invoke Write-Host -ParameterFilter {
+                "$Object" -match [regex]::Escape($AccessKey) -or "$Object" -match [regex]::Escape($SecretKey)
+            } -Times 0
 
             ($script:terraformCalls -join "`n") | Should -Not -Match ([regex]::Escape($AccessKey))
             ($script:terraformCalls -join "`n") | Should -Not -Match ([regex]::Escape($SecretKey))
