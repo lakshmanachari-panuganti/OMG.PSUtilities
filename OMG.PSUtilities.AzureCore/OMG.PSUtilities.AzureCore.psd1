@@ -12,10 +12,13 @@
     RootModule        = 'OMG.PSUtilities.AzureCore.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.1.1'
+    ModuleVersion     = '1.2.0'
 
     # Supported PSEditions
-    # CompatiblePSEditions = @()
+    # Tested: imports and resolves all exports on PowerShell 7 (Core). Windows PowerShell 5.1
+    # (Desktop) is blocked by the PowerShellVersion 7.0 floor below, so Core is the only
+    # edition this module is claimed to support.
+    CompatiblePSEditions = @('Core')
 
     # ID used to uniquely identify this module
     GUID              = '6ca653ef-4fa6-41a0-9873-7a9b112feeaf'
@@ -27,7 +30,7 @@
     CompanyName       = 'OMG IT Solutions'
 
     # Copyright statement for this module
-    Copyright         = '(c) Lakshmanachari Panuganti. All rights reserved.'
+    Copyright         = '(c) 2025-2026 Lakshmanachari Panuganti'
 
     # Description of the functionality provided by this module
     Description       = 'Core Azure-related scripting, including identity and subscription management.'
@@ -50,8 +53,11 @@
     # Processor architecture (None, X86, Amd64) required by this module
     # ProcessorArchitecture = ''
 
-    # Modules that must be imported into the global environment prior to importing this module
-    RequiredModules   = @('OMG.PSUtilities.Core')
+    # Modules that must be imported into the global environment prior to importing this module.
+    # Az.Accounts is universally required: three of the four exports depend on the Az context.
+    # Microsoft.Graph.*, kubectl, and ThreadJob are optional and are resolved at call time by
+    # the functions that need them, so they are deliberately not declared here.
+    RequiredModules   = @('OMG.PSUtilities.Core', 'Az.Accounts')
 
     # Assemblies that must be loaded prior to importing this module
     # RequiredAssemblies = @()
@@ -100,19 +106,31 @@
         PSData = @{
 
             # Tags applied to this module. These help with module discovery in online galleries.
-            # Tags = @()
+            Tags       = @('Azure', 'AzureCore', 'Identity', 'DevOps', 'PowerShell', 'Automation', 'OMG')
 
             # A URL to the license for this module.
-            # LicenseUri = ''
+            LicenseUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/blob/main/LICENSE'
 
             # A URL to the main website for this project.
-            # ProjectUri = ''
+            ProjectUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities'
 
             # A URL to an icon representing this module.
             # IconUri = ''
 
             # ReleaseNotes of this module
-            # ReleaseNotes = ''
+            ReleaseNotes = @'
+1.2.0
+- Declared Az.Accounts as a required module. It was always needed by Get-PSUAzToken,
+  Test-PSUAzConnection, and Invoke-PSUAzureAppRegAudit, but was never declared. Installs
+  now pull it automatically; environments that lack it will fail at import instead of
+  failing later inside a command.
+- Declared CompatiblePSEditions = Core, from tested imports rather than assumption.
+- Guarded the optional kubectl and ThreadJob dependencies in Get-PSUk8sPodLabel with
+  actionable messages instead of a raw CommandNotFoundException.
+- Applied the MIT license metadata approved in docs/decisions/0.5-licensing-selection.md.
+- Removed seven unreferenced --wip files from Public/. They were already excluded by the
+  loader and were never exported, so this is not a functional change.
+'@
 
             # Prerelease string of this module
             # Prerelease = ''

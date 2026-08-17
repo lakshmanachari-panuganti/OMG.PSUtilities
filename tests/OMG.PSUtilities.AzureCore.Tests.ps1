@@ -33,6 +33,44 @@ Describe 'OMG.PSUtilities.AzureCore module loading' {
     }
 }
 
+Describe 'Get-PSUk8sPodLabel optional dependency guards' {
+    It 'throws actionable guidance instead of CommandNotFoundException when kubectl is absent' {
+        InModuleScope OMG.PSUtilities.AzureCore {
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'kubectl' }
+
+            { Get-PSUk8sPodLabel } | Should -Throw '*kubectl was not found on PATH*'
+        }
+    }
+
+    It 'throws actionable guidance when ThreadJob is absent' {
+        InModuleScope OMG.PSUtilities.AzureCore {
+            # kubectl is checked first, so it must look present for this case to be reached.
+            Mock Get-Command { [pscustomobject]@{ Name = 'kubectl' } } -ParameterFilter { $Name -eq 'kubectl' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Start-ThreadJob' }
+
+            { Get-PSUk8sPodLabel } | Should -Throw '*Install-Module ThreadJob*'
+        }
+    }
+}
+
+Describe 'OMG.PSUtilities.AzureCore manifest claims' {
+    It 'declares only the editions that were actually tested' {
+        $manifest = Test-ModuleManifest -Path $moduleManifestPath
+        $manifest.CompatiblePSEditions | Should -Be @('Core')
+    }
+
+    It 'declares the required modules its exports depend on' {
+        $manifest = Test-ModuleManifest -Path $moduleManifestPath
+        $manifest.RequiredModules.Name | Should -Contain 'Az.Accounts'
+        $manifest.RequiredModules.Name | Should -Contain 'OMG.PSUtilities.Core'
+    }
+
+    It 'ships no work-in-progress files' {
+        $publicFolder = Join-Path (Split-Path -Parent $moduleManifestPath) 'Public'
+        @(Get-ChildItem -Path $publicFolder -Filter '*--wip.ps1') | Should -BeNullOrEmpty
+    }
+}
+
 Describe 'Invoke-PSUAzureAppRegAudit mutation guard' {
     It 'does not enumerate tenant data or mutate output under WhatIf' {
         InModuleScope OMG.PSUtilities.AzureCore {
