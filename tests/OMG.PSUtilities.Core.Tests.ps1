@@ -524,31 +524,43 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
     }
 
     It 'redacts ambient environment credentials from Terraform failures' {
-        InModuleScope OMG.PSUtilities.Core -Parameters @{
-            TerraformPath = $script:terraformPath
-        } {
-            param ($TerraformPath)
+        $hadSessionToken = Test-Path Env:\AWS_SESSION_TOKEN
+        $originalSessionToken = $env:AWS_SESSION_TOKEN
+        try {
+            $env:AWS_SESSION_TOKEN = 'prior-session-token'
+            InModuleScope OMG.PSUtilities.Core -Parameters @{
+                TerraformPath = $script:terraformPath
+            } {
+                param ($TerraformPath)
 
-            function terraform { }
+                function terraform { }
 
-            Mock Write-Host {}
-            Mock Write-Error {}
-            Mock Set-Location {}
-            Mock terraform {
-                $global:LASTEXITCODE = 1
-                "Terraform failed with $env:AWS_ACCESS_KEY_ID and $env:AWS_SECRET_ACCESS_KEY"
+                Mock Write-Host {}
+                Mock Write-Error {}
+                Mock Set-Location {}
+                Mock terraform {
+                    $global:LASTEXITCODE = 1
+                    "Terraform failed with $env:AWS_ACCESS_KEY_ID, $env:AWS_SECRET_ACCESS_KEY, and $env:AWS_SESSION_TOKEN"
+                }
+
+                $errorRecord = {
+                    Unlock-PSUTerraformStateAWS `
+                        -Path $TerraformPath `
+                        -LockId 'lock-id' `
+                        -Force
+                } | Should -Throw -PassThru
+
+                $errorRecord.Exception.Message | Should -Not -Match 'prior-access'
+                $errorRecord.Exception.Message | Should -Not -Match 'prior-secret'
+                $errorRecord.Exception.Message | Should -Not -Match 'prior-session-token'
+                $errorRecord.Exception.Message | Should -Match '\*\*\*'
             }
-
-            $errorRecord = {
-                Unlock-PSUTerraformStateAWS `
-                    -Path $TerraformPath `
-                    -LockId 'lock-id' `
-                    -Force
-            } | Should -Throw -PassThru
-
-            $errorRecord.Exception.Message | Should -Not -Match 'prior-access'
-            $errorRecord.Exception.Message | Should -Not -Match 'prior-secret'
-            $errorRecord.Exception.Message | Should -Match '\*\*\*'
+        } finally {
+            if ($hadSessionToken) {
+                $env:AWS_SESSION_TOKEN = $originalSessionToken
+            } else {
+                Remove-Item Env:\AWS_SESSION_TOKEN -ErrorAction SilentlyContinue
+            }
         }
     }
 

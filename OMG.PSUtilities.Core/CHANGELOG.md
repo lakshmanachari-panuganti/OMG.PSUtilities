@@ -1,3 +1,10 @@
+## [1.0.27] - 17th August 2026
+### Security
+- `Unlock-PSUTerraformStateAWS` (Public): redact ambient `AWS_SESSION_TOKEN` values from Terraform failure output in addition to access keys and secret keys.
+
+### Tests
+- Extended ambient AWS credential redaction coverage to include session tokens.
+
 ## [1.0.26] - 17th August 2026
 ### Fixed
 - `Unlock-PSUTerraformStateAWS` (Public): redact AWS credentials from Terraform failure output on the default (no explicit `-AccessKey`/`-SecretKey`) path too, where ambient environment credentials could previously leak into thrown/logged errors unredacted.
