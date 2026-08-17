@@ -1,5 +1,23 @@
 # Changelog
 
+## [1.2.0] - 2026-08-17
+### Added
+- Declared `Az.Accounts` in `RequiredModules`. Three of the four exports already depended on
+  the Az context, so the requirement existed but was never stated.
+- Declared `CompatiblePSEditions = @('Core')`, set from tested imports: PowerShell 7 imports
+  and resolves every export, while Windows PowerShell 5.1 is blocked by the existing
+  `PowerShellVersion = '7.0'` floor.
+- Guarded the optional `kubectl` and `ThreadJob` dependencies in `Get-PSUk8sPodLabel`, which
+  previously surfaced a raw `CommandNotFoundException` when either was absent.
+
+### Changed
+- Applied the MIT license metadata approved in `docs/decisions/0.5-licensing-selection.md`:
+  `Copyright`, `LicenseUri`, `ProjectUri`, and `Tags`.
+
+### Removed
+- Deleted seven unreferenced `Public/*--wip.ps1` files. The loader already excluded them and
+  none was ever exported, so this is not a functional change.
+
 ## [1.1.1] - 2026-08-15
 ### Fixed
 - Republished the loader behavior that tolerates an absent optional `Private` folder.

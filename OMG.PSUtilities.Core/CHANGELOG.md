@@ -1,3 +1,30 @@
+## [1.1.0] - 17th August 2026
+### Fixed
+- `Get-PSUPublicIP` (Public): the HTTP fallback used `Start-ThreadJob`, which Windows
+  PowerShell 5.1 does not ship, so on 5.1 it raised `CommandNotFoundException` instead of
+  returning an address whenever the DNS lookup failed. The fallback now queries the endpoints
+  in turn and takes the first valid address, which works on both editions.
+
+### Changed
+- `Get-PSUPublicIP` (Public): because the HTTP fallback is now sequential, a total outage of
+  all four endpoints can take up to four times `TimeoutSec` before the command reports
+  failure. The DNS path, the cache, and the returned value are unchanged.
+- Applied the MIT license metadata approved in `docs/decisions/0.5-licensing-selection.md`:
+  `Copyright`, `LicenseUri`, `ProjectUri`, and `Tags`.
+- Indented the manifest consistently so metadata edits do not resurface baselined analyzer
+  warnings.
+
+### Added
+- `CompatiblePSEditions = @('Desktop', 'Core')`, set from tested imports on Windows
+  PowerShell 5.1 and PowerShell 7.
+
+### Removed
+- Two unreferenced `Public/*--wip.ps1` files. The loader already excluded them and neither was
+  exported. The existing architecture assertion that fails the build if a `--wip` file is
+  packaged is retained.
+- `ThreadJob` is deliberately still absent from `RequiredModules`. Declaring it would have
+  pushed the dependency onto every module that requires Core.
+
 ## [1.0.27] - 17th August 2026
 ### Security
 - `Unlock-PSUTerraformStateAWS` (Public): redact ambient `AWS_SESSION_TOKEN` values from Terraform failure output in addition to access keys and secret keys.
