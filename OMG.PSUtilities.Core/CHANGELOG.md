@@ -1,12 +1,23 @@
+## [1.0.26] - 17th August 2026
+### Fixed
+- `Unlock-PSUTerraformStateAWS` (Public): redact AWS credentials from Terraform failure output on the default (no explicit `-AccessKey`/`-SecretKey`) path too, where ambient environment credentials could previously leak into thrown/logged errors unredacted.
+- `Unlock-PSUTerraformStateAWS` (Public): treat a zero-length `SecureString` (e.g. an empty `Read-Host -AsSecureString` response) the same as an omitted credential instead of routing it through the explicit-credential path.
+
+### Tests
+- Replaced a non-discriminating verbose-stream assertion with a `Write-Host` argument check that actually fails if a credential value reaches console output.
+
 ## [1.0.25] - 16th August 2026
+### Changed
+- **Breaking:** `Unlock-PSUTerraformStateAWS` (Public): `-AccessKey` and `-SecretKey` now require `SecureString` values instead of plain `[string]`; callers passing plaintext strings will fail parameter binding.
+
 ### Security
-- `Unlock-PSUTerraformStateAWS` (Public): require `SecureString` AWS credentials, convert them only for the temporary child-process environment, clear unmanaged conversion buffers immediately, and redact backend configuration from Terraform failures.
+- `Unlock-PSUTerraformStateAWS` (Public): require `SecureString` AWS credentials, convert them to temporarily-scoped process environment variables that are restored in `finally` after the Terraform operation completes, clear unmanaged conversion buffers immediately, and redact backend configuration and credentials from Terraform failures regardless of whether explicit credentials were supplied.
 
 ### Documentation
 - Document secure interactive credential acquisition with `Read-Host -AsSecureString`.
 
 ### Tests
-- Added focused SecureString parameter, acquisition guidance, native-boundary conversion, argv/verbose isolation, environment restoration, and error-redaction regressions.
+- Added focused SecureString parameter, acquisition guidance, native-boundary conversion, argv/console-output isolation, environment restoration, and error-redaction regressions.
 
 ## [1.0.24] - 16th August 2026
 ### Fixed
