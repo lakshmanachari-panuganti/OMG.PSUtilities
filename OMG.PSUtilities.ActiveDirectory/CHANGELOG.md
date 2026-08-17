@@ -1,5 +1,25 @@
 ## Changelog
 
+## [1.1.0] - 2026-08-18
+### Fixed
+- `Find-PSUADServiceAccountMisuse` (Public): resolve `Get-ADUser` and `Get-WinEvent` before
+  doing any work. Without the Active Directory RSAT module, or on a non-Windows host, the
+  command previously failed with `CommandNotFoundException` partway through instead of saying
+  what was missing. Neither dependency is declared in the manifest because neither is
+  installable from the Gallery.
+
+### Added
+- `CompatiblePSEditions = @('Desktop', 'Core')`, set from tested imports on Windows PowerShell
+  5.1 and PowerShell 7.
+- Regression tests for both dependency guards, including that no event-log query is attempted
+  when a prerequisite is missing.
+
+### Changed
+- Applied the MIT license metadata approved in `docs/decisions/0.5-licensing-selection.md`:
+  `Copyright`, `LicenseUri`, `ProjectUri`, and `Tags`.
+- Indented the manifest consistently so metadata edits do not resurface baselined analyzer
+  warnings.
+
 ## [1.0.6] - 2026-08-15
 ### Fixed
 - Made service-account risk scoring return one deterministic score and level.
