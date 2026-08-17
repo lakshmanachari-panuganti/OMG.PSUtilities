@@ -54,6 +54,17 @@ function Get-PSUk8sPodLabel {
         Write-Verbose "  ClusterFilter = $ClusterFilter"
         Write-Verbose "  ThrottleLimit = $ThrottleLimit"
 
+        # kubectl and ThreadJob are optional dependencies of this module and are resolved
+        # here rather than declared in the manifest, so the other exports stay usable
+        # without them. Never install anything implicitly; tell the caller what to do.
+        if (-not (Get-Command -Name 'kubectl' -ErrorAction SilentlyContinue)) {
+            throw "kubectl was not found on PATH. Install the Kubernetes CLI, confirm 'kubectl version --client' runs, then try again."
+        }
+
+        if (-not (Get-Command -Name 'Start-ThreadJob' -ErrorAction SilentlyContinue)) {
+            throw "Start-ThreadJob is not available. Install the ThreadJob module with: Install-Module ThreadJob -Scope CurrentUser"
+        }
+
         $kubeConfigPath = Join-Path $env:USERPROFILE ".kube\config"
 
         if (-not (Test-Path $kubeConfigPath)) {

@@ -1,3 +1,17 @@
+## [1.1.0] - 17th August 2026
+### Removed
+- Unused `Microsoft.PowerShell.ThreadJob` dependency. It appeared only in the manifest's
+  `RequiredModules` and was referenced nowhere in module source, so installs no longer pull a
+  module the code never loads.
+
+### Added
+- `CompatiblePSEditions = @('Desktop', 'Core')`, set from tested imports. Both Windows
+  PowerShell 5.1 and PowerShell 7 import the module and export all 12 commands.
+
+### Changed
+- Applied the MIT license metadata approved in `docs/decisions/0.5-licensing-selection.md`:
+  `Copyright`, `LicenseUri`, `ProjectUri`, and `Tags`.
+
 ## [1.0.44] - 15th August 2026
 ### Security
 - `New-PSUApiKey` (Private): consume only validated data fields from the token issuer and construct authentication headers locally, replacing remote script execution. Bearer values and expiry timestamps are validated, and token values are excluded from diagnostic output.

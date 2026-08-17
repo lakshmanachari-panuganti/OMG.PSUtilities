@@ -45,9 +45,17 @@ Get-PSUk8sPodLabel -ClusterFilter "*prod*" -ThrottleLimit 15
 
 ## 📝 Requirements
 
-- PowerShell 7.0 or higher
-- Azure PowerShell modules
+- PowerShell 7.0 or higher (PowerShell 7 / Core edition only; Windows PowerShell 5.1 is not supported)
+- `OMG.PSUtilities.Core` and `Az.Accounts` — required, installed automatically with this module
 - Appropriate Azure permissions
+
+Optional, needed only by specific commands and reported with actionable guidance when absent:
+
+| Dependency | Required by |
+| --- | --- |
+| `Microsoft.Graph.*` | `Invoke-PSUAzureAppRegAudit` |
+| `kubectl` | `Get-PSUk8sPodLabel` |
+| `ThreadJob` | `Get-PSUk8sPodLabel` |
 
 ## 🤝 Contributing
 
@@ -55,4 +63,4 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## 📄 License
 
-This project is licensed under the
+This project is licensed under the MIT License. See [LICENSE](../LICENSE) for the full text.
