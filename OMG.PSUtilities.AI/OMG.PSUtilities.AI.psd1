@@ -12,10 +12,12 @@
 RootModule = 'OMG.PSUtilities.AI.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.44'
+ModuleVersion = '1.1.0'
 
 # Supported PSEditions
-# CompatiblePSEditions = @()
+# Tested: imports and exports all 12 commands on both Windows PowerShell 5.1 (Desktop) and
+# PowerShell 7 (Core), consistent with the PowerShellVersion 5.1 floor below.
+CompatiblePSEditions = @('Desktop', 'Core')
 
 # ID used to uniquely identify this module
 GUID = '473b8225-a9cd-4982-a9f7-7a62de3bdda3'
@@ -27,7 +29,7 @@ Author = 'Lakshmanachari Panuganti'
 CompanyName = 'OMG IT Solutions'
 
 # Copyright statement for this module
-Copyright = '(c) Lakshmanachari Panuganti. All rights reserved.'
+Copyright = '(c) 2025-2026 Lakshmanachari Panuganti'
 
 # Description of the functionality provided by this module
 Description = 'AI-powered scripting tools, including chat, summarization, and generation.'
@@ -51,7 +53,7 @@ PowerShellVersion = '5.1'
 # ProcessorArchitecture = ''
 
 # Modules that must be imported into the global environment prior to importing this module
-RequiredModules = @('OMG.PSUtilities.Core','Microsoft.PowerShell.ThreadJob')
+RequiredModules = @('OMG.PSUtilities.Core')
 
 
 # Assemblies that must be loaded prior to importing this module
@@ -117,19 +119,27 @@ PrivateData = @{
     PSData = @{
 
         # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+        Tags = @('AI', 'OpenAI', 'Gemini', 'Perplexity', 'DevOps', 'PowerShell', 'Automation', 'OMG')
 
         # A URL to the license for this module.
-        # LicenseUri = ''
+        LicenseUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/blob/main/LICENSE'
 
         # A URL to the main website for this project.
-        # ProjectUri = ''
+        ProjectUri = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities'
 
         # A URL to an icon representing this module.
         # IconUri = ''
 
         # ReleaseNotes of this module
-        # ReleaseNotes = ''
+        ReleaseNotes = @'
+1.1.0
+- Removed the unused Microsoft.PowerShell.ThreadJob dependency. It appeared only in this
+  manifest and was referenced nowhere in module source, so installs no longer pull a module
+  the code never loads.
+- Declared CompatiblePSEditions = Desktop, Core, from tested imports on Windows PowerShell
+  5.1 and PowerShell 7 rather than assumption.
+- Applied the MIT license metadata approved in docs/decisions/0.5-licensing-selection.md.
+'@
 
         # Prerelease string of this module
         # Prerelease = ''
