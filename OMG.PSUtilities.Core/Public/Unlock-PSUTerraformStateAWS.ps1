@@ -15,10 +15,12 @@
     The Terraform state lock identifier. The function prompts when omitted.
 
 .PARAMETER AccessKey
-    An optional AWS access key used when initializing an S3 backend.
+    An optional AWS access key as a SecureString. For interactive use, acquire
+    the value with Read-Host -AsSecureString.
 
 .PARAMETER SecretKey
-    An optional AWS secret key used when initializing an S3 backend.
+    An optional AWS secret key as a SecureString. For interactive use, acquire
+    the value with Read-Host -AsSecureString.
 
 .PARAMETER Region
     The AWS region used for an S3 backend. Defaults to us-east-2.
@@ -31,6 +33,13 @@
 
     Unlocks the specified Terraform state after confirming the operation.
 
+.EXAMPLE
+    $accessKey = Read-Host 'AWS access key' -AsSecureString
+    $secretKey = Read-Host 'AWS secret key' -AsSecureString
+    Unlock-PSUTerraformStateAWS -Path 'C:\Terraform\Project' -LockId 'abc123' -AccessKey $accessKey -SecretKey $secretKey
+
+    Acquires AWS credentials securely before unlocking the specified state.
+
 .OUTPUTS
     None. The function invokes Terraform and writes operation status to the console.
 
@@ -39,10 +48,10 @@
     Version: 1.0
     Requires the Terraform CLI. Force-unlock can corrupt state when another
     Terraform operation is still active.
-    Explicit credentials remain string parameters for compatibility. They are
-    supplied to Terraform through temporary process environment variables and
-    restored after execution. Secure credential acquisition is handled in a
-    later migration.
+    Explicit credentials are supplied as SecureString values. Use Read-Host
+    -AsSecureString for interactive acquisition, or pass SecureString values
+    returned by a secret provider. Credentials are converted only for temporary
+    process environment variables and prior values are restored after execution.
 #>
 function Unlock-PSUTerraformStateAWS {
     [CmdletBinding(SupportsShouldProcess, ConfirmImpact = 'High')]
@@ -54,10 +63,10 @@ function Unlock-PSUTerraformStateAWS {
         [string]$LockId,
         
         [Parameter(Mandatory = $false)]
-        [string]$AccessKey,
+        [SecureString]$AccessKey,
         
         [Parameter(Mandatory = $false)]
-        [string]$SecretKey,
+        [SecureString]$SecretKey,
         
         [Parameter(Mandatory = $false)]
         [string]$Region = "us-east-2",
@@ -73,7 +82,18 @@ function Unlock-PSUTerraformStateAWS {
         )
 
         $sanitizedOutput = ($Output | ForEach-Object { [string]$_ }) -join "`n"
-        foreach ($sensitiveValue in @($AccessKey, $SecretKey)) {
+        $sanitizedOutput = [regex]::Replace(
+            $sanitizedOutput,
+            '(?i)(-backend-config(?:=|\s+))(?:"[^"]*"|''[^'']*''|\S+)',
+            '$1***'
+        )
+        $sensitiveValues = if ($credentialsChanged) {
+            @($env:AWS_ACCESS_KEY_ID, $env:AWS_SECRET_ACCESS_KEY)
+        }
+        else {
+            @()
+        }
+        foreach ($sensitiveValue in $sensitiveValues) {
             if (-not [string]::IsNullOrEmpty($sensitiveValue)) {
                 $sanitizedOutput = $sanitizedOutput.Replace($sensitiveValue, '***')
             }
@@ -139,9 +159,31 @@ function Unlock-PSUTerraformStateAWS {
         Write-Host "Working in Terraform directory: $Path"
 
         if ($AccessKey -and $SecretKey) {
-            $env:AWS_ACCESS_KEY_ID = $AccessKey
-            $env:AWS_SECRET_ACCESS_KEY = $SecretKey
             $credentialsChanged = $true
+
+            $accessKeyPointer = [IntPtr]::Zero
+            try {
+                $accessKeyPointer = [System.Runtime.InteropServices.Marshal]::SecureStringToCoTaskMemUnicode($AccessKey)
+                $env:AWS_ACCESS_KEY_ID = [System.Runtime.InteropServices.Marshal]::PtrToStringUni($accessKeyPointer)
+            }
+            finally {
+                if ($accessKeyPointer -ne [IntPtr]::Zero) {
+                    [System.Runtime.InteropServices.Marshal]::ZeroFreeCoTaskMemUnicode($accessKeyPointer)
+                    $accessKeyPointer = [IntPtr]::Zero
+                }
+            }
+
+            $secretKeyPointer = [IntPtr]::Zero
+            try {
+                $secretKeyPointer = [System.Runtime.InteropServices.Marshal]::SecureStringToCoTaskMemUnicode($SecretKey)
+                $env:AWS_SECRET_ACCESS_KEY = [System.Runtime.InteropServices.Marshal]::PtrToStringUni($secretKeyPointer)
+            }
+            finally {
+                if ($secretKeyPointer -ne [IntPtr]::Zero) {
+                    [System.Runtime.InteropServices.Marshal]::ZeroFreeCoTaskMemUnicode($secretKeyPointer)
+                    $secretKeyPointer = [IntPtr]::Zero
+                }
+            }
         }
 
         Write-Host "Initializing Terraform backend..."
