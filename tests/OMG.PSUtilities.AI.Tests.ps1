@@ -498,3 +498,26 @@ Describe 'OMG.PSUtilities.AI module loading' {
         }
     }
 }
+
+Describe 'OMG.PSUtilities.AI manifest claims' {
+    It 'does not declare a dependency the module never loads' {
+        $manifest = Test-ModuleManifest -Path $moduleManifestPath
+        $manifest.RequiredModules.Name | Should -Not -Contain 'Microsoft.PowerShell.ThreadJob'
+        $manifest.RequiredModules.Name | Should -Not -Contain 'ThreadJob'
+    }
+
+    It 'references no ThreadJob command in executable module source' {
+        # Scoped to code, not the manifest: the manifest's ReleaseNotes legitimately name the
+        # dependency being removed.
+        $sourceModule = Split-Path -Parent $moduleManifestPath
+        $hits = Get-ChildItem -Path $sourceModule -Include '*.ps1', '*.psm1' -Recurse |
+            Select-String -Pattern 'ThreadJob' -SimpleMatch
+        $hits | Should -BeNullOrEmpty
+    }
+
+    It 'declares both editions that were actually tested' {
+        $manifest = Test-ModuleManifest -Path $moduleManifestPath
+        $manifest.CompatiblePSEditions | Should -Contain 'Desktop'
+        $manifest.CompatiblePSEditions | Should -Contain 'Core'
+    }
+}
