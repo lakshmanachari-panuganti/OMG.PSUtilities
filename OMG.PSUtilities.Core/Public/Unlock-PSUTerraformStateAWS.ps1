@@ -87,12 +87,7 @@ function Unlock-PSUTerraformStateAWS {
             '(?i)(-backend-config(?:=|\s+))(?:"[^"]*"|''[^'']*''|\S+)',
             '$1***'
         )
-        $sensitiveValues = if ($credentialsChanged) {
-            @($env:AWS_ACCESS_KEY_ID, $env:AWS_SECRET_ACCESS_KEY)
-        }
-        else {
-            @()
-        }
+        $sensitiveValues = @($env:AWS_ACCESS_KEY_ID, $env:AWS_SECRET_ACCESS_KEY)
         foreach ($sensitiveValue in $sensitiveValues) {
             if (-not [string]::IsNullOrEmpty($sensitiveValue)) {
                 $sanitizedOutput = $sanitizedOutput.Replace($sensitiveValue, '***')
@@ -158,7 +153,7 @@ function Unlock-PSUTerraformStateAWS {
         $locationChanged = $true
         Write-Host "Working in Terraform directory: $Path"
 
-        if ($AccessKey -and $SecretKey) {
+        if ($AccessKey -and $AccessKey.Length -gt 0 -and $SecretKey -and $SecretKey.Length -gt 0) {
             $credentialsChanged = $true
 
             $accessKeyPointer = [IntPtr]::Zero
@@ -188,7 +183,7 @@ function Unlock-PSUTerraformStateAWS {
 
         Write-Host "Initializing Terraform backend..."
         if ($backendType -eq "s3") {
-            if ($AccessKey -and $SecretKey) {
+            if ($AccessKey -and $AccessKey.Length -gt 0 -and $SecretKey -and $SecretKey.Length -gt 0) {
                 Write-Host "Using provided AWS credentials..."
                 $initArgs = @(
                     "init",
