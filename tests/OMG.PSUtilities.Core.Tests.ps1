@@ -440,7 +440,7 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
         $help | Should -Not -Match '-SecretKey\s+[''"]'
     }
 
-    It 'uses child-process environment credentials without putting them in argv' {
+    It 'uses temporary process environment credentials without putting them in argv' {
         InModuleScope OMG.PSUtilities.Core -Parameters @{
             TerraformPath = $script:terraformPath
             AccessKey = $script:accessKey
@@ -483,6 +483,73 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
 
         $env:AWS_ACCESS_KEY_ID | Should -Be 'prior-access'
         $env:AWS_SECRET_ACCESS_KEY | Should -Be 'prior-secret'
+    }
+
+    It 'treats empty SecureString credentials as omitted' {
+        InModuleScope OMG.PSUtilities.Core -Parameters @{
+            TerraformPath = $script:terraformPath
+        } {
+            param ($TerraformPath)
+
+            function terraform { }
+
+            $emptyCredential = New-Object System.Security.SecureString
+            $script:terraformEnvironments = [System.Collections.Generic.List[string]]::new()
+            Mock Write-Host {}
+            Mock Set-Location {}
+            Mock terraform {
+                $script:terraformEnvironments.Add("$env:AWS_ACCESS_KEY_ID|$env:AWS_SECRET_ACCESS_KEY")
+                $global:LASTEXITCODE = 0
+                if ("$args" -eq 'workspace list') {
+                    '* default'
+                }
+            }
+
+            Unlock-PSUTerraformStateAWS `
+                -Path $TerraformPath `
+                -LockId 'lock-id' `
+                -AccessKey $emptyCredential `
+                -SecretKey $emptyCredential `
+                -Force
+
+            $script:terraformEnvironments | Should -Not -Contain '|'
+            $script:terraformEnvironments | Should -Contain 'prior-access|prior-secret'
+            Should -Invoke Write-Host -Times 1 -Exactly -ParameterFilter {
+                $Object -eq 'No AWS credentials provided, using default AWS profile or environment.'
+            }
+            Should -Invoke Write-Host -Times 0 -Exactly -ParameterFilter {
+                $Object -eq 'Using provided AWS credentials...'
+            }
+        }
+    }
+
+    It 'redacts ambient environment credentials from Terraform failures' {
+        InModuleScope OMG.PSUtilities.Core -Parameters @{
+            TerraformPath = $script:terraformPath
+        } {
+            param ($TerraformPath)
+
+            function terraform { }
+
+            Mock Write-Host {}
+            Mock Write-Error {}
+            Mock Set-Location {}
+            Mock terraform {
+                $global:LASTEXITCODE = 1
+                "Terraform failed with $env:AWS_ACCESS_KEY_ID and $env:AWS_SECRET_ACCESS_KEY"
+            }
+
+            $errorRecord = {
+                Unlock-PSUTerraformStateAWS `
+                    -Path $TerraformPath `
+                    -LockId 'lock-id' `
+                    -Force
+            } | Should -Throw -PassThru
+
+            $errorRecord.Exception.Message | Should -Not -Match 'prior-access'
+            $errorRecord.Exception.Message | Should -Not -Match 'prior-secret'
+            $errorRecord.Exception.Message | Should -Match '\*\*\*'
+        }
     }
 
     It 'redacts credentials from Terraform failures and restores the environment' {
