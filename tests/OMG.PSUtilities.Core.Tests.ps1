@@ -346,6 +346,9 @@ Describe 'Core WhatIf guards' {
 
             function terraform { }
 
+            $accessKey = ConvertTo-SecureString 'access-key' -AsPlainText -Force
+            $secretKey = ConvertTo-SecureString 'secret-key' -AsPlainText -Force
+
             Mock Write-Host {}
             Mock Set-Location {}
             Mock terraform {
@@ -358,8 +361,8 @@ Describe 'Core WhatIf guards' {
             Unlock-PSUTerraformStateAWS `
                 -Path $TerraformPath `
                 -LockId 'lock-id' `
-                -AccessKey 'access-key' `
-                -SecretKey 'secret-key' `
+                -AccessKey $accessKey `
+                -SecretKey $secretKey `
                 -Force `
                 -WhatIf
 
@@ -420,8 +423,21 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
         Set-Content -Path (Join-Path $script:terraformPath 'main.tf') -Value 'terraform { backend "s3" {} }'
         $script:accessKey = 'ACCESS-KEY-SENTINEL'
         $script:secretKey = 'SECRET-KEY-SENTINEL'
+        $script:secureAccessKey = ConvertTo-SecureString $script:accessKey -AsPlainText -Force
+        $script:secureSecretKey = ConvertTo-SecureString $script:secretKey -AsPlainText -Force
         $env:AWS_ACCESS_KEY_ID = 'prior-access'
         $env:AWS_SECRET_ACCESS_KEY = 'prior-secret'
+    }
+
+    It 'requires SecureString credentials and documents secure interactive acquisition' {
+        $command = Get-Command Unlock-PSUTerraformStateAWS
+        $command.Parameters['AccessKey'].ParameterType | Should -Be ([securestring])
+        $command.Parameters['SecretKey'].ParameterType | Should -Be ([securestring])
+
+        $help = Get-Help Unlock-PSUTerraformStateAWS -Full | Out-String
+        $help | Should -Match 'Read-Host\s+.+-AsSecureString'
+        $help | Should -Not -Match '-AccessKey\s+[''"]'
+        $help | Should -Not -Match '-SecretKey\s+[''"]'
     }
 
     It 'uses child-process environment credentials without putting them in argv' {
@@ -429,8 +445,10 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
             TerraformPath = $script:terraformPath
             AccessKey = $script:accessKey
             SecretKey = $script:secretKey
+            SecureAccessKey = $script:secureAccessKey
+            SecureSecretKey = $script:secureSecretKey
         } {
-            param ($TerraformPath, $AccessKey, $SecretKey)
+            param ($TerraformPath, $AccessKey, $SecretKey, $SecureAccessKey, $SecureSecretKey)
 
             function terraform { }
 
@@ -450,9 +468,10 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
             Unlock-PSUTerraformStateAWS `
                 -Path $TerraformPath `
                 -LockId 'lock-id' `
-                -AccessKey $AccessKey `
-                -SecretKey $SecretKey `
-                -Force
+                -AccessKey $SecureAccessKey `
+                -SecretKey $SecureSecretKey `
+                -Force `
+                -Verbose 4>&1 | Out-String | Should -Not -Match 'KEY-SENTINEL'
 
             ($script:terraformCalls -join "`n") | Should -Not -Match ([regex]::Escape($AccessKey))
             ($script:terraformCalls -join "`n") | Should -Not -Match ([regex]::Escape($SecretKey))
@@ -468,8 +487,10 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
             TerraformPath = $script:terraformPath
             AccessKey = $script:accessKey
             SecretKey = $script:secretKey
+            SecureAccessKey = $script:secureAccessKey
+            SecureSecretKey = $script:secureSecretKey
         } {
-            param ($TerraformPath, $AccessKey, $SecretKey)
+            param ($TerraformPath, $AccessKey, $SecretKey, $SecureAccessKey, $SecureSecretKey)
 
             function terraform { }
 
@@ -478,20 +499,22 @@ Describe 'Unlock-PSUTerraformStateAWS credential isolation' {
             Mock Set-Location {}
             Mock terraform {
                 $global:LASTEXITCODE = 1
-                "Terraform failed with $AccessKey and $SecretKey"
+                "Terraform failed with $AccessKey and -backend-config=secret_key=$SecretKey"
             }
 
             $errorRecord = {
                 Unlock-PSUTerraformStateAWS `
                     -Path $TerraformPath `
                     -LockId 'lock-id' `
-                    -AccessKey $AccessKey `
-                    -SecretKey $SecretKey `
+                    -AccessKey $SecureAccessKey `
+                    -SecretKey $SecureSecretKey `
                     -Force
             } | Should -Throw -PassThru
 
             $errorRecord.Exception.Message | Should -Not -Match ([regex]::Escape($AccessKey))
             $errorRecord.Exception.Message | Should -Not -Match ([regex]::Escape($SecretKey))
+            $errorRecord.Exception.Message | Should -Not -Match 'backend-config=secret_key'
+            $errorRecord.Exception.Message | Should -Match '\*\*\*'
         }
 
         $env:AWS_ACCESS_KEY_ID | Should -Be 'prior-access'
