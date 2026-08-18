@@ -30,7 +30,7 @@ function Approve-PSUGithubPullRequest {
 
     .PARAMETER Token
         (Optional) GitHub Personal Access Token for authentication.
-        Default value is $env:GITHUB_TOKEN. Set using: Set-PSUUserEnvironmentVariable -Name "GITHUB_TOKEN" -Value "value_of_token"
+        When omitted, the token is resolved by Get-PSUSecret -Name 'GITHUB_TOKEN', which prefers Windows Credential Manager, then SecretManagement, and finally the GITHUB_TOKEN environment variable. Store it securely with: Set-PSUCredentialToManager -Target "GITHUB_TOKEN"
 
     .EXAMPLE
         Approve-PSUGithubPullRequest -PullRequestNumber 42
@@ -87,7 +87,7 @@ function Approve-PSUGithubPullRequest {
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$Token = $env:GITHUB_TOKEN
+        [string]$Token
     )
 
     process {
@@ -107,9 +107,12 @@ function Approve-PSUGithubPullRequest {
                 }
             }
 
-            # Validate token
+            # Resolve the token from secure storage when the caller did not supply one.
+            # Get-PSUSecret prefers Windows Credential Manager, then SecretManagement, and
+            # falls back to the GITHUB_TOKEN environment variable for compatibility.
+            # Plaintext is requested here because it is needed for the Authorization header.
             if (-not $Token) {
-                throw "GitHub token not found. Set it using: Set-PSUUserEnvironmentVariable -Name 'GITHUB_TOKEN' -Value 'your-token'"
+                $Token = Get-PSUSecret -Name 'GITHUB_TOKEN' -AsPlainText
             }
 
             # Prepare headers
