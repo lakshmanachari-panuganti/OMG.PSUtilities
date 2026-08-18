@@ -3,7 +3,7 @@
     RootModule = 'OMG.DevTools.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.1.0'
+    ModuleVersion = '1.2.0'
 
     # Supported PSEditions
     # Tested: both Windows PowerShell 5.1 and PowerShell 7 import the module and resolve all
@@ -110,6 +110,19 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
+## 1.2.0
+
+### Security
+- Initialize-OMGEnvironment no longer prompts for API keys as plain text and no longer writes
+  them to user environment variables. Keys are read with Read-Host -AsSecureString, so they are
+  never echoed and do not enter PSReadLine history, and are stored in Windows Credential
+  Manager through Set-PSUCredentialToManager. Get-PSUSecret reads them back.
+- The non-secret BASE_MODULE_PATH is handled separately and is still stored in the environment,
+  because the rest of the tooling resolves the module path from there.
+- -AllowEnvironmentVariableSecrets retains the previous insecure behaviour for migration only.
+  It warns on every use and is scheduled for removal in OMG.DevTools 2.0.0.
+- Secret values never reach output, errors, or the returned result, which carries names only.
+
 ## 1.1.0
 
 ### Fixed
