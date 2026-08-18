@@ -12,7 +12,11 @@
     RootModule        = 'OMG.PSUtilities.ServiceNow.psm1'
 
     # Version number of this module.
-    ModuleVersion     = '1.0.2'
+    # Deliberately held at the version already on the PowerShell Gallery. The publish workflow
+    # skips a module when its local version is not greater than the Gallery's, so pinning this
+    # makes republication impossible even while the module remains in the workflow allowlist.
+    # This module is retired; it must never ship again.
+    ModuleVersion     = '1.0.1'
 
     # Supported PSEditions
     # CompatiblePSEditions = @()
@@ -112,7 +116,8 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
-1.0.2
+Retired - these notes will not ship. The version is pinned to the Gallery's 1.0.1 so the
+publish workflow can never republish this module.
 - Retired from automated publication. This module is no longer built for or pushed to the
   PowerShell Gallery, and its existing Gallery version is being unlisted.
 - The sole exported command, New-OMGPSUtilitiesServiceNow, remains a placeholder that throws

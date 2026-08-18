@@ -1,6 +1,9 @@
 ## Changelog
 
-## [1.0.2] - 18th August 2026
+## [Unreleased - retired, will not ship] - 18th August 2026
+The manifest version stays at 1.0.1, matching the Gallery, so this module can never publish
+again. These changes exist in source only and are recorded here for the record.
+
 ### Removed
 - Retired from automated publication. `OMG.PSUtilities.ServiceNow` is no longer in the publish
   workflow's module list, so it is never built for or pushed to the PowerShell Gallery again.
