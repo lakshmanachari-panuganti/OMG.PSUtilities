@@ -55,3 +55,9 @@ artifacts and publishes only module versions newer than PowerShell Gallery.
 - [CI/CD and releases](docs/CI-CD.md)
 - [Azure integration testing](docs/AZURE-TESTING.md)
 - [Contributing](CONTRIBUTING.md)
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](LICENSE) for the full text.
+
+Copyright (c) 2025-2026 Lakshmanachari Panuganti.
