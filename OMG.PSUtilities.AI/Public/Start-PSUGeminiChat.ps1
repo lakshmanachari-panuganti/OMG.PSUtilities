@@ -48,8 +48,22 @@ function Start-PSUGeminiChat {
     )]
     [Diagnostics.CodeAnalysis.SuppressMessageAttribute("PSUseBOMForUnicodeEncodedFile", "", Justification = "UTF-8 BOM will be added in build process")]
     param (
-        [string]$ApiKey = $env:GEMINI_API_KEY
+        [string]$ApiKey
     )
+
+    # Resolve the key from secure storage when the caller did not supply one. Get-PSUSecret
+    # prefers Windows Credential Manager and falls back to the GEMINI_API_KEY environment
+    # variable, so existing exported configuration keeps working. A missing secret leaves
+    # $ApiKey empty, preserving this command's existing behaviour for that case. An
+    # explicitly supplied -ApiKey, even an empty one, is always respected as-is.
+    if (-not $PSBoundParameters.ContainsKey('ApiKey') -and [string]::IsNullOrWhiteSpace($ApiKey)) {
+        try {
+            $ApiKey = Get-PSUSecret -Name 'GEMINI_API_KEY' -AsPlainText
+        }
+        catch {
+            Write-Verbose "No stored secret found for GEMINI_API_KEY."
+        }
+    }
 
     if (-not $ApiKey) {
         Write-Error "Gemini API key not found. Please set it using:`nSet-PSUUserEnvironmentVariable -Name 'GEMINI_API_KEY' -Value '<your-api-key>'"

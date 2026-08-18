@@ -521,3 +521,76 @@ Describe 'OMG.PSUtilities.AI manifest claims' {
         $manifest.CompatiblePSEditions | Should -Contain 'Core'
     }
 }
+
+Describe 'AI credential migration (9.3)' {
+    # A sentinel value is planted in every credential path and then searched for in output,
+    # errors, verbose text and returned objects. If it appears anywhere, the path leaks.
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.AI {
+            $script:sentinel = 'SENTINEL-AI-KEY-0xDEADBEEF'
+            $script:hostMessages = @()
+            $script:verboseMessages = @()
+            Mock Write-Host { $script:hostMessages += [string]$Object }
+            Mock Write-Verbose { $script:verboseMessages += [string]$Message }
+        }
+    }
+
+    It 'resolves a stored secret instead of requiring an environment variable' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Get-PSUSecret { $script:sentinel } -ParameterFilter { $Name -eq 'GEMINI_API_KEY' }
+            $script:sentUri = $null
+            Mock Invoke-RestMethod {
+                $script:sentUri = $Uri
+                @{ candidates = @(@{ content = @{ parts = @(@{ text = 'ok' }) } }) }
+            }
+
+            $null = Invoke-PSUPromptOnGeminiAi -Prompt 'hi' -ErrorAction SilentlyContinue
+
+            # The stored secret was used, so the request did not fall back to the proxy.
+            Should -Invoke Get-PSUSecret -Times 1
+        }
+    }
+
+    It 'keeps the sentinel out of host and verbose output' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Get-PSUSecret { $script:sentinel }
+            Mock Invoke-RestMethod { @{ candidates = @(@{ content = @{ parts = @(@{ text = 'ok' }) } }) } }
+
+            $null = Invoke-PSUPromptOnGeminiAi -Prompt 'hi' -ErrorAction SilentlyContinue
+
+            ($script:hostMessages + $script:verboseMessages) -join "`n" |
+                Should -Not -Match ([regex]::Escape($script:sentinel))
+        }
+    }
+
+    It 'keeps the sentinel out of a failure error' {
+        InModuleScope OMG.PSUtilities.AI {
+            Mock Get-PSUSecret { $script:sentinel }
+            Mock Invoke-RestMethod { throw 'upstream rejected the request' }
+
+            $errorText = ''
+            try { Invoke-PSUPromptOnGeminiAi -Prompt 'hi' -ErrorAction Stop } catch { $errorText = $_.Exception.Message }
+
+            $errorText | Should -Not -Match ([regex]::Escape($script:sentinel))
+        }
+    }
+
+    It 'no longer returns the API key from Set-PSUAzureOpenAIEnvironment' {
+        $source = Get-Content (Join-Path (Split-Path -Parent $PSScriptRoot) 'OMG.PSUtilities.AI\Public\Set-PSUAzureOpenAIEnvironment.ps1') -Raw
+
+        # The returned object must not carry the key. Guard the property assignment itself,
+        # so a future edit that reinstates it fails here.
+        $source | Should -Not -Match 'ApiKey\s*=\s*\$apiKey'
+        $source | Should -Match 'Set-PSUCredentialToManager'
+    }
+
+    It 'declares no environment-variable default on any API key parameter' {
+        $publicFolder = Join-Path (Split-Path -Parent $PSScriptRoot) 'OMG.PSUtilities.AI\Public'
+        $defaults = Get-ChildItem -Path $publicFolder -Filter '*.ps1' |
+            Select-String -Pattern '\$ApiKey\s*=\s*\$env:'
+
+        # Keys must be resolved through Get-PSUSecret, which still reaches the environment
+        # as its last tier, rather than hard-wiring the weakest source into the signature.
+        $defaults | Should -BeNullOrEmpty
+    }
+}

@@ -1,4 +1,4 @@
-﻿function Invoke-PSUPromptOnAzureOpenAi {
+function Invoke-PSUPromptOnAzureOpenAi {
     <#
     .SYNOPSIS
         Sends a prompt to Azure OpenAI (Chat Completions API) and returns the generated response.
@@ -121,7 +121,7 @@
 
         # Infrastructure parameters (LAST)
         [Parameter()]
-        [string]$ApiKey = $env:API_KEY_AZURE_OPENAI,
+        [string]$ApiKey,
 
         [Parameter()]
         [string]$Endpoint = $env:AZURE_OPENAI_ENDPOINT,
@@ -157,6 +157,20 @@
         }
 
         # Determine which API to use based on credential availability
+        # Resolve the key from secure storage when the caller did not supply one. Get-PSUSecret
+        # prefers Windows Credential Manager and falls back to the API_KEY_AZURE_OPENAI environment
+        # variable, so existing exported configuration keeps working. A missing secret leaves
+        # $ApiKey empty, preserving this command's existing behaviour for that case. An
+        # explicitly supplied -ApiKey, even an empty one, is always respected as-is.
+        if (-not $PSBoundParameters.ContainsKey('ApiKey') -and [string]::IsNullOrWhiteSpace($ApiKey)) {
+            try {
+                $ApiKey = Get-PSUSecret -Name 'API_KEY_AZURE_OPENAI' -AsPlainText
+            }
+            catch {
+                Write-Verbose "No stored secret found for API_KEY_AZURE_OPENAI."
+            }
+        }
+
         $UseDirectApi = (-not [string]::IsNullOrWhiteSpace($ApiKey)) -and
         (-not [string]::IsNullOrWhiteSpace($Endpoint)) -and
         (-not [string]::IsNullOrWhiteSpace($Deployment))
