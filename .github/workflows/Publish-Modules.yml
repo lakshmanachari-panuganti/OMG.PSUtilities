@@ -20,8 +20,6 @@ env:
     OMG.PSUtilities.AI,
     OMG.PSUtilities.AzureCore,
     OMG.PSUtilities.AzureDevOps,
-    OMG.PSUtilities.ServiceNow,
-    OMG.PSUtilities.VSphere,
     OMG.PSUtilities
 
 jobs:

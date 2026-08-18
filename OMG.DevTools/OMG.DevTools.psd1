@@ -3,9 +3,12 @@
     RootModule = 'OMG.DevTools.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.2'
+    ModuleVersion = '1.1.0'
 
     # Supported PSEditions
+    # Tested: both Windows PowerShell 5.1 and PowerShell 7 import the module and resolve all
+    # five exports with no load errors. Before the BOM fix in this release, four of the five
+    # failed to parse under 5.1, so this claim was previously false.
     CompatiblePSEditions = @('Desktop', 'Core')
 
     # ID used to uniquely identify this module
@@ -18,7 +21,7 @@
     CompanyName = ''
 
     # Copyright statement for this module
-    Copyright = '(c) 2025 Lakshmanachari Panuganti. All rights reserved.'
+    Copyright = '(c) 2025-2026 Lakshmanachari Panuganti'
 
     # Description of the functionality provided by this module
     Description = 'Development tools for building, publishing, and managing OMG PowerShell modules. Provides streamlined workflows for module development, version management, and PSGallery publishing.'
@@ -107,6 +110,20 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
+## 1.1.0
+
+### Fixed
+- Added a UTF-8 BOM to the source files containing non-ASCII characters. Windows PowerShell
+  5.1 reads BOM-less files as ANSI, which corrupted those characters and broke string
+  terminators, so four of the five exported commands failed to parse and only Get-OMGModule
+  loaded. Both editions now import the module and resolve all five exports with no errors.
+
+### Changed
+- CompatiblePSEditions = Desktop, Core is now backed by tested imports rather than assumed.
+- Applied the MIT license metadata approved in docs/decisions/0.5-licensing-selection.md.
+- OMG.DevTools remains deliberately outside the PowerShell Gallery publish workflow and the
+  meta-module, both verified as part of this change.
+
 ## 1.0.0 - Initial Release
 
 ### Features

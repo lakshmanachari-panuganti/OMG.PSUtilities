@@ -8,126 +8,139 @@
 
 @{
 
-# Script module or binary module file associated with this manifest.
-RootModule = 'OMG.PSUtilities.VSphere.psm1'
+    # Script module or binary module file associated with this manifest.
+    RootModule        = 'OMG.PSUtilities.VSphere.psm1'
 
-# Version number of this module.
-ModuleVersion = '1.0.3'
+    # Version number of this module.
+    ModuleVersion     = '1.0.4'
 
-# Supported PSEditions
-# CompatiblePSEditions = @()
+    # Supported PSEditions
+    # CompatiblePSEditions = @()
 
-# ID used to uniquely identify this module
-GUID = '65e95146-1522-449b-833a-e749585a2f23'
+    # ID used to uniquely identify this module
+    GUID              = '65e95146-1522-449b-833a-e749585a2f23'
 
-# Author of this module
-Author = 'Lakshmanachari Panuganti'
+    # Author of this module
+    Author            = 'Lakshmanachari Panuganti'
 
-# Company or vendor of this module
-CompanyName = 'OMG IT Solutions'
+    # Company or vendor of this module
+    CompanyName       = 'OMG IT Solutions'
 
-# Copyright statement for this module
-Copyright = '(c) Lakshmanachari Panuganti. All rights reserved.'
+    # Copyright statement for this module
+    Copyright         = '(c) 2025-2026 Lakshmanachari Panuganti'
 
-# Description of the functionality provided by this module
-Description = 'PowerShell automation for VMware vSphere virtual environments.'
+    # Description of the functionality provided by this module.
+    # The status prefix is deliberate: the sole exported command is a placeholder that throws
+    # NotImplementedException, and this module is retired from automated publication.
+    Description       = 'UNSUPPORTED / INCUBATION: PowerShell automation for VMware vSphere virtual environments. This module exposes no working functionality and is not published or maintained.'
 
-# Minimum version of the PowerShell engine required by this module
-PowerShellVersion = '5.1'
+    # Minimum version of the PowerShell engine required by this module
+    PowerShellVersion = '5.1'
 
-# Name of the PowerShell host required by this module
-# PowerShellHostName = ''
+    # Name of the PowerShell host required by this module
+    # PowerShellHostName = ''
 
-# Minimum version of the PowerShell host required by this module
-# PowerShellHostVersion = ''
+    # Minimum version of the PowerShell host required by this module
+    # PowerShellHostVersion = ''
 
-# Minimum version of Microsoft .NET Framework required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-# DotNetFrameworkVersion = ''
+    # Minimum version of Microsoft .NET Framework required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
+    # DotNetFrameworkVersion = ''
 
-# Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
-# ClrVersion = ''
+    # Minimum version of the common language runtime (CLR) required by this module. This prerequisite is valid for the PowerShell Desktop edition only.
+    # ClrVersion = ''
 
-# Processor architecture (None, X86, Amd64) required by this module
-# ProcessorArchitecture = ''
+    # Processor architecture (None, X86, Amd64) required by this module
+    # ProcessorArchitecture = ''
 
-# Modules that must be imported into the global environment prior to importing this module
-# RequiredModules = @()
+    # Modules that must be imported into the global environment prior to importing this module
+    # RequiredModules = @()
 
-# Assemblies that must be loaded prior to importing this module
-# RequiredAssemblies = @()
+    # Assemblies that must be loaded prior to importing this module
+    # RequiredAssemblies = @()
 
-# Script files (.ps1) that are run in the caller's environment prior to importing this module.
-# ScriptsToProcess = @()
+    # Script files (.ps1) that are run in the caller's environment prior to importing this module.
+    # ScriptsToProcess = @()
 
-# Type files (.ps1xml) to be loaded when importing this module
-# TypesToProcess = @()
+    # Type files (.ps1xml) to be loaded when importing this module
+    # TypesToProcess = @()
 
-# Format files (.ps1xml) to be loaded when importing this module
-# FormatsToProcess = @()
+    # Format files (.ps1xml) to be loaded when importing this module
+    # FormatsToProcess = @()
 
-# Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
-# NestedModules = @()
+    # Modules to import as nested modules of the module specified in RootModule/ModuleToProcess
+    # NestedModules = @()
 
-# Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
-FunctionsToExport = @(
-    'New-OMGPSUtilitiesVSphere'
-)
+    # Functions to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no functions to export.
+    FunctionsToExport = @(
+        'New-OMGPSUtilitiesVSphere'
+    )
 
-# Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
-CmdletsToExport = @()
+    # Cmdlets to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no cmdlets to export.
+    CmdletsToExport   = @()
 
-# Variables to export from this module
-VariablesToExport = @()
+    # Variables to export from this module
+    VariablesToExport = @()
 
-# Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
-AliasesToExport = @()
+    # Aliases to export from this module, for best performance, do not use wildcards and do not delete the entry, use an empty array if there are no aliases to export.
+    AliasesToExport   = @()
 
-# DSC resources to export from this module
-# DscResourcesToExport = @()
+    # DSC resources to export from this module
+    # DscResourcesToExport = @()
 
-# List of all modules packaged with this module
-# ModuleList = @()
+    # List of all modules packaged with this module
+    # ModuleList = @()
 
-# List of all files packaged with this module
-# FileList = @()
+    # List of all files packaged with this module
+    # FileList = @()
 
-# Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
-PrivateData = @{
+    # Private data to pass to the module specified in RootModule/ModuleToProcess. This may also contain a PSData hashtable with additional module metadata used by PowerShell.
+    PrivateData       = @{
 
-    PSData = @{
+        PSData = @{
 
-        # Tags applied to this module. These help with module discovery in online galleries.
-        # Tags = @()
+            # Tags applied to this module. These help with module discovery in online galleries.
+            Tags         = @('VMware', 'vSphere', 'Unsupported', 'Incubation', 'PowerShell', 'OMG')
 
-        # A URL to the license for this module.
-        # LicenseUri = ''
+            # A URL to the license for this module.
+            LicenseUri   = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities/blob/main/LICENSE'
 
-        # A URL to the main website for this project.
-        # ProjectUri = ''
+            # A URL to the main website for this project.
+            ProjectUri   = 'https://github.com/lakshmanachari-panuganti/OMG.PSUtilities'
 
-        # A URL to an icon representing this module.
-        # IconUri = ''
+            # A URL to an icon representing this module.
+            # IconUri = ''
 
-        # ReleaseNotes of this module
-        # ReleaseNotes = ''
+            # ReleaseNotes of this module
+            ReleaseNotes = @'
+1.0.4
+- Retired from automated publication. This module is no longer built for or pushed to the
+  PowerShell Gallery, and its existing Gallery version is being unlisted.
+- The sole exported command, New-OMGPSUtilitiesVSphere, remains a placeholder that throws
+  NotImplementedException. No functionality has ever shipped.
+- Corrected the changelog's historical account of the Sensitive-Test-Pack files, which claimed a
+  critical credential breach requiring immediate rotation. The repository history shows those
+  files were deliberately fake fixtures used to test secret detection, and they were removed.
+- The source directory is retained only as unsupported incubation history.
+- Applied the MIT license metadata approved in docs/decisions/0.5-licensing-selection.md.
+'@
 
-        # Prerelease string of this module
-        # Prerelease = ''
+            # Prerelease string of this module
+            # Prerelease = ''
 
-        # Flag to indicate whether the module requires explicit user acceptance for install/update/save
-        # RequireLicenseAcceptance = $false
+            # Flag to indicate whether the module requires explicit user acceptance for install/update/save
+            # RequireLicenseAcceptance = $false
 
-        # External dependent modules of this module
-        # ExternalModuleDependencies = @()
+            # External dependent modules of this module
+            # ExternalModuleDependencies = @()
 
-    } # End of PSData hashtable
+        } # End of PSData hashtable
 
-} # End of PrivateData hashtable
+    } # End of PrivateData hashtable
 
-# HelpInfo URI of this module
-# HelpInfoURI = ''
+    # HelpInfo URI of this module
+    # HelpInfoURI = ''
 
-# Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
-# DefaultCommandPrefix = ''
+    # Default prefix for commands exported from this module. Override the default prefix using Import-Module -Prefix.
+    # DefaultCommandPrefix = ''
 
 }

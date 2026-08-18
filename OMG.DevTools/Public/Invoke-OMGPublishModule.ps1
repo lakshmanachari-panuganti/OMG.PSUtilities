@@ -1,4 +1,4 @@
-function Invoke-OMGPublishModule {
+﻿function Invoke-OMGPublishModule {
     <#
     .SYNOPSIS
         Publishes updated OMG modules to PowerShell Gallery.

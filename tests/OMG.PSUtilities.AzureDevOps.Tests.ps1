@@ -228,3 +228,61 @@ Describe 'New-PSUADOPullRequest' {
         }
     }
 }
+
+Describe 'Get-PSUADOVariableGroupInventory optional ThreadJob dependency' {
+    # ThreadJob is intentionally absent from RequiredModules. That is only defensible while
+    # the sequential fallback actually works, so these tests exercise it directly.
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Mock Write-Host {}
+            Mock Write-Progress {}
+            Mock Write-Warning {}
+            Mock Confirm-PSUAdoConnectionParameter {}
+            Mock Get-PSUAdoAuthHeader { @{ Authorization = 'Basic x' } }
+        }
+    }
+
+    It 'still returns inventory when the ThreadJob module is unavailable' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Mock Get-Module { $null } -ParameterFilter { $ListAvailable -and $Name -eq 'ThreadJob' }
+
+            Mock Invoke-RestMethod -ParameterFilter { $Uri -like '*/_apis/projects*' } -MockWith {
+                @{ value = @(
+                        [pscustomobject]@{ name = 'Alpha'; id = 'id-alpha' }
+                        [pscustomobject]@{ name = 'Beta'; id = 'id-beta' }
+                    )
+                }
+            }
+            Mock Invoke-RestMethod -ParameterFilter { $Uri -like '*distributedtask/variablegroups*' } -MockWith {
+                @{ value = @([pscustomobject]@{ id = 7; name = 'shared-vg'; variables = [pscustomobject]@{} }) }
+            }
+
+            $result = @(Get-PSUADOVariableGroupInventory -Organization 'contoso' -PAT 'pat')
+
+            # Two projects, one variable group each, produced without ThreadJob.
+            $result.Count | Should -Be 2
+            $result.VariableGroupName | Should -Contain 'shared-vg'
+        }
+    }
+
+    It 'does not start a thread job when the module is unavailable' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Mock Get-Module { $null } -ParameterFilter { $ListAvailable -and $Name -eq 'ThreadJob' }
+            Mock Start-ThreadJob { throw 'Sequential fallback must not start a thread job.' }
+
+            Mock Invoke-RestMethod -ParameterFilter { $Uri -like '*/_apis/projects*' } -MockWith {
+                @{ value = @(
+                        [pscustomobject]@{ name = 'Alpha'; id = 'id-alpha' }
+                        [pscustomobject]@{ name = 'Beta'; id = 'id-beta' }
+                    )
+                }
+            }
+            Mock Invoke-RestMethod -ParameterFilter { $Uri -like '*distributedtask/variablegroups*' } -MockWith {
+                @{ value = @() }
+            }
+
+            { Get-PSUADOVariableGroupInventory -Organization 'contoso' -PAT 'pat' } | Should -Not -Throw
+            Should -Invoke Start-ThreadJob -Times 0 -Exactly
+        }
+    }
+}

@@ -1,5 +1,23 @@
 # CHANGELOG
 
+## [1.2.0] - 2026-08-18
+### Removed
+- `OMG.PSUtilities.ServiceNow` and `OMG.PSUtilities.VSphere` from the meta-module's
+  `RequiredModules`. Both are unimplemented stubs retired from publication, so installing this
+  meta-module no longer pulls in modules whose only command throws `NotImplementedException`.
+
+### Added
+- Root `LICENSE` file (MIT, Lakshmanachari Panuganti, 2025-2026), added earlier in Phase 8. The
+  `LicenseUri` in every published manifest now resolves instead of returning 404.
+- `Copyright` on the meta-module manifest, which previously had no copyright statement at all.
+- `CompatiblePSEditions = @('Core')` on the meta-module, the intersection of its required
+  modules' tested edition support.
+
+### Fixed
+- The `[1.0.1]` entry below claimed "Added LICENSE file with MIT License." No such file was added
+  in that release; the repository had no `LICENSE` until Phase 8 of 2026. The claim is corrected
+  in place below rather than deleted, so the record of the error survives.
+
 ## [1.0.19] - 2025-07-15
 - Initiated development from the ground up to create the first release of a wrapper module for:
   - OMG.PSUtilities.ActiveDirectory
@@ -42,7 +60,9 @@ Opens a PowerShell-based chat session with Gemini AI.
 - `Test-PSUInternetConnection`: 🌍 Tests general internet connectivity.
 - `Uninstall-PSUInstalledSoftware`: 🗑️ Uninstalls software objects piped in from Get-PSUInstalledSoftware.
 - Improved comment-based help and parameter documentation for all new functions.
-- Added LICENSE file with MIT License.
+- ~~Added LICENSE file with MIT License.~~ **Correction:** no `LICENSE` file was added in this
+  release. The repository had no license file until Phase 8 of 2026, when MIT was formally
+  selected and the root `LICENSE` was added. See the `[1.2.0]` entry above.
 
 ## [1.0.0] - 2025-07-03
 ### Added
