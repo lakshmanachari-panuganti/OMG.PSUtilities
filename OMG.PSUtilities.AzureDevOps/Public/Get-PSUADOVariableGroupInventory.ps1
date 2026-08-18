@@ -151,7 +151,6 @@ function Get-PSUADOVariableGroupInventory {
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 
