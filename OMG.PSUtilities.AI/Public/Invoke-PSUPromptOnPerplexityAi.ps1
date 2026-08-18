@@ -1,4 +1,4 @@
-﻿function Invoke-PSUPromptOnPerplexityAi {
+function Invoke-PSUPromptOnPerplexityAi {
     <#
     .SYNOPSIS
         Sends a text prompt to the Perplexity AI API and returns the generated response.
@@ -89,7 +89,7 @@
 
         [Parameter()]
         [ValidateNotNullOrEmpty()]
-        [string]$ApiKey = $env:API_KEY_PERPLEXITY,
+        [string]$ApiKey,
 
         [Parameter()]
         [ValidateSet('sonar', 'sonar-pro', 'sonar-reasoning', 'sonar-reasoning-pro', 'sonar-deep-research')]
@@ -112,6 +112,20 @@
     )
 
     # Main function logic
+    # Resolve the key from secure storage when the caller did not supply one. Get-PSUSecret
+    # prefers Windows Credential Manager and falls back to the API_KEY_PERPLEXITY environment
+    # variable, so existing exported configuration keeps working. A missing secret leaves
+    # $ApiKey empty, preserving this command's existing behaviour for that case. An
+    # explicitly supplied -ApiKey, even an empty one, is always respected as-is.
+    if (-not $PSBoundParameters.ContainsKey('ApiKey') -and [string]::IsNullOrWhiteSpace($ApiKey)) {
+        try {
+            $ApiKey = Get-PSUSecret -Name 'API_KEY_PERPLEXITY' -AsPlainText
+        }
+        catch {
+            Write-Verbose "No stored secret found for API_KEY_PERPLEXITY."
+        }
+    }
+
     if (-not $ApiKey) {
         Write-Error "Perplexity API key not found. Set it using:`nSet-PSUUserEnvironmentVariable -Name 'API_KEY_PERPLEXITY' -Value '<your-api-key>'"
         return
@@ -166,4 +180,3 @@
         Write-Error "Failed to get response from Perplexity:`n$($_.Exception.Message)"
     }
 }
-
