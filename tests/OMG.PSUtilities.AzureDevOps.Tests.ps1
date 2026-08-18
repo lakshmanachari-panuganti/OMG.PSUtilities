@@ -286,3 +286,90 @@ Describe 'Get-PSUADOVariableGroupInventory optional ThreadJob dependency' {
         }
     }
 }
+
+Describe 'Azure DevOps PAT handling (9.4a)' {
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            $script:sentinelPat = 'SENTINEL-PAT-0xC0FFEE'
+            $script:hostMessages = @()
+            $script:verboseMessages = @()
+            Mock Write-Host { $script:hostMessages += [string]$Object }
+            Mock Write-Verbose { $script:verboseMessages += [string]$Message }
+        }
+    }
+
+    AfterEach {
+        Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+    }
+
+    It 'resolves a stored PAT when no environment variable is configured' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+
+            $headers = Get-PSUAdoAuthHeader
+
+            Should -Invoke Get-PSUSecret -Times 1
+            $headers.Authorization | Should -Match '^Basic '
+        }
+    }
+
+    It 'builds the same header the API expects from the resolved token' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+
+            $headers = Get-PSUAdoAuthHeader
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$script:sentinelPat"))
+
+            $headers.Authorization | Should -Be "Basic $expected"
+        }
+    }
+
+    It 'keeps the PAT out of host and verbose output' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+
+            $null = Get-PSUAdoAuthHeader
+
+            ($script:hostMessages + $script:verboseMessages) -join "`n" |
+                Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'keeps the PAT out of the error raised when no token is available' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { throw 'not stored' }
+
+            $errorText = ''
+            try { Get-PSUAdoAuthHeader -ErrorAction Stop } catch { $errorText = $_.Exception.Message }
+
+            $errorText | Should -Match 'PAT is required'
+            $errorText | Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'still honours the environment variable during the compatibility window' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            $env:PAT = $script:sentinelPat
+            Mock Get-PSUSecret { throw 'should not be consulted when the environment is set' }
+
+            $headers = Get-PSUAdoAuthHeader
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$script:sentinelPat"))
+
+            $headers.Authorization | Should -Be "Basic $expected"
+        }
+    }
+
+    It 'reveals no leading characters of the token in parameter traces' {
+        # Masking that keeps a prefix narrows a brute-force search and lets a token be
+        # correlated across logs, so no part of it may survive.
+        $moduleRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'OMG.PSUtilities.AzureDevOps'
+        $partialMasks = Get-ChildItem -Path $moduleRoot -Include '*.ps1' -Recurse |
+            Select-String -Pattern 'Substring\(0,\s*\d+\)\s*\+\s*"\*'
+
+        $partialMasks | Should -BeNullOrEmpty
+    }
+}
