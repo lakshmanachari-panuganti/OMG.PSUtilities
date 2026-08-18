@@ -158,6 +158,6 @@ function Get-PSUSecret {
             }
         }
 
-        throw "Secret '$Name' was not found. Tried: $($attempted -join ', '). Store it with: Set-PSUCredentialToManager -Target '$Name'"
+        throw "Secret '$Name' was not found. Tried: $($attempted -join ', '). Configure it with: Set-PSUCredentialToManager -Target '$Name', or install Microsoft.PowerShell.SecretManagement and store it there."
     }
 }
