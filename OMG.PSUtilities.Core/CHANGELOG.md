@@ -1,3 +1,28 @@
+## [1.2.0] - 18th August 2026
+### Added
+- `Get-PSUSecret` (Public): resolves a named secret from Windows Credential Manager, then
+  `Microsoft.PowerShell.SecretManagement` when installed, then an environment variable of the
+  same name. Returns a `SecureString` by default; `-AsPlainText` is provided only for
+  unavoidable native and HTTP boundaries. `-Source` pins resolution to one tier, which is how a
+  caller guarantees a secret is not being read from an environment variable.
+- Regression tests covering the resolution order, the pinned-source refusal to fall back, the
+  `SecureString` return type, and the absence of the secret value from warning and error text.
+
+### Changed
+- `Approve-PSUGithubPullRequest`, `Complete-PSUGithubPullRequest` and
+  `New-PSUGithubPullRequest` (Public): resolve `GITHUB_TOKEN` through `Get-PSUSecret` when no
+  `-Token` is supplied, instead of reading `$env:GITHUB_TOKEN` directly as a parameter default.
+  Existing setups that export `GITHUB_TOKEN` continue to work, because the environment variable
+  remains the last resolution tier, but Credential Manager is now preferred and the
+  environment tier warns.
+- Command help no longer teaches `$env:GITHUB_TOKEN` as the way to configure the token; it
+  points at `Set-PSUCredentialToManager` instead.
+
+### Security
+- The environment-variable tier warns when used, naming it as the least secure source. Secret
+  values never appear in output, verbose, warning, or error text; failures report only the
+  secret name and which sources were tried.
+
 ## [1.1.0] - 17th August 2026
 ### Fixed
 - `Get-PSUPublicIP` (Public): the HTTP fallback used `Start-ThreadJob`, which Windows

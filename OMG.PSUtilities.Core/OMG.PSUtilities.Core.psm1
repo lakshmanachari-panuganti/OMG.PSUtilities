@@ -32,6 +32,7 @@ $PublicFunctions = @(
     'Get-PSUInstalledSoftware',
     'Get-PSUModule',
     'Get-PSUPublicIP',
+    'Get-PSUSecret',
     'Get-PSUUserEnvironmentVariable',
     'Get-PSUUserSession',
     'New-PSUGithubPullRequest',
