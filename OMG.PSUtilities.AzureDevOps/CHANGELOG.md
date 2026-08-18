@@ -1,3 +1,17 @@
+## [1.3.0] - 18th August 2026
+### Fixed
+- All 28 public commands declared `[ValidateNotNullOrEmpty()]` on a `PAT` parameter that defaults
+  to `$env:PAT`. With no environment variable set, the command failed at parameter binding before
+  `Get-PSUAdoAuthHeader` ran, so the Credential Manager resolution added in 1.2.0 could never take
+  effect. The validation is removed; an unresolvable token now produces the helper's actionable
+  guidance naming both storage options instead of a binding error naming neither.
+
+### Tests
+- Write-family coverage: a write authorises from a stored PAT with no environment variable set,
+  asserted against the exact `Basic` header derived from the token; the token is absent from
+  output, results and a failed write; and no public command performs its own `Get-PSUSecret` call,
+  which keeps resolution in the single place that owns redaction and precedence.
+
 ## [1.2.0] - 18th August 2026
 ### Security
 - Parameter tracing no longer prints the first three characters of the PAT. `Write-PSUAdoParameterTrace`
