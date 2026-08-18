@@ -139,7 +139,6 @@ function Set-PSUADOTask {
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 

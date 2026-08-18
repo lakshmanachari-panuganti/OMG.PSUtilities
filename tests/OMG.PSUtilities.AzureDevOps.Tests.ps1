@@ -373,3 +373,87 @@ Describe 'Azure DevOps PAT handling (9.4a)' {
         $partialMasks | Should -BeNullOrEmpty
     }
 }
+
+Describe 'Azure DevOps write-command PAT handling (9.4b)' {
+    # The write family inherits resolution from Get-PSUAdoAuthHeader rather than resolving
+    # for itself, so these tests prove that inheritance works and that no write path
+    # reintroduces the token into output, errors or results.
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            $script:sentinelPat = 'SENTINEL-WRITE-PAT-0xBADF00D'
+            $script:hostMessages = @()
+            $script:verboseMessages = @()
+            Mock Write-Host { $script:hostMessages += [string]$Object }
+            Mock Write-Verbose { $script:verboseMessages += [string]$Message }
+            Mock Confirm-PSUAdoConnectionParameter {}
+        }
+    }
+
+    AfterEach {
+        Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+    }
+
+    It 'authorises a write using a stored PAT with no environment variable set' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+            $script:sentAuth = $null
+            # The command resolves the repository through another public command first; mock it
+            # so the test exercises the authorisation boundary rather than the lookup.
+            Mock Get-PSUADORepositories { @([pscustomobject]@{ Name = 'R'; Id = 'repo-id' }) }
+            Mock Invoke-RestMethod {
+                if ($null -eq $script:sentAuth) { $script:sentAuth = $Headers.Authorization }
+                @{ id = 1; closedDate = $null; createdBy = @{ displayName = 'u' }; _links = @{ html = @{ href = 'u' } } }
+            }
+
+            $null = Approve-PSUADOPullRequest -Project 'P' -Repository 'R' -PullRequestId 1 `
+                -Organization 'contoso' -ErrorAction SilentlyContinue
+
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$script:sentinelPat"))
+            $script:sentAuth | Should -Be "Basic $expected"
+        }
+    }
+
+    It 'keeps the PAT out of write-path output and results' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+            Mock Get-PSUADORepositories { @([pscustomobject]@{ Name = 'R'; Id = 'repo-id' }) }
+            Mock Invoke-RestMethod {
+                @{ id = 1; closedDate = $null; createdBy = @{ displayName = 'u' }; _links = @{ html = @{ href = 'u' } } }
+            }
+
+            $result = Approve-PSUADOPullRequest -Project 'P' -Repository 'R' -PullRequestId 1 `
+                -Organization 'contoso' -ErrorAction SilentlyContinue
+
+            $rendered = ($result | ConvertTo-Json -Depth 6) + ($script:hostMessages -join "`n") + ($script:verboseMessages -join "`n")
+            $rendered | Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'keeps the PAT out of a failed write' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+            Mock Invoke-RestMethod { throw 'Azure DevOps rejected the request' }
+
+            $errorText = ''
+            try {
+                Approve-PSUADOPullRequest -Project 'P' -Repository 'R' -PullRequestId 1 `
+                    -Organization 'contoso' -ErrorAction Stop
+            } catch { $errorText = $_.Exception.Message }
+
+            $errorText | Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'no write command declares its own PAT resolution' {
+        # Resolution must stay centralised in Get-PSUAdoAuthHeader. A command resolving its
+        # own token would bypass the single redaction and precedence point.
+        $publicFolder = Join-Path (Split-Path -Parent $PSScriptRoot) 'OMG.PSUtilities.AzureDevOps\Public'
+        $localResolution = Get-ChildItem -Path $publicFolder -Filter '*.ps1' |
+            Select-String -Pattern 'Get-PSUSecret'
+
+        $localResolution | Should -BeNullOrEmpty
+    }
+}
