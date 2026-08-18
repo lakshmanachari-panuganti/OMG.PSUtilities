@@ -1,3 +1,22 @@
+## [1.1.0] - 18th August 2026
+### Added
+- `CompatiblePSEditions = @('Core')`, set from tested imports. PowerShell 7 imports the module
+  and exports all 28 commands; Windows PowerShell 5.1 is refused by the existing
+  `PowerShellVersion = '7.0'` floor.
+- Regression tests for `Get-PSUADOVariableGroupInventory`'s sequential fallback, covering the
+  case where the ThreadJob module is unavailable.
+
+### Changed
+- `ThreadJob` remains an optional dependency rather than a declared requirement. Only
+  `Get-PSUADOVariableGroupInventory` uses it and it already falls back to sequential
+  processing; that fallback is now tested, which is the condition for leaving it undeclared.
+- Applied the MIT license metadata approved in `docs/decisions/0.5-licensing-selection.md`:
+  `Copyright`, `LicenseUri`, `ProjectUri`, and `Tags`. The commented
+  `https://opensource.org/licenses/MIT` example is replaced by the canonical repository
+  `LICENSE` link, so only one URL form remains in the repository.
+- Indented the manifest consistently so metadata edits do not resurface baselined analyzer
+  warnings.
+
 ## [1.0.21] - 15th August 2026
 ### Fixed
 - `Set-PSUADOVariableGroup` now preserves JSON-derived variables, secret flags, group type, and supplied Key Vault provider data; missing Key Vault metadata is rejected, and `-WhatIf` performs neither the PUT nor the refresh.

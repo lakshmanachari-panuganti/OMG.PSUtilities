@@ -1,5 +1,13 @@
 # OMG.PSUtilities.ServiceNow
 
+> **Unsupported — incubation source only.**
+> This module exposes **no working functionality**. Its single exported command,
+> `New-OMGPSUtilitiesServiceNow`, is a placeholder that throws `NotImplementedException`.
+>
+> It has been retired from automated publication, and its existing PowerShell Gallery version
+> is being unlisted. Do not install it and do not depend on it. The directory is retained only
+> as historical incubation source.
+
 ServiceNow automation and integration using PowerShell and REST APIs.
 
 

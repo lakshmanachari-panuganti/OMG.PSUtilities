@@ -166,3 +166,37 @@ Describe 'Find-PSUADServiceAccountMisuse queries' {
 AfterAll {
     Remove-Module OMG.PSUtilities.ActiveDirectory -Force -ErrorAction SilentlyContinue
 }
+Describe 'Find-PSUADServiceAccountMisuse platform dependency guards' {
+    # Neither dependency is installable from the Gallery, so the command must report what is
+    # missing rather than raise CommandNotFoundException partway through its work.
+    It 'reports how to install RSAT when Get-ADUser is unavailable' {
+        InModuleScope OMG.PSUtilities.ActiveDirectory {
+            Mock Write-Host {}
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Get-ADUser' }
+
+            { Find-PSUADServiceAccountMisuse } | Should -Throw '*Rsat.ActiveDirectory*'
+        }
+    }
+
+    It 'reports the Windows requirement when Get-WinEvent is unavailable' {
+        InModuleScope OMG.PSUtilities.ActiveDirectory {
+            Mock Write-Host {}
+            # Get-ADUser is checked first, so it must look present to reach the second guard.
+            Mock Get-Command { [pscustomobject]@{ Name = 'Get-ADUser' } } -ParameterFilter { $Name -eq 'Get-ADUser' }
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Get-WinEvent' }
+
+            { Find-PSUADServiceAccountMisuse } | Should -Throw '*only run on Windows*'
+        }
+    }
+
+    It 'queries nothing when a prerequisite is missing' {
+        InModuleScope OMG.PSUtilities.ActiveDirectory {
+            Mock Write-Host {}
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Get-ADUser' }
+            Mock Get-WinEvent { throw 'Event log must not be read.' }
+
+            { Find-PSUADServiceAccountMisuse } | Should -Throw
+            Should -Invoke Get-WinEvent -Times 0 -Exactly
+        }
+    }
+}

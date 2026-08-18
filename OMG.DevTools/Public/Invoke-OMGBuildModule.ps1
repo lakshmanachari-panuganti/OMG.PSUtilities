@@ -1,4 +1,4 @@
-function Invoke-OMGBuildModule {
+﻿function Invoke-OMGBuildModule {
     <#
     .SYNOPSIS
         Builds all OMG modules locally.

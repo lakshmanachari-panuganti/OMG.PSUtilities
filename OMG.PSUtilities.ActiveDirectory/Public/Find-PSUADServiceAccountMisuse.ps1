@@ -62,6 +62,18 @@ function Find-PSUADServiceAccountMisuse {
         [string]$Server = $env:COMPUTERNAME # Should be a domain controler
     )
 
+    # Platform-specific dependencies are resolved before any work starts, so an unmet
+    # prerequisite reports what to install rather than a raw CommandNotFoundException.
+    # Neither is declared in the manifest: Get-ADUser ships with RSAT rather than the
+    # Gallery, and Get-WinEvent exists only on Windows.
+    if (-not (Get-Command -Name 'Get-ADUser' -ErrorAction SilentlyContinue)) {
+        throw "Get-ADUser is not available. Install the Active Directory PowerShell module (RSAT), for example: Add-WindowsCapability -Online -Name 'Rsat.ActiveDirectory.DS-LDS.Tools~~~~0.0.1.0'"
+    }
+
+    if (-not (Get-Command -Name 'Get-WinEvent' -ErrorAction SilentlyContinue)) {
+        throw "Get-WinEvent is not available. This command reads the Windows Security event log and can only run on Windows."
+    }
+
     try {
         Write-Host "[+] Starting AD service account misuse detection..." -ForegroundColor Cyan
         $StartDate = (Get-Date).AddDays(-$DaysBack)
