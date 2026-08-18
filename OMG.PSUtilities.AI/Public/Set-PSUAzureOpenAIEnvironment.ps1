@@ -76,6 +76,10 @@ function Set-PSUAzureOpenAIEnvironment {
         'PSAvoidUsingWriteHost', '',
         Justification = 'Function is interactive and provides real-time feedback during Azure OpenAI environment setup'
     )]
+    [Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+        'PSAvoidUsingConvertToSecureStringWithPlainText', '',
+        Justification = 'Get-AzCognitiveServicesAccountKey returns the key as plaintext. Converting it into a SecureString so it can be handed to Set-PSUCredentialToManager is the protective step, not a leak; it is what moves the key out of the returned object and into Credential Manager.'
+    )]
     param(
         [Parameter()]
         [string]$ResourceGroupName,
@@ -313,6 +317,16 @@ function Set-PSUAzureOpenAIEnvironment {
             # Set environment variables
             Write-Step "Setting Environment Variables"
 
+            # Store the key in Windows Credential Manager, which is where Get-PSUSecret looks
+            # first. The environment variable is still written because Set-PSUDefaultAiEngine
+            # and existing user configuration read it; that fallback is documented and is
+            # scheduled for removal in OMG.PSUtilities.AI 2.0.0.
+            $apiKeyCredential = [PSCredential]::new(
+                'API_KEY_AZURE_OPENAI',
+                (ConvertTo-SecureString -String $apiKey -AsPlainText -Force)
+            )
+            Set-PSUCredentialToManager -Target 'API_KEY_AZURE_OPENAI' -Credential $apiKeyCredential -Confirm:$false | Out-Null
+
             Set-PSUUserEnvironmentVariable -Name 'API_KEY_AZURE_OPENAI' -Value $apiKey
             Set-PSUUserEnvironmentVariable -Name 'AZURE_OPENAI_ENDPOINT' -Value $endpoint
             Set-PSUUserEnvironmentVariable -Name 'AZURE_OPENAI_DEPLOYMENT' -Value $DeploymentName
@@ -329,7 +343,9 @@ function Set-PSUAzureOpenAIEnvironment {
                 DeploymentName      = $DeploymentName
                 ModelName           = $ModelName
                 Endpoint            = $endpoint
-                ApiKey              = $apiKey
+                # ApiKey is deliberately absent. Returning it put the key into transcripts,
+                # console history and any log that captured the result object. Retrieve it
+                # with: Get-PSUSecret -Name 'API_KEY_AZURE_OPENAI'
                 SubscriptionId      = $context.Subscription.Id
                 SubscriptionName    = $context.Subscription.Name
                 PSTypeName          = 'PSU.AzureOpenAI.Configuration'

@@ -87,7 +87,6 @@ function Get-PSUADOVariableGroup {
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 

@@ -1,3 +1,44 @@
+## [1.3.0] - 18th August 2026
+### Fixed
+- All 28 public commands declared `[ValidateNotNullOrEmpty()]` on a `PAT` parameter that defaults
+  to `$env:PAT`. With no environment variable set, the command failed at parameter binding before
+  `Get-PSUAdoAuthHeader` ran, so the Credential Manager resolution added in 1.2.0 could never take
+  effect. The validation is removed; an unresolvable token now produces the helper's actionable
+  guidance naming both storage options instead of a binding error naming neither.
+
+### Tests
+- Write-family coverage: a write authorises from a stored PAT with no environment variable set,
+  asserted against the exact `Basic` header derived from the token; the token is absent from
+  output, results and a failed write; and no public command performs its own `Get-PSUSecret` call,
+  which keeps resolution in the single place that owns redaction and precedence.
+
+## [1.2.0] - 18th August 2026
+### Security
+- Parameter tracing no longer prints the first three characters of the PAT. `Write-PSUAdoParameterTrace`
+  and `Get-PSUADOVariableGroupInventory` both masked the token as `abc********`; a retained prefix
+  narrows a brute-force search and is enough to correlate one token across separate logs. The
+  value is now fully redacted.
+- `Get-PSUAdoAuthHeader` (Private) is the single point of PAT resolution for the module. An
+  unconfigured token is resolved through `Get-PSUSecret` from Windows Credential Manager, so a
+  PAT no longer has to be exported to an environment variable to be usable. The plaintext exists
+  only long enough to build the Authorization header.
+
+### Changed
+- The `PAT` environment variable still takes precedence where it is set, because it remains the
+  parameter default on the public commands. This is the documented compatibility behaviour for
+  the deprecation window and is scheduled for removal in `OMG.PSUtilities.AzureDevOps` 2.0.0.
+  Resolution triggers on an empty value rather than an unbound parameter, because commands chain
+  internally and splat their own `$PAT` onward, so an inner call receives an explicitly bound but
+  empty value when nothing is configured.
+- The guidance shown when no token is available now names `Set-PSUCredentialToManager` as the
+  preferred option, with the environment variable presented as the legacy alternative.
+
+### Tests
+- Sentinel-PAT coverage: resolution from Credential Manager, the exact Authorization header built
+  from the resolved token, absence of the token from host and verbose output, absence from the
+  error raised when no token exists, the environment variable still winning during the
+  compatibility window, and a guard that no partial-masking pattern returns.
+
 ## [1.1.0] - 18th August 2026
 ### Added
 - `CompatiblePSEditions = @('Core')`, set from tested imports. PowerShell 7 imports the module

@@ -75,7 +75,6 @@ function Get-PSUADORepoBranchList {
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 

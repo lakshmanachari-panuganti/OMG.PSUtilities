@@ -286,3 +286,174 @@ Describe 'Get-PSUADOVariableGroupInventory optional ThreadJob dependency' {
         }
     }
 }
+
+Describe 'Azure DevOps PAT handling (9.4a)' {
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            $script:sentinelPat = 'SENTINEL-PAT-0xC0FFEE'
+            $script:hostMessages = @()
+            $script:verboseMessages = @()
+            Mock Write-Host { $script:hostMessages += [string]$Object }
+            Mock Write-Verbose { $script:verboseMessages += [string]$Message }
+        }
+    }
+
+    AfterEach {
+        Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+    }
+
+    It 'resolves a stored PAT when no environment variable is configured' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+
+            $headers = Get-PSUAdoAuthHeader
+
+            Should -Invoke Get-PSUSecret -Times 1
+            $headers.Authorization | Should -Match '^Basic '
+        }
+    }
+
+    It 'builds the same header the API expects from the resolved token' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+
+            $headers = Get-PSUAdoAuthHeader
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$script:sentinelPat"))
+
+            $headers.Authorization | Should -Be "Basic $expected"
+        }
+    }
+
+    It 'keeps the PAT out of host and verbose output' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+
+            $null = Get-PSUAdoAuthHeader
+
+            ($script:hostMessages + $script:verboseMessages) -join "`n" |
+                Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'keeps the PAT out of the error raised when no token is available' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { throw 'not stored' }
+
+            $errorText = ''
+            try { Get-PSUAdoAuthHeader -ErrorAction Stop } catch { $errorText = $_.Exception.Message }
+
+            $errorText | Should -Match 'PAT is required'
+            $errorText | Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'still honours the environment variable during the compatibility window' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            $env:PAT = $script:sentinelPat
+            Mock Get-PSUSecret { throw 'should not be consulted when the environment is set' }
+
+            $headers = Get-PSUAdoAuthHeader
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$script:sentinelPat"))
+
+            $headers.Authorization | Should -Be "Basic $expected"
+        }
+    }
+
+    It 'reveals no leading characters of the token in parameter traces' {
+        # Masking that keeps a prefix narrows a brute-force search and lets a token be
+        # correlated across logs, so no part of it may survive.
+        $moduleRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'OMG.PSUtilities.AzureDevOps'
+        $partialMasks = Get-ChildItem -Path $moduleRoot -Include '*.ps1' -Recurse |
+            Select-String -Pattern 'Substring\(0,\s*\d+\)\s*\+\s*"\*'
+
+        $partialMasks | Should -BeNullOrEmpty
+    }
+}
+
+Describe 'Azure DevOps write-command PAT handling (9.4b)' {
+    # The write family inherits resolution from Get-PSUAdoAuthHeader rather than resolving
+    # for itself, so these tests prove that inheritance works and that no write path
+    # reintroduces the token into output, errors or results.
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            $script:sentinelPat = 'SENTINEL-WRITE-PAT-0xBADF00D'
+            $script:hostMessages = @()
+            $script:verboseMessages = @()
+            Mock Write-Host { $script:hostMessages += [string]$Object }
+            Mock Write-Verbose { $script:verboseMessages += [string]$Message }
+            Mock Confirm-PSUAdoConnectionParameter {}
+        }
+    }
+
+    AfterEach {
+        Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+    }
+
+    It 'authorises a write using a stored PAT with no environment variable set' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+            $script:sentAuth = $null
+            # The command resolves the repository through another public command first; mock it
+            # so the test exercises the authorisation boundary rather than the lookup.
+            Mock Get-PSUADORepositories { @([pscustomobject]@{ Name = 'R'; Id = 'repo-id' }) }
+            Mock Invoke-RestMethod {
+                if ($null -eq $script:sentAuth) { $script:sentAuth = $Headers.Authorization }
+                @{ id = 1; closedDate = $null; createdBy = @{ displayName = 'u' }; _links = @{ html = @{ href = 'u' } } }
+            }
+
+            $null = Approve-PSUADOPullRequest -Project 'P' -Repository 'R' -PullRequestId 1 `
+                -Organization 'contoso' -ErrorAction SilentlyContinue
+
+            $expected = [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$script:sentinelPat"))
+            $script:sentAuth | Should -Be "Basic $expected"
+        }
+    }
+
+    It 'keeps the PAT out of write-path output and results' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+            Mock Get-PSUADORepositories { @([pscustomobject]@{ Name = 'R'; Id = 'repo-id' }) }
+            Mock Invoke-RestMethod {
+                @{ id = 1; closedDate = $null; createdBy = @{ displayName = 'u' }; _links = @{ html = @{ href = 'u' } } }
+            }
+
+            $result = Approve-PSUADOPullRequest -Project 'P' -Repository 'R' -PullRequestId 1 `
+                -Organization 'contoso' -ErrorAction SilentlyContinue
+
+            $rendered = ($result | ConvertTo-Json -Depth 6) + ($script:hostMessages -join "`n") + ($script:verboseMessages -join "`n")
+            $rendered | Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'keeps the PAT out of a failed write' {
+        InModuleScope OMG.PSUtilities.AzureDevOps {
+            Remove-Item Env:\PAT -ErrorAction SilentlyContinue
+            Mock Get-PSUSecret { $script:sentinelPat }
+            Mock Invoke-RestMethod { throw 'Azure DevOps rejected the request' }
+
+            $errorText = ''
+            try {
+                Approve-PSUADOPullRequest -Project 'P' -Repository 'R' -PullRequestId 1 `
+                    -Organization 'contoso' -ErrorAction Stop
+            } catch { $errorText = $_.Exception.Message }
+
+            $errorText | Should -Not -Match ([regex]::Escape($script:sentinelPat))
+        }
+    }
+
+    It 'no write command declares its own PAT resolution' {
+        # Resolution must stay centralised in Get-PSUAdoAuthHeader. A command resolving its
+        # own token would bypass the single redaction and precedence point.
+        $publicFolder = Join-Path (Split-Path -Parent $PSScriptRoot) 'OMG.PSUtilities.AzureDevOps\Public'
+        $localResolution = Get-ChildItem -Path $publicFolder -Filter '*.ps1' |
+            Select-String -Pattern 'Get-PSUSecret'
+
+        $localResolution | Should -BeNullOrEmpty
+    }
+}

@@ -46,7 +46,9 @@ function Write-PSUAdoParameterTrace {
     Write-Verbose "[$($Invocation.MyCommand.Name)] Parameters:"
     foreach ($param in $BoundParameters.GetEnumerator()) {
         if ($param.Key -eq 'PAT') {
-            $maskedPAT = if ($param.Value -and $param.Value.Length -ge 3) { $param.Value.Substring(0, 3) + "********" } else { "***" }
+            # Never reveal any part of the token. Leading characters narrow a brute-force
+            # search and are enough to correlate a token across logs.
+            $maskedPAT = "********"
             Write-Verbose "  $($param.Key): $maskedPAT"
         } else {
             Write-Verbose "  $($param.Key): $($param.Value)"

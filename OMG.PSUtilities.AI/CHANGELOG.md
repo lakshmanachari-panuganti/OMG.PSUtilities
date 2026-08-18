@@ -1,3 +1,29 @@
+## [1.2.0] - 18th August 2026
+### Security
+- `Set-PSUAzureOpenAIEnvironment` (Public): removed `ApiKey` from the returned object. Returning
+  it placed the key into transcripts, console history, and any log that captured the result.
+  The key is now also stored in Windows Credential Manager, so it can be retrieved with
+  `Get-PSUSecret -Name 'API_KEY_AZURE_OPENAI'` instead of being handed back.
+- `Invoke-PSUPromptOnAzureOpenAi`, `Invoke-PSUPromptOnGeminiAi`, `Invoke-PSUPromptOnPerplexityAi`
+  and `Start-PSUGeminiChat` (Public): the `-ApiKey` parameter no longer defaults to an
+  environment variable. Keys are resolved through `Get-PSUSecret`, which prefers Credential
+  Manager and keeps the environment variable as its last tier, so exported configuration
+  continues to work while secure storage now takes precedence.
+
+### Changed
+- An explicitly supplied `-ApiKey`, including an empty string, is always respected as given.
+  Only an unbound parameter triggers resolution, so callers that pass `-ApiKey ''` to force the
+  proxy path behave exactly as before.
+- The `API_KEY_AZURE_OPENAI` environment write is retained for compatibility with
+  `Set-PSUDefaultAiEngine` and existing user configuration. It is scheduled for removal in
+  `OMG.PSUtilities.AI` 2.0.0.
+
+### Tests
+- Sentinel-secret coverage: a known value is planted in the credential path and asserted absent
+  from host output, verbose output, and the error raised when the upstream call fails; plus
+  guards that no `-ApiKey` parameter regains an environment-variable default and that
+  `Set-PSUAzureOpenAIEnvironment` does not reinstate the `ApiKey` property.
+
 ## [1.1.0] - 17th August 2026
 ### Removed
 - Unused `Microsoft.PowerShell.ThreadJob` dependency. It appeared only in the manifest's

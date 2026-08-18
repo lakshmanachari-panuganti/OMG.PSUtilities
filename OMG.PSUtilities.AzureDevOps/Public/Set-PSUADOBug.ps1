@@ -140,7 +140,6 @@ function Set-PSUADOBug {
         [string]$Organization = $env:ORGANIZATION,
 
         [Parameter()]
-        [ValidateNotNullOrEmpty()]
         [string]$PAT = $env:PAT
     )
 
