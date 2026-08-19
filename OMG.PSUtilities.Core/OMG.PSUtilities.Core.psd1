@@ -12,7 +12,7 @@
     RootModule           = 'OMG.PSUtilities.Core.psm1'
 
     # Version number of this module.
-    ModuleVersion        = '1.1.0'
+    ModuleVersion        = '1.2.0'
 
     # Supported PSEditions
     # Tested: imports and exports every command on both Windows PowerShell 5.1 (Desktop) and
@@ -91,6 +91,7 @@
         'Get-PSUInstalledSoftware',
         'Get-PSUModule',
         'Get-PSUPublicIP',
+        'Get-PSUSecret',
         'Get-PSUUserEnvironmentVariable',
         'Get-PSUUserSession',
         'New-PSUGithubPullRequest',
@@ -153,6 +154,19 @@
 
             # ReleaseNotes of this module
             ReleaseNotes = @'
+1.2.0
+- Added Get-PSUSecret, which resolves a named secret from Windows Credential Manager, then
+  Microsoft.PowerShell.SecretManagement when installed, then an environment variable of the
+  same name, and returns a SecureString by default.
+- The environment-variable tier is retained for compatibility but warns when used, because
+  environment variables are readable by any process in the session and are often captured in
+  logs. Pinning -Source prevents that fallback entirely.
+- Approve-PSUGithubPullRequest, Complete-PSUGithubPullRequest and New-PSUGithubPullRequest now
+  resolve GITHUB_TOKEN through Get-PSUSecret when no -Token is supplied. Existing setups that
+  export GITHUB_TOKEN keep working; storing it in Credential Manager is now preferred.
+- The secret value never appears in output, warnings, or error text; failures name only the
+  secret and the sources tried.
+
 1.1.0
 - Get-PSUPublicIP no longer uses Start-ThreadJob. Its HTTP fallback now queries the endpoints
   in turn and takes the first valid address. On Windows PowerShell 5.1, which does not ship

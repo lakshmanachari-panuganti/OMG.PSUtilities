@@ -651,3 +651,80 @@ Describe 'Get-PSUPublicIP dependency-free fallback' {
         }
     }
 }
+
+Describe 'Get-PSUSecret resolution order' {
+    BeforeEach {
+        InModuleScope OMG.PSUtilities.Core {
+            $script:secretUnderTest = 'SECRET-VALUE-DO-NOT-LEAK'
+        }
+    }
+
+    AfterEach {
+        Remove-Item Env:\PSU_TEST_SECRET -ErrorAction SilentlyContinue
+    }
+
+    It 'does not fall through to the environment when a source is pinned' {
+        InModuleScope OMG.PSUtilities.Core {
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Get-Secret' }
+            Mock Write-Warning {}
+
+            # The environment variable is deliberately populated. Pinning the source to
+            # Credential Manager must fail rather than silently downgrade to the least
+            # secure tier, which is the entire point of the -Source parameter.
+            $env:PSU_TEST_SECRET = 'from-environment'
+
+            { Get-PSUSecret -Name 'PSU_TEST_SECRET' -Source CredentialManager } |
+                Should -Throw '*Tried: CredentialManager*'
+
+            Should -Invoke Write-Warning -Times 0 -Exactly
+        }
+    }
+
+    It 'falls back to the environment variable and warns when it does' {
+        InModuleScope OMG.PSUtilities.Core {
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Get-Secret' }
+            $env:PSU_TEST_SECRET = $script:secretUnderTest
+            $script:warnings = @()
+            Mock Write-Warning { $script:warnings += [string]$Message }
+
+            Get-PSUSecret -Name 'PSU_TEST_SECRET' -Source EnvironmentVariable -AsPlainText |
+                Should -Be $script:secretUnderTest
+
+            # The caller must be told this came from the least secure source.
+            ($script:warnings -join "`n") | Should -Match 'environment variable'
+        }
+    }
+
+    It 'returns a SecureString by default rather than plain text' {
+        InModuleScope OMG.PSUtilities.Core {
+            Mock Write-Warning {}
+            $env:PSU_TEST_SECRET = $script:secretUnderTest
+
+            $secure = Get-PSUSecret -Name 'PSU_TEST_SECRET' -Source EnvironmentVariable
+
+            $secure | Should -BeOfType [System.Security.SecureString]
+        }
+    }
+
+    It 'never puts the secret value in the warning text' {
+        InModuleScope OMG.PSUtilities.Core {
+            $env:PSU_TEST_SECRET = $script:secretUnderTest
+            $script:warnings = @()
+            Mock Write-Warning { $script:warnings += [string]$Message }
+
+            $null = Get-PSUSecret -Name 'PSU_TEST_SECRET' -Source EnvironmentVariable
+
+            ($script:warnings -join "`n") | Should -Not -Match ([regex]::Escape($script:secretUnderTest))
+        }
+    }
+
+    It 'reports the sources tried without disclosing any value when nothing is found' {
+        InModuleScope OMG.PSUtilities.Core {
+            Mock Get-Command { $null } -ParameterFilter { $Name -eq 'Get-Secret' }
+            Remove-Item Env:\PSU_MISSING_SECRET -ErrorAction SilentlyContinue
+
+            { Get-PSUSecret -Name 'PSU_MISSING_SECRET' -Source EnvironmentVariable -ErrorAction Stop } |
+                Should -Throw '*PSU_MISSING_SECRET*'
+        }
+    }
+}

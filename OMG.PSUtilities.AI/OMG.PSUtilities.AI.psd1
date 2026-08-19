@@ -12,7 +12,7 @@
     RootModule           = 'OMG.PSUtilities.AI.psm1'
 
     # Version number of this module.
-    ModuleVersion        = '1.1.0'
+    ModuleVersion        = '1.2.0'
 
     # Supported PSEditions
     # Tested: imports and exports all 12 commands on both Windows PowerShell 5.1 (Desktop) and
